@@ -465,65 +465,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-24 px-4 bg-muted/20">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium mb-4">
-              <TrendingUp size={12} /> Pricing
-            </div>
-            <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(1.75rem, 4vw, 3rem)', fontWeight: 700 }} className="mb-4">
-              Simple, transparent pricing
-            </h2>
-            <p className="text-muted-foreground">Start free. Upgrade when you're ready to scale.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {plans.map((plan, i) => (
-              <div
-                key={plan.name}
-                className={`relative p-6 rounded-2xl border transition-all duration-300 ${
-                  plan.highlight
-                    ? 'bg-gradient-to-b from-primary/10 to-card border-primary/40 shadow-2xl shadow-primary/20 scale-105'
-                    : 'bg-card border-border hover:border-primary/20'
-                }`}
-              >
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-xs font-semibold rounded-full">
-                    Most Popular
-                  </div>
-                )}
-                <div className="mb-4">
-                  <h3 className="font-semibold text-foreground mb-1">{plan.name}</h3>
-                  <p className="text-xs text-muted-foreground">{plan.description}</p>
-                </div>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: '2.5rem', fontWeight: 800 }} className="text-foreground">{plan.price}</span>
-                  <span className="text-muted-foreground text-sm">{plan.period}</span>
-                </div>
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map(f => (
-                    <li key={f} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-foreground/80">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => navigate('/auth')}
-                  className={`w-full py-3 rounded-xl font-medium text-sm transition-all ${
-                    plan.highlight
-                      ? 'bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/30'
-                      : 'border border-border hover:border-primary/40 hover:bg-primary/5'
-                  }`}
-                >
-                  {plan.cta}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+   
 
       {/* CTA */}
       <section className="py-24 px-4">
