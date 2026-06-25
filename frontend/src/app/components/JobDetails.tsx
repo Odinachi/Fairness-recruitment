@@ -7,7 +7,6 @@ import {
   Star, Zap, Globe, MessageSquare, CalendarDays, Award,
   ChevronRight, Brain, Target,
 } from 'lucide-react'
-import { jobs } from '../data/mockData'
 import { useState } from 'react'
 import { motion } from 'motion/react'
 
@@ -23,7 +22,7 @@ const matchBreakdown = [
 export function JobDetails() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user } = useApp()
+  const { user, jobs } = useApp()
   const [saved, setSaved] = useState(false)
   const [applied, setApplied] = useState(false)
   const [applyLoading, setApplyLoading] = useState(false)
@@ -254,13 +253,7 @@ export function JobDetails() {
                       <CheckCircle2 size={24} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-emerald-400 animate-bounce" />
                     </div>
                     <h3 className="font-semibold text-emerald-400 mb-1">Application Submitted!</h3>
-                    <p className="text-xs text-muted-foreground mb-4">We've sent your AI-optimized application to {job.company}</p>
-                    <button
-                      onClick={() => navigate('/messages')}
-                      className="w-full py-2.5 rounded-xl text-sm font-medium border border-border hover:bg-muted transition-colors flex items-center justify-center gap-2 group/msg"
-                    >
-                      <MessageSquare size={16} strokeWidth={1.75} className="transition-transform duration-200 group-hover/msg:scale-105" /> Message Recruiter
-                    </button>
+                    <p className="text-xs text-muted-foreground mb-0">We've sent your AI-optimized application to {job.company}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -279,12 +272,6 @@ export function JobDetails() {
                           {user ? <><Zap size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" /> Apply with AI</> : 'Sign In to Apply'}
                         </>
                       )}
-                    </button>
-                    <button
-                      onClick={() => navigate('/messages')}
-                      className="w-full py-2.5 rounded-xl text-sm font-medium border border-border hover:border-primary/30 hover:bg-primary/5 transition-all flex items-center justify-center gap-2 group/msg"
-                    >
-                      <MessageSquare size={16} strokeWidth={1.75} className="transition-transform duration-200 group-hover/msg:scale-105" /> Message Recruiter
                     </button>
                     <div className="text-center text-xs text-muted-foreground">
                       AI will craft a personalized cover letter and optimize your application

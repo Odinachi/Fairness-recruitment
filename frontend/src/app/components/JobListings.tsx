@@ -7,7 +7,6 @@ import {
   Bookmark, ArrowUpRight, SlidersHorizontal, ChevronDown, X,
   Star, Zap, Globe, Building2,
 } from 'lucide-react'
-import { jobs } from '../data/mockData'
 import { motion } from 'motion/react'
 
 const categories = ['All', 'Engineering', 'Design', 'Product', 'AI/ML', 'Data Science', 'DevOps', 'Security', 'Research', 'Mobile']
@@ -29,7 +28,7 @@ function MatchBadge({ match }: { match: number }) {
 
 export function JobListings() {
   const navigate = useNavigate()
-  const { user } = useApp()
+  const { user, jobs } = useApp()
   const [searchParams] = useSearchParams()
   const filterParam = searchParams.get('filter')
 

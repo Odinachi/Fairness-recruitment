@@ -7,7 +7,6 @@ import {
   ChevronRight, Zap, ArrowUpRight, RefreshCw, Star,
   CheckCircle2, AlertCircle, BookOpen, MapPin, DollarSign,
 } from 'lucide-react'
-import { jobs } from '../data/mockData'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer,
@@ -48,7 +47,7 @@ const gapData = [
 
 export function AIRecommendations() {
   const navigate = useNavigate()
-  const { user } = useApp()
+  const { user, jobs } = useApp()
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',

@@ -6,7 +6,6 @@ import {
   Calendar, ArrowLeft, ExternalLink, Award, TrendingUp, CheckCircle2,
   Brain, Target, Clock, Users,
 } from 'lucide-react'
-import { candidates, jobs } from '../data/mockData'
 import { useState } from 'react'
 import { motion } from 'motion/react'
 
@@ -31,7 +30,7 @@ const stageLabels: Record<string, string> = {
 export function CandidateProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user } = useApp()
+  const { user, candidates, jobs } = useApp()
   const [activeTab, setActiveTab] = useState<'overview' | 'experience' | 'ai'>('overview')
   const [stageOverride, setStageOverride] = useState<string | null>(null)
 

@@ -5,8 +5,9 @@ import {
   Bell, Sparkles, MessageSquare, Briefcase, Calendar, Gift, Settings,
   CheckCheck, Trash2, Filter, X,
 } from 'lucide-react'
-import { notifications } from '../data/mockData'
 import { motion, AnimatePresence } from 'motion/react'
+import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 
 const typeIcons: Record<string, React.FC<any>> = {
   match: Sparkles,
@@ -27,14 +28,13 @@ const typeColors: Record<string, string> = {
 }
 
 export function Notifications() {
-  const { user } = useApp()
-  const [notifs, setNotifs] = useState(notifications)
+  const { user, notifications } = useApp()
   const [activeFilter, setActiveFilter] = useState<string>('All')
 
   const filters = ['All', 'Unread', 'Matches', 'Applications', 'Messages', 'Interviews']
-  const unreadCount = notifs.filter(n => !n.read).length
+  const unreadCount = notifications.filter(n => !n.read).length
 
-  const filtered = notifs.filter(n => {
+  const filtered = notifications.filter(n => {
     if (activeFilter === 'All') return true
     if (activeFilter === 'Unread') return !n.read
     if (activeFilter === 'Matches') return n.type === 'match'
@@ -44,11 +44,18 @@ export function Notifications() {
     return true
   })
 
-  const markAllRead = () => setNotifs(prev => prev.map(n => ({ ...n, read: true })))
+  const markAllRead = async () => {
+    const promises = notifications.map(n => updateDoc(doc(db, 'notifications', n.id), { read: true }))
+    await Promise.all(promises)
+  }
 
-  const dismiss = (id: string) => setNotifs(prev => prev.filter(n => n.id !== id))
+  const dismiss = async (id: string) => {
+    await deleteDoc(doc(db, 'notifications', id))
+  }
 
-  const markRead = (id: string) => setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+  const markRead = async (id: string) => {
+    await updateDoc(doc(db, 'notifications', id), { read: true })
+  }
 
   return (
     <Layout>

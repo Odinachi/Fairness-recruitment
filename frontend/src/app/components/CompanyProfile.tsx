@@ -7,7 +7,6 @@ import {
   MessageSquare, ChevronRight, Zap, DollarSign, Clock,
   Twitter, Linkedin, Github, Heart,
 } from 'lucide-react'
-import { jobs } from '../data/mockData'
 import { motion } from 'motion/react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -78,7 +77,7 @@ const defaultCompany = companies.stripe
 export function CompanyProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user } = useApp()
+  const { user, jobs } = useApp()
 
   const company = (id && companies[id]) || defaultCompany
   const companyJobs = jobs.filter(j => j.company.toLowerCase() === company.name.toLowerCase())

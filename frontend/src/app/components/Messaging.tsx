@@ -5,26 +5,24 @@ import {
   Send, Search, Paperclip, Smile, MoreVertical, Phone, Video,
   Circle, ArrowLeft, Sparkles, Brain, Zap,
 } from 'lucide-react'
-import { conversations, messages as allMessages } from '../data/mockData'
 import { motion, AnimatePresence } from 'motion/react'
 
 export function Messaging() {
-  const { user } = useApp()
+  const { user, conversations, messages, addMessage, updateConversationLastMessage } = useApp()
   const [activeConvId, setActiveConvId] = useState<string | null>('1')
   const [input, setInput] = useState('')
-  const [messageMap, setMessageMap] = useState(allMessages)
   const [search, setSearch] = useState('')
   const [showAI, setShowAI] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const activeConv = conversations.find(c => c.id === activeConvId)
-  const currentMessages = activeConvId ? (messageMap[activeConvId] || []) : []
+  const currentMessages = activeConvId ? (messages[activeConvId] || []) : []
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [currentMessages])
 
-  const sendMessage = (e: React.FormEvent) => {
+  const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || !activeConvId) return
 
@@ -39,15 +37,13 @@ export function Messaging() {
       read: true,
     }
 
-    setMessageMap(prev => ({
-      ...prev,
-      [activeConvId]: [...(prev[activeConvId] || []), newMsg],
-    }))
     setInput('')
+    await addMessage(newMsg)
+    await updateConversationLastMessage(activeConvId, newMsg.content, 'Just now')
 
     // Simulate reply
     if (activeConvId === '1') {
-      setTimeout(() => {
+      setTimeout(async () => {
         const reply = {
           id: (Date.now() + 1).toString(),
           conversationId: activeConvId,
@@ -58,10 +54,8 @@ export function Messaging() {
           timestamp: new Date().toISOString(),
           read: false,
         }
-        setMessageMap(prev => ({
-          ...prev,
-          [activeConvId]: [...(prev[activeConvId] || []), reply],
-        }))
+        await addMessage(reply)
+        await updateConversationLastMessage(activeConvId, reply.content, 'Just now')
       }, 1500)
     }
   }

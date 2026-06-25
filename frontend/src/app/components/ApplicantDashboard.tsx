@@ -13,7 +13,6 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   RadarChart, PolarGrid, PolarAngleAxis, Radar
 } from 'recharts'
-import { jobs, applicantApplications, applicationChartData } from '../data/mockData'
 import { motion } from 'motion/react'
 
 const skillsData = [
@@ -72,7 +71,7 @@ function MatchBadge({ match }: { match: number }) {
 }
 
 export function ApplicantDashboard() {
-  const { user } = useApp()
+  const { user, jobs, applicantApplications, applicationChartData } = useApp()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')

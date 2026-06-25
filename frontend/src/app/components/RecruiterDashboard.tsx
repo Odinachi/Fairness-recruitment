@@ -11,10 +11,6 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, Legend
 } from 'recharts'
-import {
-  candidates, recruiterHiringData, recruiterJobPostings,
-  sourceData, monthlyHireData,
-} from '../data/mockData'
 import { motion } from 'motion/react'
 
 function MatchBadge({ score }: { score: number }) {
@@ -48,7 +44,10 @@ const stageLabels: Record<string, string> = {
 }
 
 export function RecruiterDashboard() {
-  const { user } = useApp()
+  const {
+    user, candidates, recruiterHiringData, recruiterJobPostings,
+    sourceData, monthlyHireData
+  } = useApp()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
