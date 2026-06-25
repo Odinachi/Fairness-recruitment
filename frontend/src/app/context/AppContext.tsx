@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { onAuthStateChanged } from 'firebase/auth'
+import { auth } from '../firebase'
 
 export type UserRole = 'applicant' | 'recruiter'
 
@@ -10,6 +12,7 @@ export interface User {
   avatar: string
   company?: string
   title?: string
+  profileSetupCompleted?: boolean
 }
 
 interface AppContextType {
@@ -43,6 +46,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [darkMode])
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        // Retrieve custom fields from LocalStorage
+        const cachedProfile = localStorage.getItem(`jobnatics_profile_${firebaseUser.uid}`)
+        let profile = cachedProfile ? JSON.parse(cachedProfile) : null
+        
+        if (!profile) {
+          // Default fallback if cache is missing
+          profile = {
+            role: 'applicant',
+            avatar: firebaseUser.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
+            title: 'Senior Frontend Engineer',
+            profileSetupCompleted: false,
+          }
+        }
+        
+        setUser({
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+          email: firebaseUser.email || '',
+          role: profile.role,
+          avatar: profile.avatar || firebaseUser.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
+          company: profile.company,
+          title: profile.title,
+          profileSetupCompleted: !!profile.profileSetupCompleted,
+        })
+      } else {
+        setUser(null)
+      }
+    })
+    return unsubscribe
+  }, [])
+
   const toggleDarkMode = () => setDarkMode(prev => !prev)
 
   return (
@@ -53,3 +90,4 @@ export function AppProvider({ children }: { children: ReactNode }) {
 }
 
 export const useApp = () => useContext(AppContext)
+

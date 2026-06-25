@@ -164,9 +164,7 @@ export function LandingPage() {
                 <Moon size={18} strokeWidth={1.75} className="transition-transform duration-500 group-hover:-rotate-12 group-hover:text-indigo-400" />
               )}
             </button>
-            <button onClick={() => navigate('/auth')} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Sign In
-            </button>
+
             <button
               onClick={() => handleGetStarted()}
               className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
@@ -325,14 +323,14 @@ export function LandingPage() {
                   { title: 'ML Engineer', company: 'OpenAI', match: 91 },
                   { title: 'Full Stack Engineer', company: 'Vercel', match: 88 },
                 ].map((job) => (
-                    <div key={job.company} className="bg-background/60 rounded-lg p-3 border border-border text-left group hover:bg-background transition-colors duration-200">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                          <Briefcase size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="text-primary" />
-                        </div>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">{job.match}%</span>
+                  <div key={job.company} className="bg-background/60 rounded-lg p-3 border border-border text-left group hover:bg-background transition-colors duration-200">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                        <Briefcase size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="text-primary" />
                       </div>
-                      <div className="text-xs font-medium truncate">{job.title}</div>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">{job.match}%</span>
+                    </div>
+                    <div className="text-xs font-medium truncate">{job.title}</div>
                     <div className="text-xs text-muted-foreground">{job.company}</div>
                   </div>
                 ))}

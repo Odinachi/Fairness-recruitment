@@ -3,6 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { useApp, User } from '../context/AppContext'
 import { Zap, Eye, EyeOff, ArrowLeft, Sparkles, Users, CheckCircle2, ArrowRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
+import { auth } from '../firebase'
+import { toast } from 'sonner'
 
 type Mode = 'signin' | 'signup'
 type Role = 'applicant' | 'recruiter'
@@ -29,47 +32,69 @@ export function AuthPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (mode === 'signup' && step === 1) {
+      if (!form.name || !form.email || !form.password) {
+        toast.error('Please fill in all fields')
+        return
+      }
       setStep(2)
       return
     }
 
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1200))
+    try {
+      if (mode === 'signup') {
+        const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password)
+        const firebaseUser = userCredential.user
 
-    const user: User = {
-      id: '1',
-      name: form.name || (role === 'recruiter' ? 'Alex Rivera' : 'Jordan Lee'),
-      email: form.email || (role === 'recruiter' ? 'alex@techcorp.ai' : 'jordan@email.com'),
-      role,
-      avatar: role === 'recruiter'
-        ? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face'
-        : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
-      company: form.company || (role === 'recruiter' ? 'TechCorp AI' : undefined),
-      title: form.title || (role === 'applicant' ? 'Senior Frontend Engineer' : 'Head of Talent'),
+        await updateProfile(firebaseUser, {
+          displayName: form.name
+        })
+
+        const profile = {
+          role,
+          company: role === 'recruiter' ? form.company : undefined,
+          title: role === 'applicant' ? form.title : 'Senior Frontend Engineer',
+          avatar: role === 'recruiter'
+            ? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face'
+            : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
+          profileSetupCompleted: false,
+        }
+        localStorage.setItem(`jobnatics_profile_${firebaseUser.uid}`, JSON.stringify(profile))
+
+        toast.success('Account created successfully!')
+        navigate('/profile-setup')
+      } else {
+        if (!form.email || !form.password) {
+          toast.error('Please enter email and password')
+          setLoading(false)
+          return
+        }
+        const userCredential = await signInWithEmailAndPassword(auth, form.email, form.password)
+        const firebaseUser = userCredential.user
+
+        const cachedProfile = localStorage.getItem(`jobnatics_profile_${firebaseUser.uid}`)
+        const profile = cachedProfile ? JSON.parse(cachedProfile) : null
+        const redirectRole = profile?.role || 'applicant'
+
+        toast.success(`Welcome back, ${firebaseUser.displayName || 'User'}!`)
+        navigate(redirectRole === 'recruiter' ? '/app/recruiter' : '/app/applicant')
+      }
+    } catch (error: any) {
+      console.error(error)
+      let message = error.message || 'An error occurred during authentication.'
+      if (error.code === 'auth/invalid-credential') {
+        message = 'Invalid email or password.'
+      } else if (error.code === 'auth/email-already-in-use') {
+        message = 'This email address is already in use.'
+      } else if (error.code === 'auth/weak-password') {
+        message = 'Password should be at least 6 characters.'
+      } else if (error.code === 'auth/invalid-email') {
+        message = 'Please enter a valid email address.'
+      }
+      toast.error(message)
+    } finally {
+      setLoading(false)
     }
-
-    setUser(user)
-    navigate(role === 'recruiter' ? '/app/recruiter' : '/app/applicant')
-  }
-
-  const demoLogin = async (demoRole: Role) => {
-    setLoading(true)
-    await new Promise(r => setTimeout(r, 800))
-
-    const user: User = {
-      id: '1',
-      name: demoRole === 'recruiter' ? 'Alex Rivera' : 'Jordan Lee',
-      email: demoRole === 'recruiter' ? 'alex@techcorp.ai' : 'jordan@email.com',
-      role: demoRole,
-      avatar: demoRole === 'recruiter'
-        ? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face'
-        : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
-      company: demoRole === 'recruiter' ? 'TechCorp AI' : undefined,
-      title: demoRole === 'applicant' ? 'Senior Frontend Engineer' : 'Head of Talent',
-    }
-
-    setUser(user)
-    navigate(demoRole === 'recruiter' ? '/app/recruiter' : '/app/applicant')
   }
 
   return (
@@ -179,61 +204,38 @@ export function AuthPage() {
           </div>
 
           {/* Role selector */}
-          <div className="mb-6">
-            <p className="text-sm text-muted-foreground mb-3">I am a...</p>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setRole('applicant')}
-                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 group ${
-                  role === 'applicant'
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border text-muted-foreground hover:border-primary/30'
-                }`}
-              >
-                <Sparkles size={20} strokeWidth={1.75} fill={role === 'applicant' ? 'currentColor' : 'none'} fillOpacity={0.15} className={`transition-transform duration-300 ${role === 'applicant' ? 'animate-pulse' : 'group-hover:scale-105'}`} />
-                <span className="text-sm font-medium">Job Seeker</span>
-                <span className="text-xs opacity-70">Find opportunities</span>
-              </button>
-              <button
-                onClick={() => setRole('recruiter')}
-                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 group ${
-                  role === 'recruiter'
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border text-muted-foreground hover:border-primary/30'
-                }`}
-              >
-                <Users size={20} strokeWidth={1.75} fill={role === 'recruiter' ? 'currentColor' : 'none'} fillOpacity={0.15} className={`transition-transform duration-300 ${role === 'recruiter' ? 'scale-105' : 'group-hover:scale-105'}`} />
-                <span className="text-sm font-medium">Recruiter</span>
-                <span className="text-xs opacity-70">Hire talent</span>
-              </button>
+          {mode === 'signup' && step === 1 && (
+            <div className="mb-6">
+              <p className="text-sm text-muted-foreground mb-3">I am a...</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setRole('applicant')}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 group ${
+                    role === 'applicant'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground hover:border-primary/30'
+                  }`}
+                >
+                  <Sparkles size={20} strokeWidth={1.75} fill={role === 'applicant' ? 'currentColor' : 'none'} fillOpacity={0.15} className={`transition-transform duration-300 ${role === 'applicant' ? 'animate-pulse' : 'group-hover:scale-105'}`} />
+                  <span className="text-sm font-medium">Job Seeker</span>
+                  <span className="text-xs opacity-70">Find opportunities</span>
+                </button>
+                <button
+                  onClick={() => setRole('recruiter')}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 group ${
+                    role === 'recruiter'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground hover:border-primary/30'
+                  }`}
+                >
+                  <Users size={20} strokeWidth={1.75} fill={role === 'recruiter' ? 'currentColor' : 'none'} fillOpacity={0.15} className={`transition-transform duration-300 ${role === 'recruiter' ? 'scale-105' : 'group-hover:scale-105'}`} />
+                  <span className="text-sm font-medium">Recruiter</span>
+                  <span className="text-xs opacity-70">Hire talent</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Demo quick login */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <button
-              onClick={() => demoLogin('applicant')}
-              disabled={loading}
-              className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/30 bg-primary/5 text-primary text-sm font-medium hover:bg-primary/10 transition-colors disabled:opacity-50 group"
-            >
-              <Sparkles size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="transition-transform duration-300 group-hover:scale-105" />
-              Demo: Applicant
-            </button>
-            <button
-              onClick={() => demoLogin('recruiter')}
-              disabled={loading}
-              className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-accent/30 bg-accent/5 text-accent text-sm font-medium hover:bg-accent/10 transition-colors disabled:opacity-50 group"
-            >
-              <Users size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="transition-transform duration-300 group-hover:scale-105" />
-              Demo: Recruiter
-            </button>
-          </div>
-
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-muted-foreground">or continue with email</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">

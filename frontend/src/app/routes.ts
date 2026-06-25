@@ -11,6 +11,7 @@ import { AIRecommendations } from './components/AIRecommendations'
 import { CandidateProfile } from './components/CandidateProfile'
 import { CompanyProfile } from './components/CompanyProfile'
 import { Settings } from './components/Settings'
+import { ProfileSetup } from './components/ProfileSetup'
 
 export const router = createHashRouter([
   { path: '/', Component: LandingPage },
@@ -25,5 +26,6 @@ export const router = createHashRouter([
   { path: '/profile/:id', Component: CandidateProfile },
   { path: '/company/:id', Component: CompanyProfile },
   { path: '/settings', Component: Settings },
+  { path: '/profile-setup', Component: ProfileSetup },
   { path: '*', loader: () => redirect('/') },
 ])

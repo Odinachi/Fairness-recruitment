@@ -1,6 +1,8 @@
-import { ReactNode, useState } from 'react'
+import { ReactNode, useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router'
 import { useApp } from '../context/AppContext'
+import { signOut } from 'firebase/auth'
+import { auth } from '../firebase'
 import {
   LayoutDashboard, Briefcase, FileText, Sparkles, MessageSquare,
   Bell, Bookmark, UserCircle, Settings, LogOut, Users, BarChart3,
@@ -38,9 +40,19 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const nav = user?.role === 'recruiter' ? recruiterNav : applicantNav
 
-  const handleLogout = () => {
-    setUser(null)
-    navigate('/')
+  useEffect(() => {
+    if (user && !user.profileSetupCompleted && location.pathname !== '/profile-setup') {
+      navigate('/profile-setup')
+    }
+  }, [user, location.pathname, navigate])
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+      navigate('/')
+    } catch (err) {
+      console.error('Logout error:', err)
+    }
   }
 
   return (
