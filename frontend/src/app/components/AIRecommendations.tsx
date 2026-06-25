@@ -149,7 +149,7 @@ export function AIRecommendations() {
                         ? 'bg-gradient-to-br from-primary to-accent shadow-md shadow-primary/30'
                         : 'bg-muted border border-border'
                     }`}>
-                      {msg.role === 'ai' ? <Bot size={14} className="text-white" /> : <User size={14} className="text-muted-foreground" />}
+                      {msg.role === 'ai' ? <Bot size={14} strokeWidth={1.75} className="text-white" /> : <User size={14} strokeWidth={1.75} className="text-muted-foreground" />}
                     </div>
                     <div className={`max-w-sm px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                       msg.role === 'user'
@@ -163,7 +163,7 @@ export function AIRecommendations() {
                 {isTyping && (
                   <div className="flex gap-3">
                     <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0">
-                      <Bot size={14} className="text-white" />
+                      <Bot size={14} strokeWidth={1.75} className="text-white animate-pulse" />
                     </div>
                     <div className="px-4 py-3 bg-muted border border-border rounded-2xl rounded-bl-md">
                       <div className="flex gap-1">
@@ -205,9 +205,9 @@ export function AIRecommendations() {
                 <button
                   type="submit"
                   disabled={!input.trim() || isTyping}
-                  className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary/90 disabled:opacity-40 shadow-sm shadow-primary/20 transition-all"
+                  className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary/90 disabled:opacity-40 shadow-sm shadow-primary/20 transition-all group/send"
                 >
-                  <Send size={16} />
+                  <Send size={16} strokeWidth={1.75} className="transition-transform duration-300 group-hover/send:translate-x-0.5 group-hover/send:-translate-y-0.5" />
                 </button>
               </form>
             </div>
@@ -216,11 +216,11 @@ export function AIRecommendations() {
             <div className="p-5 rounded-2xl bg-card border border-border">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold flex items-center gap-2">
-                  <Sparkles size={16} className="text-primary" />
+                  <Sparkles size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary animate-pulse" />
                   Your Top AI Matches
                 </h3>
-                <button onClick={() => navigate('/jobs')} className="text-xs text-primary hover:underline flex items-center gap-1">
-                  See all <ChevronRight size={12} />
+                <button onClick={() => navigate('/jobs')} className="text-xs text-primary hover:underline flex items-center gap-1 group/see">
+                  See all <ChevronRight size={12} strokeWidth={1.75} className="transition-transform duration-200 group-hover/see:translate-x-0.5" />
                 </button>
               </div>
               <div className="space-y-3">
@@ -245,14 +245,14 @@ export function AIRecommendations() {
                     </div>
                     <div>
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${
-                        job.match >= 90 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
-                        job.match >= 80 ? 'bg-primary/20 text-primary border-primary/30' :
-                        'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                        job.match >= 90 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                        job.match >= 80 ? 'bg-primary/10 text-primary border-primary/20' :
+                        'bg-amber-500/10 text-amber-400 border-amber-500/20'
                       }`}>
-                        <Sparkles size={9} /> {job.match}%
+                        <Sparkles size={9} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="animate-pulse" /> {job.match}%
                       </span>
                     </div>
-                    <ArrowUpRight size={14} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                    <ArrowUpRight size={14} strokeWidth={1.75} className="text-muted-foreground group-hover:text-primary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </motion.div>
                 ))}
               </div>
@@ -264,7 +264,7 @@ export function AIRecommendations() {
             {/* Match radar */}
             <div className="p-5 rounded-2xl bg-card border border-border">
               <div className="flex items-center gap-2 mb-4">
-                <Brain size={16} className="text-primary" />
+                <Brain size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary animate-pulse" />
                 <h3 className="font-semibold text-sm">AI Match Profile</h3>
               </div>
               <ResponsiveContainer width="100%" height={220}>
@@ -279,7 +279,7 @@ export function AIRecommendations() {
             {/* Skill gap analysis */}
             <div className="p-5 rounded-2xl bg-card border border-border">
               <div className="flex items-center gap-2 mb-4">
-                <Target size={16} className="text-amber-400" />
+                <Target size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-amber-400" />
                 <h3 className="font-semibold text-sm">Skill Gap Analysis</h3>
               </div>
               <div className="space-y-3">
@@ -309,7 +309,7 @@ export function AIRecommendations() {
             {/* AI Insights */}
             <div className="p-5 rounded-2xl bg-card border border-border">
               <div className="flex items-center gap-2 mb-4">
-                <Zap size={16} className="text-accent" />
+                <Zap size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-accent animate-pulse" />
                 <h3 className="font-semibold text-sm">AI Career Insights</h3>
               </div>
               <div className="space-y-3">
@@ -321,16 +321,16 @@ export function AIRecommendations() {
                 ].map((insight, i) => {
                   const Icon = insight.icon
                   return (
-                    <div key={i} className={`flex gap-2.5 p-3 rounded-lg border text-xs ${
+                    <div key={i} className={`flex gap-2.5 p-3 rounded-lg border text-xs group ${
                       insight.type === 'positive' ? 'bg-emerald-500/5 border-emerald-500/15' :
                       insight.type === 'warning' ? 'bg-amber-500/5 border-amber-500/15' :
                       'bg-primary/5 border-primary/15'
                     }`}>
-                      <Icon size={13} className={`flex-shrink-0 mt-0.5 ${
+                      <Icon size={13} strokeWidth={1.75} fill={insight.type === 'positive' || insight.type === 'tip' ? 'currentColor' : 'none'} fillOpacity={0.15} className={`flex-shrink-0 mt-0.5 transition-transform duration-200 group-hover:scale-110 ${
                         insight.type === 'positive' ? 'text-emerald-400' :
                         insight.type === 'warning' ? 'text-amber-400' : 'text-primary'
                       }`} />
-                      <span className="text-foreground/80 leading-relaxed">{insight.text}</span>
+                      <span className="text-foreground/80 leading-relaxed transition-colors group-hover:text-foreground">{insight.text}</span>
                     </div>
                   )
                 })}

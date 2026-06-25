@@ -90,7 +90,7 @@ export function Messaging() {
           <div className="p-4 border-b border-border">
             <h2 className="font-semibold mb-3">Messages</h2>
             <div className="relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search size={15} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search conversations..."
@@ -143,9 +143,9 @@ export function Messaging() {
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
               <button
                 onClick={() => setActiveConvId(null)}
-                className="md:hidden w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                className="md:hidden w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground group"
               >
-                <ArrowLeft size={18} />
+                <ArrowLeft size={18} strokeWidth={1.75} className="transition-transform group-hover:-translate-x-0.5" />
               </button>
               <div className="relative">
                 <img src={activeConv.participantAvatar} alt={activeConv.participantName} className="w-9 h-9 rounded-full object-cover" />
@@ -158,20 +158,20 @@ export function Messaging() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowAI(!showAI)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    showAI ? 'bg-primary/20 text-primary border border-primary/30' : 'border border-border text-muted-foreground hover:bg-muted'
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 group/ai ${
+                    showAI ? 'bg-primary/20 text-primary border border-primary/30 shadow-sm' : 'border border-border text-muted-foreground hover:bg-muted'
                   }`}
                 >
-                  <Sparkles size={12} /> AI Assist
+                  <Sparkles size={12} strokeWidth={1.75} fill="currentColor" fillOpacity={showAI ? 0.2 : 0} className="animate-pulse" /> AI Assist
                 </button>
-                <button className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-lg transition-colors">
-                  <Phone size={16} />
+                <button className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all group/phone">
+                  <Phone size={16} strokeWidth={1.75} className="transition-transform duration-200 group-hover/phone:scale-110" />
                 </button>
-                <button className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-lg transition-colors">
-                  <Video size={16} />
+                <button className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all group/video">
+                  <Video size={16} strokeWidth={1.75} className="transition-transform duration-200 group-hover/video:scale-110" />
                 </button>
-                <button className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-lg transition-colors">
-                  <MoreVertical size={16} />
+                <button className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-lg transition-all group/more">
+                  <MoreVertical size={16} strokeWidth={1.75} className="transition-transform duration-200 group-hover/more:scale-110" />
                 </button>
               </div>
             </div>
@@ -218,7 +218,7 @@ export function Messaging() {
                   className="px-4 py-3 border-t border-border bg-primary/5"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <Brain size={13} className="text-primary" />
+                    <Brain size={13} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary animate-pulse" />
                     <span className="text-xs font-medium text-primary">AI Suggested Replies</span>
                   </div>
                   <div className="flex gap-2 flex-wrap">
@@ -238,8 +238,8 @@ export function Messaging() {
 
             {/* Input */}
             <form onSubmit={sendMessage} className="flex items-center gap-3 p-4 border-t border-border bg-card">
-              <button type="button" className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-                <Paperclip size={18} />
+              <button type="button" className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all group/clip">
+                <Paperclip size={18} strokeWidth={1.75} className="transition-transform duration-200 group-hover/clip:scale-115 group-hover/clip:rotate-12" />
               </button>
               <div className="flex-1 relative">
                 <input
@@ -250,23 +250,23 @@ export function Messaging() {
                   className="w-full px-4 py-2.5 rounded-xl bg-muted border border-border focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-sm placeholder:text-muted-foreground transition-all"
                 />
               </div>
-              <button type="button" className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-                <Smile size={18} />
+              <button type="button" className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all group/smile">
+                <Smile size={18} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="transition-transform duration-200 group-hover/smile:scale-115" />
               </button>
               <button
                 type="submit"
                 disabled={!input.trim()}
-                className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary/90 disabled:opacity-40 transition-all shadow-sm shadow-primary/30"
+                className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary/90 disabled:opacity-40 transition-all shadow-sm shadow-primary/30 group/send hover:scale-105 active:scale-95"
               >
-                <Send size={16} />
+                <Send size={16} strokeWidth={1.75} className="transition-transform duration-300 group-hover/send:translate-x-0.5 group-hover/send:-translate-y-0.5 group-hover/send:scale-105" />
               </button>
             </form>
           </div>
         ) : (
-          <div className="hidden md:flex flex-1 items-center justify-center bg-muted/10">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/20 flex items-center justify-center">
-                <Zap size={28} className="text-primary" />
+          <div className="hidden md:flex flex-1 items-center justify-center bg-muted/10 group">
+            <div className="text-center group">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/20 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                <Zap size={28} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
               </div>
               <h3 className="font-semibold mb-2">Select a conversation</h3>
               <p className="text-sm text-muted-foreground">Choose a chat to start messaging</p>

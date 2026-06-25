@@ -139,9 +139,9 @@ export function LandingPage() {
       {/* Navbar */}
       <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/90 backdrop-blur-xl border-b border-border shadow-lg' : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
-              <Zap size={16} className="text-white" />
+          <div className="flex items-center gap-2 group cursor-pointer">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30 transition-transform duration-300 group-hover:scale-105">
+              <Zap size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="text-white transition-transform duration-300 group-hover:rotate-12" />
             </div>
             <span className="font-bold text-foreground" style={{ fontFamily: 'Outfit, sans-serif' }}>
               Jobnatics <span className="text-primary">AI</span>
@@ -157,8 +157,12 @@ export function LandingPage() {
           </div> */}
 
           <div className="hidden md:flex items-center gap-3">
-            <button onClick={toggleDarkMode} className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors">
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            <button onClick={toggleDarkMode} className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors group">
+              {darkMode ? (
+                <Sun size={18} strokeWidth={1.75} className="transition-transform duration-500 group-hover:rotate-90 group-hover:text-amber-400" />
+              ) : (
+                <Moon size={18} strokeWidth={1.75} className="transition-transform duration-500 group-hover:-rotate-12 group-hover:text-indigo-400" />
+              )}
             </button>
             <button onClick={() => navigate('/auth')} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Sign In
@@ -171,8 +175,12 @@ export function LandingPage() {
             </button>
           </div>
 
-          <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          <button className="md:hidden w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors group" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? (
+              <X size={20} strokeWidth={1.75} className="transition-transform duration-200 group-hover:rotate-90" />
+            ) : (
+              <Menu size={20} strokeWidth={1.75} className="transition-transform duration-200 group-hover:scale-105" />
+            )}
           </button>
         </div>
 
@@ -209,8 +217,8 @@ export function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8">
-              <Sparkles size={14} />
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8 hover:bg-primary/15 transition-colors group cursor-default">
+              <Sparkles size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="animate-pulse text-primary group-hover:scale-110 transition-transform duration-300" />
               <span>AI-Powered Recruitment Intelligence</span>
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             </div>
@@ -248,17 +256,17 @@ export function LandingPage() {
           >
             <button
               onClick={() => handleGetStarted()}
-              className="flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white font-semibold shadow-2xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all duration-200"
+              className="flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-violet-600 text-white font-semibold shadow-2xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all duration-200 group"
             >
-              <Rocket size={18} />
+              <Rocket size={18} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               Find My Perfect Job
-              <ArrowRight size={18} />
+              <ArrowRight size={18} strokeWidth={1.75} className="transition-transform duration-300 group-hover:translate-x-1" />
             </button>
             <button
               onClick={() => handleGetStarted('recruiter')}
-              className="flex items-center gap-2 px-8 py-4 rounded-xl border border-border hover:border-primary/40 hover:bg-primary/5 font-semibold transition-all duration-200"
+              className="flex items-center gap-2 px-8 py-4 rounded-xl border border-border hover:border-primary/40 hover:bg-primary/5 font-semibold transition-all duration-200 group"
             >
-              <Users size={18} />
+              <Users size={18} strokeWidth={1.75} fill="currentColor" fillOpacity={0.1} className="transition-transform duration-300 group-hover:scale-105 text-muted-foreground group-hover:text-primary" />
               I'm Hiring
             </button>
           </motion.div>
@@ -317,14 +325,14 @@ export function LandingPage() {
                   { title: 'ML Engineer', company: 'OpenAI', match: 91 },
                   { title: 'Full Stack Engineer', company: 'Vercel', match: 88 },
                 ].map((job) => (
-                  <div key={job.company} className="bg-background/60 rounded-lg p-3 border border-border text-left">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center">
-                        <Briefcase size={14} className="text-primary" />
+                    <div key={job.company} className="bg-background/60 rounded-lg p-3 border border-border text-left group hover:bg-background transition-colors duration-200">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                          <Briefcase size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="text-primary" />
+                        </div>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">{job.match}%</span>
                       </div>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">{job.match}%</span>
-                    </div>
-                    <div className="text-xs font-medium truncate">{job.title}</div>
+                      <div className="text-xs font-medium truncate">{job.title}</div>
                     <div className="text-xs text-muted-foreground">{job.company}</div>
                   </div>
                 ))}
@@ -338,8 +346,8 @@ export function LandingPage() {
       <section id="features" className="py-24 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-4">
-              <Brain size={12} /> Platform Features
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-4 hover:bg-primary/15 transition-colors group cursor-default">
+              <Brain size={12} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="group-hover:scale-110 transition-transform duration-300" /> Platform Features
             </div>
             <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(1.75rem, 4vw, 3rem)', fontWeight: 700, lineHeight: 1.2 }} className="mb-4">
               Intelligence at every touchpoint
@@ -361,8 +369,9 @@ export function LandingPage() {
                   transition={{ duration: 0.4, delay: i * 0.05 }}
                   className={`group p-6 rounded-2xl bg-card border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-xl ${feature.glow} cursor-default`}
                 >
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-200`}>
-                    <Icon size={22} className="text-white" />
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300 relative overflow-hidden`}>
+                    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <Icon size={22} strokeWidth={1.5} fill="currentColor" fillOpacity={0.2} className="text-white transition-all duration-300 group-hover:rotate-6 group-hover:scale-105" />
                   </div>
                   <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
@@ -377,8 +386,8 @@ export function LandingPage() {
       <section id="how-it-works" className="py-24 px-4 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-medium mb-4">
-              <Play size={12} /> How It Works
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-medium mb-4 hover:bg-accent/15 transition-colors group cursor-default">
+              <Play size={12} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="group-hover:scale-110 transition-transform duration-300" /> How It Works
             </div>
             <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(1.75rem, 4vw, 3rem)', fontWeight: 700 }} className="mb-4">
               Built for both sides of hiring
@@ -427,8 +436,8 @@ export function LandingPage() {
       <section className="py-24 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-medium mb-4">
-              <Award size={12} /> Success Stories
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-medium mb-4 hover:bg-purple-500/15 transition-colors group cursor-default">
+              <Award size={12} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="group-hover:scale-110 transition-transform duration-300" /> Success Stories
             </div>
             <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(1.75rem, 4vw, 3rem)', fontWeight: 700 }} className="mb-4">
               Trusted by the best teams & talent
@@ -447,7 +456,7 @@ export function LandingPage() {
               >
                 <div className="flex gap-1 mb-4">
                   {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
+                    <Star key={i} size={14} strokeWidth={1.5} className="text-amber-400 fill-amber-400 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" style={{ transitionDelay: `${i * 50}ms` }} />
                   ))}
                 </div>
                 <p className="text-sm text-foreground/90 leading-relaxed mb-6">"{t.quote}"</p>
@@ -472,9 +481,9 @@ export function LandingPage() {
       <footer className="border-t border-border py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Zap size={14} className="text-white" />
+            <div className="flex items-center gap-2 group cursor-pointer">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center transition-all duration-300 group-hover:shadow-md group-hover:shadow-primary/20">
+                <Zap size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="text-white transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
               </div>
               <span className="font-semibold" style={{ fontFamily: 'Outfit, sans-serif' }}>Jobnatics AI</span>
             </div>

@@ -16,13 +16,13 @@ const levelOptions = ['All', 'Entry', 'Mid', 'Senior', 'Lead', 'Executive']
 const typeOptions = ['All', 'Full-time', 'Part-time', 'Contract', 'Internship']
 
 function MatchBadge({ match }: { match: number }) {
-  const color = match >= 90 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-    : match >= 80 ? 'bg-primary/20 text-primary border-primary/30'
-    : match >= 70 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+  const color = match >= 90 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+    : match >= 80 ? 'bg-primary/10 text-primary border-primary/20'
+    : match >= 70 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
     : 'bg-muted text-muted-foreground border-border'
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${color}`}>
-      <Sparkles size={9} /> {match}%
+      <Sparkles size={10} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="animate-pulse" /> {match}% Match
     </span>
   )
 }
@@ -287,7 +287,7 @@ export function JobListings() {
 
               <div className="space-y-1.5 mb-4">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <MapPin size={11} /> {job.location}
+                  <MapPin size={11} strokeWidth={1.75} className="text-muted-foreground/60" /> {job.location}
                   <span className={`ml-auto px-2 py-0.5 rounded-full text-xs ${
                     job.remote === 'remote' ? 'text-emerald-400 bg-emerald-500/10' :
                     job.remote === 'hybrid' ? 'text-accent bg-accent/10' :
@@ -297,12 +297,12 @@ export function JobListings() {
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <DollarSign size={11} /> {job.salary}
+                  <DollarSign size={11} strokeWidth={1.75} className="text-muted-foreground/60" /> {job.salary}
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Briefcase size={11} /> {job.type} · {job.level}
+                  <Briefcase size={11} strokeWidth={1.75} className="text-muted-foreground/60" /> {job.type} · {job.level}
                   <span className="ml-auto text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock size={10} /> {job.posted}
+                    <Clock size={10} strokeWidth={1.75} className="text-muted-foreground/60" /> {job.posted}
                   </span>
                 </div>
               </div>
@@ -323,23 +323,19 @@ export function JobListings() {
               <div className="flex items-center gap-2 pt-3 border-t border-border">
                 <button
                   onClick={e => handleApply(job.id, e)}
-                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all duration-200 group/apply ${
                     appliedJobs.includes(job.id)
                       ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-primary text-white hover:bg-primary/90 shadow-sm shadow-primary/20'
+                      : 'bg-primary text-white hover:bg-primary/90 shadow-sm shadow-primary/20 hover:scale-[1.01]'
                   }`}
                 >
-                  {appliedJobs.includes(job.id) ? '✓ Applied' : user ? '⚡ AI Apply' : 'Apply Now'}
+                  {appliedJobs.includes(job.id) ? 'Applied' : user ? '⚡ AI Apply' : 'Apply Now'}
                 </button>
                 <button
                   onClick={e => toggleSave(job.id, e)}
-                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors border ${
-                    savedJobs.includes(job.id)
-                      ? 'text-primary bg-primary/10 border-primary/20'
-                      : 'text-muted-foreground border-border hover:border-primary/30 hover:text-primary'
-                  }`}
+                  className="p-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 flex-shrink-0 group/bookmark"
                 >
-                  <Bookmark size={15} className={savedJobs.includes(job.id) ? 'fill-primary' : ''} />
+                  <Bookmark size={14} strokeWidth={1.75} fill={savedJobs.includes(job.id) ? 'currentColor' : 'none'} className={`transition-all duration-200 group-hover/bookmark:scale-110 ${savedJobs.includes(job.id) ? 'text-primary fill-primary' : 'text-muted-foreground'}`} />
                 </button>
                 <button
                   onClick={e => { e.stopPropagation(); navigate(`/jobs/${job.id}`) }}

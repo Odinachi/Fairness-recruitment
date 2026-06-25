@@ -47,9 +47,9 @@ export function JobDetails() {
         {/* Back */}
         <button
           onClick={() => navigate('/jobs')}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6 group"
         >
-          <ArrowLeft size={16} /> Back to Jobs
+          <ArrowLeft size={16} strokeWidth={1.75} className="transition-transform duration-200 group-hover:-translate-x-0.5" /> Back to Jobs
         </button>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -67,46 +67,46 @@ export function JobDetails() {
                       {job.title}
                     </h1>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                      <button onClick={() => navigate(`/company/${job.company.toLowerCase()}`)} className="flex items-center gap-1 hover:text-primary transition-colors"><Building2 size={14} /> {job.company}</button>
-                      <span className="flex items-center gap-1"><MapPin size={14} /> {job.location}</span>
-                      <span className="flex items-center gap-1"><Clock size={14} /> {job.posted}</span>
+                      <button onClick={() => navigate(`/company/${job.company.toLowerCase()}`)} className="flex items-center gap-1 hover:text-primary transition-colors group"><Building2 size={14} strokeWidth={1.75} className="text-muted-foreground/80 group-hover:text-primary transition-all group-hover:scale-105" /> {job.company}</button>
+                      <span className="flex items-center gap-1"><MapPin size={14} strokeWidth={1.75} /> {job.location}</span>
+                      <span className="flex items-center gap-1"><Clock size={14} strokeWidth={1.75} /> {job.posted}</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
                   <button
                     onClick={() => setSaved(!saved)}
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all ${
-                      saved ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/30'
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all group/bookmark ${
+                      saved ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/30 hover:bg-muted'
                     }`}
                   >
-                    <Bookmark size={16} className={saved ? 'fill-primary' : ''} />
+                    <Bookmark size={16} strokeWidth={1.75} fill={saved ? 'currentColor' : 'none'} className={`transition-all duration-200 group-hover/bookmark:scale-110 ${saved ? 'fill-primary' : ''}`} />
                   </button>
-                  <button className="w-9 h-9 rounded-xl flex items-center justify-center border border-border text-muted-foreground hover:border-primary/30 transition-colors">
-                    <Share2 size={16} />
+                  <button className="w-9 h-9 rounded-xl flex items-center justify-center border border-border text-muted-foreground hover:border-primary/30 hover:bg-muted transition-colors group/share">
+                    <Share2 size={16} strokeWidth={1.75} className="transition-transform group-hover/share:scale-110" />
                   </button>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-2 mb-4">
                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted text-xs font-medium">
-                  <Briefcase size={13} /> {job.type}
+                  <Briefcase size={13} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} /> {job.type}
                 </span>
                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted text-xs font-medium">
-                  <Star size={13} /> {job.level}
+                  <Star size={13} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} /> {job.level}
                 </span>
                 <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium ${
                   job.remote === 'remote' ? 'bg-emerald-500/10 text-emerald-400' :
                   job.remote === 'hybrid' ? 'bg-accent/10 text-accent' :
                   'bg-muted text-muted-foreground'
                 }`}>
-                  <Globe size={13} /> {job.remote.charAt(0).toUpperCase() + job.remote.slice(1)}
+                  <Globe size={13} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} /> {job.remote.charAt(0).toUpperCase() + job.remote.slice(1)}
                 </span>
                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted text-xs font-medium">
-                  <DollarSign size={13} /> {job.salary}
+                  <DollarSign size={13} strokeWidth={1.75} /> {job.salary}
                 </span>
                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted text-xs font-medium">
-                  <Users size={13} /> {job.applicants} applicants
+                  <Users size={13} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} /> {job.applicants} applicants
                 </span>
               </div>
 
@@ -129,7 +129,7 @@ export function JobDetails() {
               <ul className="space-y-2 mb-6">
                 {job.requirements.map((req, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <CheckCircle2 size={15} className="text-primary flex-shrink-0 mt-0.5" />
+                    <CheckCircle2 size={15} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary flex-shrink-0 mt-0.5" />
                     {req}
                   </li>
                 ))}
@@ -139,7 +139,7 @@ export function JobDetails() {
               <ul className="space-y-2">
                 {job.benefits.map((benefit, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <Award size={15} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <Award size={15} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-emerald-400 flex-shrink-0 mt-0.5" />
                     {benefit}
                   </li>
                 ))}
@@ -185,11 +185,11 @@ export function JobDetails() {
                         <div className="text-xs text-muted-foreground">{rj.company} · {rj.salary}</div>
                       </div>
                       {user && (
-                        <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">
-                          <Sparkles size={9} /> {rj.match}%
+                        <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                          <Sparkles size={9} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="animate-pulse" /> {rj.match}%
                         </span>
                       )}
-                      <ChevronRight size={16} className="text-muted-foreground" />
+                      <ChevronRight size={16} strokeWidth={1.75} className="text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
                     </div>
                   ))}
                 </div>
@@ -205,7 +205,7 @@ export function JobDetails() {
                 <div className={`p-5 rounded-2xl bg-gradient-to-br ${matchBg} to-card border border-border`}>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold flex items-center gap-2">
-                      <Brain size={16} className="text-primary" />
+                      <Brain size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary animate-pulse" />
                       AI Match Score
                     </span>
                     <span className={`font-bold text-2xl ${matchColor}`} style={{ fontFamily: 'Outfit, sans-serif' }}>
@@ -251,15 +251,15 @@ export function JobDetails() {
                 {applied ? (
                   <div className="text-center py-4">
                     <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 flex items-center justify-center">
-                      <CheckCircle2 size={24} className="text-emerald-400" />
+                      <CheckCircle2 size={24} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-emerald-400 animate-bounce" />
                     </div>
                     <h3 className="font-semibold text-emerald-400 mb-1">Application Submitted!</h3>
                     <p className="text-xs text-muted-foreground mb-4">We've sent your AI-optimized application to {job.company}</p>
                     <button
                       onClick={() => navigate('/messages')}
-                      className="w-full py-2.5 rounded-xl text-sm font-medium border border-border hover:bg-muted transition-colors flex items-center justify-center gap-2"
+                      className="w-full py-2.5 rounded-xl text-sm font-medium border border-border hover:bg-muted transition-colors flex items-center justify-center gap-2 group/msg"
                     >
-                      <MessageSquare size={16} /> Message Recruiter
+                      <MessageSquare size={16} strokeWidth={1.75} className="transition-transform duration-200 group-hover/msg:scale-105" /> Message Recruiter
                     </button>
                   </div>
                 ) : (
@@ -267,7 +267,7 @@ export function JobDetails() {
                     <button
                       onClick={user ? handleApply : () => navigate('/auth')}
                       disabled={applyLoading}
-                      className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 bg-primary text-white hover:bg-primary/90 disabled:opacity-70"
+                      className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 bg-primary text-white hover:bg-primary/90 disabled:opacity-70 group"
                     >
                       {applyLoading ? (
                         <>
@@ -276,15 +276,15 @@ export function JobDetails() {
                         </>
                       ) : (
                         <>
-                          {user ? <><Zap size={16} /> Apply with AI</> : 'Sign In to Apply'}
+                          {user ? <><Zap size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" /> Apply with AI</> : 'Sign In to Apply'}
                         </>
                       )}
                     </button>
                     <button
                       onClick={() => navigate('/messages')}
-                      className="w-full py-2.5 rounded-xl text-sm font-medium border border-border hover:border-primary/30 hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
+                      className="w-full py-2.5 rounded-xl text-sm font-medium border border-border hover:border-primary/30 hover:bg-primary/5 transition-all flex items-center justify-center gap-2 group/msg"
                     >
-                      <MessageSquare size={16} /> Message Recruiter
+                      <MessageSquare size={16} strokeWidth={1.75} className="transition-transform duration-200 group-hover/msg:scale-105" /> Message Recruiter
                     </button>
                     <div className="text-center text-xs text-muted-foreground">
                       AI will craft a personalized cover letter and optimize your application
@@ -297,7 +297,7 @@ export function JobDetails() {
               {user && (
                 <div className="p-5 rounded-2xl bg-card border border-border">
                   <div className="flex items-center gap-2 mb-3">
-                    <Target size={16} className="text-accent" />
+                    <Target size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-accent animate-pulse" />
                     <h3 className="font-semibold text-sm">AI Interview Prep</h3>
                   </div>
                   <p className="text-xs text-muted-foreground mb-3">
@@ -311,7 +311,7 @@ export function JobDetails() {
 
               {/* Deadline */}
               <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
-                <CalendarDays size={16} className="text-amber-400 flex-shrink-0" />
+                <CalendarDays size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-amber-400 flex-shrink-0" />
                 <div>
                   <p className="text-xs font-medium text-amber-400">Application Deadline</p>
                   <p className="text-xs text-muted-foreground">{job.deadline}</p>

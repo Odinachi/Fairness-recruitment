@@ -48,8 +48,8 @@ export function Settings() {
                 className="w-16 h-16 rounded-xl object-cover ring-2 ring-primary/20"
               />
               <div>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-xs font-semibold text-foreground transition-colors mb-1.5">
-                  <Upload size={12} />
+                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-xs font-semibold text-foreground transition-colors mb-1.5 group">
+                  <Upload size={12} strokeWidth={1.75} className="transition-transform duration-300 group-hover:-translate-y-0.5 text-muted-foreground group-hover:text-foreground" />
                   Change photo
                 </button>
                 <p className="text-[10px] text-muted-foreground">JPG, GIF or PNG. Max 5MB.</p>
@@ -93,8 +93,8 @@ export function Settings() {
 
           {/* AI Profile */}
           <div className="p-5 rounded-xl bg-card border border-border/30">
-            <div className="flex items-center gap-1.5 mb-4">
-              <Sparkles size={14} className="text-primary" />
+            <div className="flex items-center gap-1.5 mb-4 group cursor-default">
+              <Sparkles size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary transition-transform duration-300 group-hover:scale-110 animate-pulse" />
               <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">AI Profile Settings</h2>
             </div>
             <div className="space-y-1">
@@ -106,8 +106,8 @@ export function Settings() {
               ].map(item => (
                 <div key={item.label} className="flex items-center justify-between py-3 border-b border-border/20 last:border-0">
                   <span className="text-xs text-muted-foreground">{item.label}</span>
-                  <button className="flex items-center gap-1 text-xs font-semibold hover:text-primary transition-colors text-foreground">
-                    {item.value} <ChevronRight size={12} className="text-muted-foreground" />
+                  <button className="flex items-center gap-1 text-xs font-semibold hover:text-primary transition-colors text-foreground group/btn">
+                    {item.value} <ChevronRight size={12} strokeWidth={1.75} className="text-muted-foreground group-hover/btn:translate-x-0.5 transition-transform duration-200" />
                   </button>
                 </div>
               ))}
@@ -135,13 +135,23 @@ export function Settings() {
           <div className="flex justify-end pt-4 border-t border-border/20">
             <button
               onClick={handleSave}
-              className={`flex items-center gap-1.5 px-5 py-2.5 rounded-lg font-semibold text-xs transition-all ${
+              className={`flex items-center gap-1.5 px-5 py-2.5 rounded-lg font-semibold text-xs transition-all duration-200 group ${
                 saved
                   ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                  : 'bg-primary text-white hover:bg-primary/95 shadow-sm'
+                  : 'bg-primary text-white hover:bg-primary/90 hover:scale-[1.02] shadow-sm'
               }`}
             >
-              {saved ? <><CheckCircle2 size={14} /> Saved Changes!</> : <><Save size={14} /> Save Profile</>}
+              {saved ? (
+                <>
+                  <CheckCircle2 size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="animate-bounce" />
+                  Saved Changes!
+                </>
+              ) : (
+                <>
+                  <Save size={14} strokeWidth={1.75} className="transition-transform duration-300 group-hover:scale-110" />
+                  Save Profile
+                </>
+              )}
             </button>
           </div>
         </div>

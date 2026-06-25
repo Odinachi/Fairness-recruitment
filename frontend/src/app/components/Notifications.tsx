@@ -64,9 +64,9 @@ export function Notifications() {
           <div className="flex gap-2">
             <button
               onClick={markAllRead}
-              className="flex items-center gap-2 px-3 py-2 text-sm rounded-xl border border-border hover:bg-muted transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm rounded-xl border border-border hover:bg-muted transition-colors group"
             >
-              <CheckCheck size={16} /> Mark all read
+              <CheckCheck size={16} strokeWidth={1.75} className="transition-transform group-hover:scale-105 text-muted-foreground group-hover:text-foreground" /> Mark all read
             </button>
           </div>
         </div>
@@ -113,8 +113,8 @@ export function Notifications() {
                     <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-primary" />
                   )}
 
-                  <div className={`w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 ${typeColors[notif.type]}`}>
-                    <Icon size={18} />
+                  <div className={`w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105 ${typeColors[notif.type]}`}>
+                    <Icon size={18} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} />
                   </div>
 
                   <div className="flex-1 min-w-0 pr-6">
@@ -134,9 +134,9 @@ export function Notifications() {
 
                   <button
                     onClick={e => { e.stopPropagation(); dismiss(notif.id) }}
-                    className="absolute top-3 right-3 w-6 h-6 rounded-full bg-muted/0 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-all"
+                    className="absolute top-3 right-3 w-6 h-6 rounded-full bg-muted/0 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-all group/del"
                   >
-                    <X size={12} />
+                    <X size={12} strokeWidth={1.75} className="transition-transform group-hover/del:rotate-90" />
                   </button>
                 </motion.div>
               )
@@ -144,9 +144,9 @@ export function Notifications() {
           </AnimatePresence>
 
           {filtered.length === 0 && (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted flex items-center justify-center">
-                <Bell size={24} className="text-muted-foreground" />
+            <div className="text-center py-16 group">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                <Bell size={24} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-muted-foreground transition-transform duration-500 group-hover:rotate-12" />
               </div>
               <h3 className="font-semibold mb-2">No notifications</h3>
               <p className="text-sm text-muted-foreground">

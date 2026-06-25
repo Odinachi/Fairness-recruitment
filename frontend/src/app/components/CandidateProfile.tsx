@@ -55,9 +55,9 @@ export function CandidateProfile() {
       <div className="p-6 max-w-5xl mx-auto">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6 group"
         >
-          <ArrowLeft size={16} /> Back
+          <ArrowLeft size={16} strokeWidth={1.75} className="transition-transform duration-200 group-hover:-translate-x-0.5" /> Back
         </button>
 
         {/* Profile header */}
@@ -83,19 +83,19 @@ export function CandidateProfile() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold border ${
-                    candidate.aiScore >= 90 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
-                    candidate.aiScore >= 80 ? 'bg-primary/20 text-primary border-primary/30' :
-                    'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                    candidate.aiScore >= 90 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                    candidate.aiScore >= 80 ? 'bg-primary/10 text-primary border-primary/20' :
+                    'bg-amber-500/10 text-amber-400 border-amber-500/20'
                   }`}>
-                    <Sparkles size={13} /> {candidate.aiScore}% AI Score
+                    <Sparkles size={13} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="animate-pulse" /> {candidate.aiScore}% AI Score
                   </span>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
-                <span className="flex items-center gap-1.5"><MapPin size={14} /> {candidate.location}</span>
-                <span className="flex items-center gap-1.5"><Briefcase size={14} /> {candidate.experience} years experience</span>
-                <span className="flex items-center gap-1.5"><GraduationCap size={14} /> {candidate.education}</span>
+                <span className="flex items-center gap-1.5"><MapPin size={14} strokeWidth={1.75} /> {candidate.location}</span>
+                <span className="flex items-center gap-1.5"><Briefcase size={14} strokeWidth={1.75} /> {candidate.experience} years experience</span>
+                <span className="flex items-center gap-1.5"><GraduationCap size={14} strokeWidth={1.75} /> {candidate.education}</span>
                 <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
                   candidate.status === 'Available' ? 'bg-emerald-500/10 text-emerald-400' :
                   candidate.status === 'Open to offers' ? 'bg-amber-500/10 text-amber-400' :
@@ -117,15 +117,15 @@ export function CandidateProfile() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => navigate('/messages')}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all group/msg"
                   >
-                    <MessageSquare size={16} /> Send Message
+                    <MessageSquare size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="transition-transform group-hover/msg:scale-105" /> Send Message
                   </button>
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors">
-                    <Calendar size={16} /> Schedule Interview
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors group/cal">
+                    <Calendar size={16} strokeWidth={1.75} className="transition-transform group-hover/cal:scale-105" /> Schedule Interview
                   </button>
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors">
-                    <ExternalLink size={16} /> View Portfolio
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors group/port">
+                    <ExternalLink size={16} strokeWidth={1.75} className="transition-transform group-hover/port:scale-105" /> View Portfolio
                   </button>
                 </div>
               )}
@@ -187,13 +187,13 @@ export function CandidateProfile() {
               </div>
 
               <div className="p-5 rounded-2xl bg-card border border-border">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Award size={16} className="text-amber-400" /> Key Achievements
+                <h3 className="font-semibold mb-3 flex items-center gap-2 group/title">
+                  <Award size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-amber-400 transition-transform group-hover/title:scale-110" /> Key Achievements
                 </h3>
                 <ul className="space-y-2">
                   {candidate.achievements.map((a, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 size={15} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <CheckCircle2 size={15} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-emerald-400 flex-shrink-0 mt-0.5" />
                       {a}
                     </li>
                   ))}
@@ -234,9 +234,9 @@ export function CandidateProfile() {
                   ].map(stat => {
                     const Icon = stat.icon
                     return (
-                      <div key={stat.label} className="flex items-center justify-between">
+                      <div key={stat.label} className="flex items-center justify-between group">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Icon size={14} />
+                          <Icon size={14} strokeWidth={1.75} className="transition-transform group-hover:scale-110" />
                           {stat.label}
                         </div>
                         <span className="text-sm font-medium">{stat.value}</span>
@@ -296,7 +296,7 @@ export function CandidateProfile() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="p-5 rounded-2xl bg-card border border-border">
               <div className="flex items-center gap-2 mb-4">
-                <Brain size={16} className="text-primary" />
+                <Brain size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary animate-pulse" />
                 <h3 className="font-semibold text-sm">AI Match Breakdown</h3>
               </div>
               <div className="space-y-3">
@@ -321,7 +321,7 @@ export function CandidateProfile() {
 
             <div className="p-5 rounded-2xl bg-card border border-border">
               <div className="flex items-center gap-2 mb-4">
-                <Sparkles size={16} className="text-accent" />
+                <Sparkles size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-accent animate-pulse" />
                 <h3 className="font-semibold text-sm">AI-Generated Summary</h3>
               </div>
               <div className="space-y-3 text-sm text-muted-foreground">
@@ -331,9 +331,9 @@ export function CandidateProfile() {
                 <p className="leading-relaxed">
                   Their skills in {candidate.skills.slice(0, 3).join(', ')} directly align with your requirements. The AI predicts a <strong className="text-emerald-400">{candidate.aiScore}% probability of success</strong> in this role based on skill alignment, experience trajectory, and historical performance patterns.
                 </p>
-                <div className="p-3 rounded-lg bg-primary/5 border border-primary/15">
+                <div className="p-3 rounded-lg bg-primary/5 border border-primary/15 group/rec">
                   <div className="flex items-center gap-2 mb-1">
-                    <TrendingUp size={12} className="text-primary" />
+                    <TrendingUp size={12} strokeWidth={1.75} className="text-primary transition-transform group-hover/rec:translate-x-0.5 group-hover/rec:-translate-y-0.5" />
                     <span className="text-xs font-medium text-primary">AI Recommendation</span>
                   </div>
                   <p className="text-xs">High priority candidate. Recommend fast-tracking to interview stage to prevent competing offer loss.</p>

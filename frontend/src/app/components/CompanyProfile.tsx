@@ -88,9 +88,9 @@ export function CompanyProfile() {
       <div className="p-6 max-w-5xl mx-auto">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6 group"
         >
-          <ArrowLeft size={16} /> Back
+          <ArrowLeft size={16} strokeWidth={1.75} className="transition-transform duration-200 group-hover:-translate-x-0.5" /> Back
         </button>
 
         {/* Hero */}
@@ -115,23 +115,23 @@ export function CompanyProfile() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
-                <span className="flex items-center gap-1.5"><MapPin size={14} /> {company.location}</span>
-                <span className="flex items-center gap-1.5"><Users size={14} /> {company.size} employees</span>
-                <span className="flex items-center gap-1.5"><Building2 size={14} /> {company.industry}</span>
-                <span className="flex items-center gap-1.5"><Award size={14} /> Founded {company.founded}</span>
+                <span className="flex items-center gap-1.5"><MapPin size={14} strokeWidth={1.75} /> {company.location}</span>
+                <span className="flex items-center gap-1.5"><Users size={14} strokeWidth={1.75} /> {company.size} employees</span>
+                <span className="flex items-center gap-1.5"><Building2 size={14} strokeWidth={1.75} /> {company.industry}</span>
+                <span className="flex items-center gap-1.5"><Award size={14} strokeWidth={1.75} /> Founded {company.founded}</span>
                 <a href={`https://${company.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-primary hover:underline">
-                  <Globe size={14} /> {company.website}
+                  <Globe size={14} strokeWidth={1.75} /> {company.website}
                 </a>
               </div>
               <div className="flex gap-3">
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all">
-                  <Heart size={16} /> Follow
+                <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all group/follow">
+                  <Heart size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="transition-transform group-hover/follow:scale-110" /> Follow
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors">
-                  <ExternalLink size={16} /> Visit Website
+                <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors group/visit">
+                  <ExternalLink size={16} strokeWidth={1.75} className="transition-transform group-hover/visit:scale-105" /> Visit Website
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors">
-                  <MessageSquare size={16} /> Contact
+                <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors group/msg">
+                  <MessageSquare size={16} strokeWidth={1.75} className="transition-transform group-hover/msg:scale-105" /> Contact
                 </button>
               </div>
             </div>
@@ -166,9 +166,9 @@ export function CompanyProfile() {
             </div>
 
             {/* Headcount growth */}
-            <div className="p-5 rounded-2xl bg-card border border-border">
+            <div className="p-5 rounded-2xl bg-card border border-border group/growth">
               <div className="flex items-center gap-2 mb-4">
-                <TrendingUp size={16} className="text-emerald-400" />
+                <TrendingUp size={16} strokeWidth={1.75} className="text-emerald-400 transition-transform duration-300 group-hover/growth:translate-x-0.5 group-hover/growth:-translate-y-0.5" />
                 <h2 className="font-semibold">Team Growth</h2>
               </div>
               <ResponsiveContainer width="100%" height={200}>
@@ -194,7 +194,7 @@ export function CompanyProfile() {
             <div className="p-5 rounded-2xl bg-card border border-border">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold flex items-center gap-2">
-                  <Briefcase size={16} className="text-primary" />
+                  <Briefcase size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary animate-pulse" />
                   Open Roles at {company.name}
                 </h2>
                 <span className="text-xs text-muted-foreground">{companyJobs.length || 1} open</span>
@@ -209,17 +209,17 @@ export function CompanyProfile() {
                     <div className="flex-1">
                       <div className="text-sm font-medium group-hover:text-primary transition-colors">{job.title}</div>
                       <div className="text-xs text-muted-foreground flex items-center gap-3 mt-0.5">
-                        <span className="flex items-center gap-1"><MapPin size={10} /> {job.location}</span>
-                        <span className="flex items-center gap-1"><DollarSign size={10} /> {job.salary}</span>
-                        <span className="flex items-center gap-1"><Clock size={10} /> {job.posted}</span>
+                        <span className="flex items-center gap-1"><MapPin size={10} strokeWidth={1.75} /> {job.location}</span>
+                        <span className="flex items-center gap-1"><DollarSign size={10} strokeWidth={1.75} /> {job.salary}</span>
+                        <span className="flex items-center gap-1"><Clock size={10} strokeWidth={1.75} /> {job.posted}</span>
                       </div>
                     </div>
                     {user && (
-                      <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">
-                        <Sparkles size={9} /> {job.match}%
+                      <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                        <Sparkles size={9} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="animate-pulse" /> {job.match}%
                       </span>
                     )}
-                    <ChevronRight size={14} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                    <ChevronRight size={14} strokeWidth={1.75} className="text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
                   </div>
                 ))}
               </div>
@@ -236,14 +236,14 @@ export function CompanyProfile() {
           <div className="space-y-5">
             {/* Culture values */}
             <div className="p-5 rounded-2xl bg-card border border-border">
-              <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-                <Zap size={14} className="text-primary" />
+              <h3 className="font-semibold text-sm mb-4 flex items-center gap-2 group/culture">
+                <Zap size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary transition-transform group-hover/culture:scale-110" />
                 Culture & Values
               </h3>
               <div className="space-y-2">
                 {company.culture.map(value => (
                   <div key={value} className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+                    <CheckCircle2 size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-emerald-400 flex-shrink-0" />
                     <span className="text-sm text-muted-foreground">{value}</span>
                   </div>
                 ))}
@@ -252,14 +252,14 @@ export function CompanyProfile() {
 
             {/* Benefits */}
             <div className="p-5 rounded-2xl bg-card border border-border">
-              <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-                <Award size={14} className="text-amber-400" />
+              <h3 className="font-semibold text-sm mb-4 flex items-center gap-2 group/benefits">
+                <Award size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-amber-400 transition-transform group-hover/benefits:scale-110" />
                 Benefits
               </h3>
               <div className="space-y-2">
                 {company.benefits.map(benefit => (
                   <div key={benefit} className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-primary flex-shrink-0" />
+                    <CheckCircle2 size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary flex-shrink-0" />
                     <span className="text-sm text-muted-foreground">{benefit}</span>
                   </div>
                 ))}
@@ -302,9 +302,9 @@ export function CompanyProfile() {
                 ].map(({ icon: Icon, label }) => (
                   <button
                     key={label}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all text-xs"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all text-xs group"
                   >
-                    <Icon size={15} /> {label}
+                    <Icon size={15} strokeWidth={1.75} className="transition-transform group-hover:scale-110" /> {label}
                   </button>
                 ))}
               </div>

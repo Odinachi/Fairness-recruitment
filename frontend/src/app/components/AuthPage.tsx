@@ -86,14 +86,14 @@ export function AuthPage() {
         </div>
 
         <div className="relative z-10 flex flex-col p-12 w-full">
-          <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white/70 hover:text-white transition-colors mb-16">
-            <ArrowLeft size={16} />
+          <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white/70 hover:text-white transition-colors mb-16 group">
+            <ArrowLeft size={16} strokeWidth={1.75} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
             <span className="text-sm">Back to home</span>
           </button>
 
-          <div className="flex items-center gap-3 mb-16">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
-              <Zap size={20} className="text-white" />
+          <div className="flex items-center gap-3 mb-16 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30 transition-transform duration-300 group-hover:scale-105">
+              <Zap size={20} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="text-white transition-transform duration-300 group-hover:rotate-12" />
             </div>
             <span className="font-bold text-white text-xl" style={{ fontFamily: 'Outfit, sans-serif' }}>
               Jobnatics <span className="text-primary">AI</span>
@@ -126,11 +126,11 @@ export function AuthPage() {
                 'Bias-free candidate screening',
                 'Deep analytics on your hiring pipeline',
               ]).map(item => (
-                <div key={item} className="flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 size={12} className="text-primary" />
+                <div key={item} className="flex items-center gap-3 group">
+                  <div className="w-5 h-5 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105">
+                    <CheckCircle2 size={12} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary" />
                   </div>
-                  <span className="text-sm text-white/70">{item}</span>
+                  <span className="text-sm text-white/70 transition-colors group-hover:text-white">{item}</span>
                 </div>
               ))}
             </div>
@@ -154,9 +154,9 @@ export function AuthPage() {
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <Zap size={16} className="text-white" />
+          <div className="flex items-center gap-2 mb-8 lg:hidden group">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+              <Zap size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="text-white transition-transform duration-300 group-hover:rotate-12" />
             </div>
             <span className="font-bold" style={{ fontFamily: 'Outfit, sans-serif' }}>
               Jobnatics <span className="text-primary">AI</span>
@@ -184,25 +184,25 @@ export function AuthPage() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setRole('applicant')}
-                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 group ${
                   role === 'applicant'
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border text-muted-foreground hover:border-primary/30'
                 }`}
               >
-                <Sparkles size={20} />
+                <Sparkles size={20} strokeWidth={1.75} fill={role === 'applicant' ? 'currentColor' : 'none'} fillOpacity={0.15} className={`transition-transform duration-300 ${role === 'applicant' ? 'animate-pulse' : 'group-hover:scale-105'}`} />
                 <span className="text-sm font-medium">Job Seeker</span>
                 <span className="text-xs opacity-70">Find opportunities</span>
               </button>
               <button
                 onClick={() => setRole('recruiter')}
-                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 group ${
                   role === 'recruiter'
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border text-muted-foreground hover:border-primary/30'
                 }`}
               >
-                <Users size={20} />
+                <Users size={20} strokeWidth={1.75} fill={role === 'recruiter' ? 'currentColor' : 'none'} fillOpacity={0.15} className={`transition-transform duration-300 ${role === 'recruiter' ? 'scale-105' : 'group-hover:scale-105'}`} />
                 <span className="text-sm font-medium">Recruiter</span>
                 <span className="text-xs opacity-70">Hire talent</span>
               </button>
@@ -214,17 +214,17 @@ export function AuthPage() {
             <button
               onClick={() => demoLogin('applicant')}
               disabled={loading}
-              className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/30 bg-primary/5 text-primary text-sm font-medium hover:bg-primary/10 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/30 bg-primary/5 text-primary text-sm font-medium hover:bg-primary/10 transition-colors disabled:opacity-50 group"
             >
-              <Sparkles size={14} />
+              <Sparkles size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="transition-transform duration-300 group-hover:scale-105" />
               Demo: Applicant
             </button>
             <button
               onClick={() => demoLogin('recruiter')}
               disabled={loading}
-              className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-accent/30 bg-accent/5 text-accent text-sm font-medium hover:bg-accent/10 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-accent/30 bg-accent/5 text-accent text-sm font-medium hover:bg-accent/10 transition-colors disabled:opacity-50 group"
             >
-              <Users size={14} />
+              <Users size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="transition-transform duration-300 group-hover:scale-105" />
               Demo: Recruiter
             </button>
           </div>
@@ -281,9 +281,9 @@ export function AuthPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors group"
                       >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {showPassword ? <EyeOff size={18} strokeWidth={1.75} className="transition-transform group-hover:scale-105" /> : <Eye size={18} strokeWidth={1.75} className="transition-transform group-hover:scale-105" />}
                       </button>
                     </div>
                   </div>
@@ -308,9 +308,9 @@ export function AuthPage() {
                       className="w-full px-4 py-3 rounded-xl bg-muted border border-border focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground"
                     />
                   </div>
-                  <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
+                  <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 group/ai">
                     <div className="flex items-center gap-2 mb-2">
-                      <Sparkles size={14} className="text-primary" />
+                      <Sparkles size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary animate-pulse transition-transform group-hover/ai:scale-110" />
                       <span className="text-sm font-medium text-primary">AI Profile Setup</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -325,16 +325,16 @@ export function AuthPage() {
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
               >
-                <ArrowLeft size={14} /> Back
+                <ArrowLeft size={14} strokeWidth={1.75} className="transition-transform duration-200 group-hover:-translate-x-0.5" /> Back
               </button>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all disabled:opacity-70"
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all disabled:opacity-70 group"
             >
               {loading ? (
                 <>
@@ -344,7 +344,7 @@ export function AuthPage() {
               ) : (
                 <>
                   {mode === 'signup' ? (step === 1 ? 'Continue' : 'Create Account') : 'Sign In'}
-                  <ArrowRight size={16} />
+                  <ArrowRight size={16} strokeWidth={1.75} className="transition-transform duration-200 group-hover:translate-x-0.5" />
                 </>
               )}
             </button>

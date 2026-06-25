@@ -6,8 +6,9 @@ import {
   Sparkles, Briefcase, Target, Eye, Bell,
   ChevronRight, MapPin, Clock, DollarSign, Star, ArrowUpRight,
   Brain, FileText, MessageSquare, AlertCircle,
-  Zap, BarChart3, Award, Upload, Play, RefreshCw, Bookmark
+  Zap, BarChart3, Award, Upload, Play, RefreshCw, Bookmark, TrendingUp
 } from 'lucide-react'
+
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   RadarChart, PolarGrid, PolarAngleAxis, Radar
@@ -33,18 +34,8 @@ const radarData = [
   { subject: 'Salary Fit', A: 88, fullMark: 100 },
 ]
 
-// Custom mini helper for icon since TrendingUp is not imported
-function TrendingUpIcon({ size, className }: { size?: number; className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size || 16} height={size || 16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-      <polyline points="16 7 22 7 22 13"></polyline>
-    </svg>
-  )
-}
-
 const aiInsights = [
-  { icon: TrendingUpIcon, text: 'Your TypeScript skills are in the top 12% of candidates in SF', type: 'positive' },
+  { icon: TrendingUp, text: 'Your TypeScript skills are in the top 12% of candidates in SF', type: 'positive' },
   { icon: Target, text: 'Adding "System Design" to your skills could boost matches by 18%', type: 'tip' },
   { icon: Award, text: 'Your GitHub activity score is exceptional — mention it more prominently', type: 'positive' },
   { icon: AlertCircle, text: 'Gap detected: Most Senior roles require AWS certification', type: 'warning' },
@@ -162,11 +153,13 @@ export function ApplicantDashboard() {
                 key={stat.label}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-5 rounded-xl bg-card border border-border/30 hover:border-primary/10 transition-all cursor-default"
+                className="p-5 rounded-xl bg-card border border-border/30 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-default group"
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-muted-foreground">{stat.label}</span>
-                  <Icon size={16} className={stat.color} />
+                  <div className="w-8 h-8 rounded-lg bg-muted/40 flex items-center justify-center transition-all group-hover:scale-105">
+                    <Icon size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className={`transition-transform duration-300 ${stat.color}`} />
+                  </div>
                 </div>
                 <div className="font-bold text-foreground tracking-tight" style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.75rem' }}>{stat.value}</div>
                 <div className="text-[10px] font-semibold text-emerald-400 mt-1 flex items-center gap-1">
@@ -349,11 +342,11 @@ export function ApplicantDashboard() {
                       insight.type === 'warning' ? 'border-amber-500/10 bg-amber-500/5 text-amber-400' :
                       'border-primary/10 bg-primary/5 text-primary'
                     return (
-                      <div key={i} className="flex gap-2.5 items-start">
-                        <div className={`p-1.5 rounded border ${borderCls} flex-shrink-0 mt-0.5`}>
-                          <Icon size={12} />
+                      <div key={i} className="flex gap-2.5 items-start group">
+                        <div className={`p-1.5 rounded border ${borderCls} flex-shrink-0 mt-0.5 transition-transform duration-200 group-hover:scale-105`}>
+                          <Icon size={12} strokeWidth={1.75} fill={insight.type === 'positive' || insight.type === 'tip' ? 'currentColor' : 'none'} fillOpacity={0.15} />
                         </div>
-                        <p className="text-xs text-muted-foreground leading-normal">{insight.text}</p>
+                        <p className="text-xs text-muted-foreground leading-normal transition-colors group-hover:text-foreground">{insight.text}</p>
                       </div>
                     )
                   })}
@@ -382,9 +375,9 @@ export function ApplicantDashboard() {
                         key={action.label}
                         className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-border/30 bg-muted/20 hover:bg-muted/40 transition-colors text-left text-xs font-semibold text-foreground group"
                       >
-                        <Icon size={14} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                        <Icon size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.12} className="text-muted-foreground group-hover:text-primary transition-all duration-300 group-hover:scale-110" />
                         <span className="flex-1">{action.label}</span>
-                        <ChevronRight size={12} className="text-muted-foreground group-hover:text-foreground transition-colors" />
+                        <ChevronRight size={12} strokeWidth={1.75} className="text-muted-foreground group-hover:text-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
                       </button>
                     )
                   })}
@@ -549,9 +542,9 @@ export function ApplicantDashboard() {
             </div>
 
             {/* Career path suggestions */}
-            <div className="p-5 rounded-xl bg-card border border-border/30 lg:col-span-2">
+            <div className="p-5 rounded-xl bg-card border border-border/30 lg:col-span-2 group">
               <div className="flex items-center gap-1.5 mb-4">
-                <TrendingUpIcon size={14} className="text-emerald-400" />
+                <TrendingUp size={14} strokeWidth={1.75} className="text-emerald-400 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">AI Career Path Analysis</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

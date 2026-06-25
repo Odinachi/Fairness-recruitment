@@ -53,8 +53,8 @@ export function Layout({ children }: { children: ReactNode }) {
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
-            <Zap size={16} className="text-white" />
+          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30 group cursor-pointer">
+            <Zap size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} className="text-white transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
           </div>
           {sidebarOpen && (
             <div className="overflow-hidden">
@@ -111,7 +111,13 @@ export function Layout({ children }: { children: ReactNode }) {
                       : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground border border-transparent'
                     }`}
                 >
-                  <Icon size={18} className={`flex-shrink-0 ${active ? 'text-primary' : ''}`} />
+                  <Icon 
+                    size={18} 
+                    strokeWidth={active ? 2 : 1.75}
+                    fill={active ? "currentColor" : "none"}
+                    fillOpacity={0.15}
+                    className={`flex-shrink-0 transition-all duration-200 group-hover:scale-110 group-active:scale-95 ${active ? 'text-primary' : 'text-sidebar-foreground/60 group-hover:text-sidebar-foreground'}`} 
+                  />
                   {sidebarOpen && (
                     <>
                       <span className="flex-1 text-left text-sm font-medium whitespace-nowrap">{item.label}</span>
@@ -135,16 +141,16 @@ export function Layout({ children }: { children: ReactNode }) {
         <div className="border-t border-sidebar-border p-2 space-y-1">
           <button
             onClick={() => navigate('/settings')}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-150 group"
           >
-            <Settings size={18} className="flex-shrink-0" />
+            <Settings size={18} strokeWidth={1.75} className="flex-shrink-0 text-sidebar-foreground/60 group-hover:text-sidebar-foreground transition-transform duration-500 group-hover:rotate-90" />
             {sidebarOpen && <span className="text-sm font-medium">Settings</span>}
           </button>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-destructive/70 hover:bg-destructive/10 hover:text-destructive transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-destructive/70 hover:bg-destructive/10 hover:text-destructive transition-all duration-150 group"
           >
-            <LogOut size={18} className="flex-shrink-0" />
+            <LogOut size={18} strokeWidth={1.75} className="flex-shrink-0 transition-transform duration-200 group-hover:translate-x-1" />
             {sidebarOpen && <span className="text-sm font-medium">Logout</span>}
           </button>
           {sidebarOpen && user && (
@@ -165,14 +171,17 @@ export function Layout({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-40 flex items-center gap-4 px-4 py-3 border-b border-border bg-background/80 backdrop-blur-xl">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors group"
           >
-            {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+            {sidebarOpen ? (
+              <X size={18} strokeWidth={1.75} className="transition-transform duration-200 group-hover:rotate-90" />
+            ) : (
+              <Menu size={18} strokeWidth={1.75} className="transition-transform duration-200 group-hover:scale-105" />
+            )}
           </button>
 
-          {/* Search */}
-          <div className={`flex-1 max-w-md relative transition-all duration-200 ${searchFocused ? 'max-w-xl' : ''}`}>
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <div className={`flex-1 max-w-md relative transition-all duration-200 ${searchFocused ? 'max-w-xl' : ''} group`}>
+            <Search size={16} strokeWidth={1.75} className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-200 ${searchFocused ? 'text-primary scale-105' : 'text-muted-foreground group-hover:text-foreground'}`} />
             <input
               type="text"
               placeholder="Search jobs, candidates, companies..."
@@ -196,18 +205,20 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={toggleDarkMode}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors group"
             >
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              {darkMode ? (
+                <Sun size={18} strokeWidth={1.75} className="transition-transform duration-500 group-hover:rotate-90 group-hover:text-amber-400" />
+              ) : (
+                <Moon size={18} strokeWidth={1.75} className="transition-transform duration-500 group-hover:-rotate-12 group-hover:text-indigo-400" />
+              )}
             </button>
 
-
-
             {user && (
-              <button className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-lg hover:bg-muted transition-colors">
-                <img src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full object-cover ring-2 ring-primary/30" />
+              <button className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-lg hover:bg-muted transition-colors group">
+                <img src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full object-cover ring-2 ring-primary/30 group-hover:ring-primary transition-all" />
                 <span className="text-sm font-medium hidden sm:block">{user.name.split(' ')[0]}</span>
-                <ChevronRight size={14} className="text-muted-foreground" />
+                <ChevronRight size={14} strokeWidth={1.75} className="text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
               </button>
             )}
           </div>

@@ -5,7 +5,7 @@ import { Layout } from './Layout'
 import {
   Sparkles, Users, Briefcase, Clock, BarChart3,
   ChevronRight, ArrowUpRight, Brain, Plus, Filter,
-  Calendar, MessageSquare, AlertCircle, Zap, RefreshCw, Eye
+  Calendar, MessageSquare, AlertCircle, Zap, RefreshCw, Eye, TrendingUp, Star
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -16,23 +16,6 @@ import {
   sourceData, monthlyHireData,
 } from '../data/mockData'
 import { motion } from 'motion/react'
-
-function TrendingUpIcon({ size, className }: { size?: number; className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size || 16} height={size || 16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-      <polyline points="16 7 22 7 22 13"></polyline>
-    </svg>
-  )
-}
-
-function StarIcon({ size, className }: { size?: number; className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size || 16} height={size || 16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-    </svg>
-  )
-}
 
 function MatchBadge({ score }: { score: number }) {
   const color = score >= 90 ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
@@ -81,8 +64,8 @@ export function RecruiterDashboard() {
   }
 
   const aiInsights = [
-    { icon: TrendingUpIcon, text: 'Your avg time-to-fill is 18 days — 24% faster than industry average', type: 'positive' },
-    { icon: StarIcon, text: 'Alex Chen & Marcus Williams are showing signs of competing offers — act fast', type: 'warning' },
+    { icon: TrendingUp, text: 'Your avg time-to-fill is 18 days — 24% faster than industry average', type: 'positive' },
+    { icon: Star, text: 'Alex Chen & Marcus Williams are showing signs of competing offers — act fast', type: 'warning' },
     { icon: Brain, text: 'ML Engineer role has 95% match candidates you haven\'t reviewed yet', type: 'tip' },
     { icon: AlertCircle, text: 'DevOps role has been paused for 14 days — consider reactivating', type: 'warning' },
   ]
@@ -134,11 +117,13 @@ export function RecruiterDashboard() {
                 key={stat.label}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-5 rounded-xl bg-card border border-border/30 hover:border-primary/10 transition-all cursor-default"
+                className="p-5 rounded-xl bg-card border border-border/30 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-default group"
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-muted-foreground">{stat.label}</span>
-                  <Icon size={16} className={stat.color} />
+                  <div className="w-8 h-8 rounded-lg bg-muted/40 flex items-center justify-center transition-all group-hover:scale-105">
+                    <Icon size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className={`transition-transform duration-300 ${stat.color}`} />
+                  </div>
                 </div>
                 <div className="font-bold text-foreground tracking-tight" style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.75rem' }}>{stat.value}</div>
                 <div className="text-[10px] font-semibold text-emerald-400 mt-1 flex items-center gap-1">
@@ -367,11 +352,11 @@ export function RecruiterDashboard() {
                       insight.type === 'warning' ? 'border-amber-500/10 bg-amber-500/5 text-amber-400' :
                       'border-primary/10 bg-primary/5 text-primary'
                     return (
-                      <div key={i} className="flex gap-2.5 items-start">
-                        <div className={`p-1.5 rounded border ${borderCls} flex-shrink-0 mt-0.5`}>
-                          <Icon size={12} />
+                      <div key={i} className="flex gap-2.5 items-start group">
+                        <div className={`p-1.5 rounded border ${borderCls} flex-shrink-0 mt-0.5 transition-transform duration-200 group-hover:scale-105`}>
+                          <Icon size={12} strokeWidth={1.75} fill={insight.type === 'positive' || insight.type === 'tip' ? 'currentColor' : 'none'} fillOpacity={0.15} />
                         </div>
-                        <p className="text-xs text-muted-foreground leading-normal">{insight.text}</p>
+                        <p className="text-xs text-muted-foreground leading-normal transition-colors group-hover:text-foreground">{insight.text}</p>
                       </div>
                     )
                   })}
