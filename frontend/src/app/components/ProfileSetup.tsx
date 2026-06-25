@@ -14,6 +14,7 @@ export function ProfileSetup() {
   const { user, setUser, darkMode } = useApp()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   // Redirect to Auth if not logged in
   useEffect(() => {
@@ -41,10 +42,42 @@ export function ProfileSetup() {
   if (!user) return null
 
   const handleNext = () => {
-    if (step === 1 && (!form.location || !form.bio)) {
-      toast.error('Please fill in your location and bio')
+    const newErrors: Record<string, string> = {}
+    if (step === 1) {
+      if (!form.location.trim()) {
+        newErrors.location = 'Location is required.'
+      } else if (form.location.trim().length < 3) {
+        newErrors.location = 'Location must be at least 3 characters.'
+      }
+      if (!form.bio.trim()) {
+        newErrors.bio = 'Bio details are required.'
+      } else if (form.bio.trim().length < 15) {
+        newErrors.bio = 'Please write at least 15 characters to help our AI profile builder.'
+      }
+    } else if (step === 2) {
+      const isValidUrl = (url: string) => {
+        if (!url) return true
+        const pattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/i
+        return pattern.test(url)
+      }
+      if (form.website && !isValidUrl(form.website)) {
+        newErrors.website = 'Please enter a valid website URL.'
+      }
+      if (form.linkedin && (!isValidUrl(form.linkedin) || !form.linkedin.includes('linkedin.com'))) {
+        newErrors.linkedin = 'Please enter a valid LinkedIn URL (containing linkedin.com).'
+      }
+      if (user.role === 'applicant' && form.github && (!isValidUrl(form.github) || !form.github.includes('github.com'))) {
+        newErrors.github = 'Please enter a valid GitHub URL (containing github.com).'
+      }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      toast.error('Please fix the validation errors before continuing.')
       return
     }
+
+    setErrors({})
     setStep(prev => prev + 1)
   }
 
@@ -141,10 +174,10 @@ export function ProfileSetup() {
                 Step {step} of 3
               </span>
             </div>
-            
+
             {/* Progress Bar */}
             <div className="h-1 bg-border/40 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-300"
                 style={{ width: `${(step / 3) * 100}%` }}
               />
@@ -174,25 +207,43 @@ export function ProfileSetup() {
                       type="text"
                       placeholder="e.g. San Francisco, CA or London, UK"
                       value={form.location}
-                      onChange={e => setForm({ ...form, location: e.target.value })}
-                      className="w-full px-4 py-3 text-sm rounded-xl bg-muted/40 border border-border/30 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                      onChange={e => {
+                        setForm({ ...form, location: e.target.value })
+                        if (errors.location) setErrors({ ...errors, location: '' })
+                      }}
+                      className={`w-full px-4 py-3 text-sm rounded-xl bg-muted/40 border focus:outline-none focus:ring-2 transition-all placeholder:text-muted-foreground/50 ${errors.location
+                          ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20'
+                          : 'border-border/30 focus:border-primary focus:ring-primary/20'
+                        }`}
                     />
+                    {errors.location && (
+                      <p className="text-[11px] text-red-400 mt-1.5 font-medium">{errors.location}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-foreground mb-1.5 flex items-center gap-1.5">
-                      <Briefcase size={14} strokeWidth={1.75} className="text-primary" /> 
+                      <Briefcase size={14} strokeWidth={1.75} className="text-primary" />
                       {user.role === 'recruiter' ? 'About Your Hiring Needs' : 'Professional Biography'}
                     </label>
                     <textarea
                       rows={4}
-                      placeholder={user.role === 'recruiter' 
+                      placeholder={user.role === 'recruiter'
                         ? "Describe the role, company culture, or key skills you're seeking to hire..."
                         : "Describe your professional background, core technical skills, and career interests..."
                       }
                       value={form.bio}
-                      onChange={e => setForm({ ...form, bio: e.target.value })}
-                      className="w-full px-4 py-3 text-sm rounded-xl bg-muted/40 border border-border/30 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50 resize-none leading-relaxed"
+                      onChange={e => {
+                        setForm({ ...form, bio: e.target.value })
+                        if (errors.bio) setErrors({ ...errors, bio: '' })
+                      }}
+                      className={`w-full px-4 py-3 text-sm rounded-xl bg-muted/40 border focus:outline-none focus:ring-2 transition-all placeholder:text-muted-foreground/50 resize-none leading-relaxed ${errors.bio
+                          ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20'
+                          : 'border-border/30 focus:border-primary focus:ring-primary/20'
+                        }`}
                     />
+                    {errors.bio && (
+                      <p className="text-[11px] text-red-400 mt-1.5 font-medium">{errors.bio}</p>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -211,16 +262,25 @@ export function ProfileSetup() {
                   </h2>
                   <div>
                     <label className="block text-xs font-medium text-foreground mb-1.5 flex items-center gap-1.5">
-                      <Globe size={14} strokeWidth={1.75} className="text-primary" /> 
+                      <Globe size={14} strokeWidth={1.75} className="text-primary" />
                       {user.role === 'recruiter' ? 'Company Website' : 'Personal Portfolio / Website'}
                     </label>
                     <input
                       type="url"
                       placeholder="https://example.com"
                       value={form.website}
-                      onChange={e => setForm({ ...form, website: e.target.value })}
-                      className="w-full px-4 py-3 text-sm rounded-xl bg-muted/40 border border-border/30 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                      onChange={e => {
+                        setForm({ ...form, website: e.target.value })
+                        if (errors.website) setErrors({ ...errors, website: '' })
+                      }}
+                      className={`w-full px-4 py-3 text-sm rounded-xl bg-muted/40 border focus:outline-none focus:ring-2 transition-all placeholder:text-muted-foreground/50 ${errors.website
+                          ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20'
+                          : 'border-border/30 focus:border-primary focus:ring-primary/20'
+                        }`}
                     />
+                    {errors.website && (
+                      <p className="text-[11px] text-red-400 mt-1.5 font-medium">{errors.website}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-foreground mb-1.5 flex items-center gap-1.5">
@@ -230,9 +290,18 @@ export function ProfileSetup() {
                       type="url"
                       placeholder="https://linkedin.com/in/username"
                       value={form.linkedin}
-                      onChange={e => setForm({ ...form, linkedin: e.target.value })}
-                      className="w-full px-4 py-3 text-sm rounded-xl bg-muted/40 border border-border/30 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                      onChange={e => {
+                        setForm({ ...form, linkedin: e.target.value })
+                        if (errors.linkedin) setErrors({ ...errors, linkedin: '' })
+                      }}
+                      className={`w-full px-4 py-3 text-sm rounded-xl bg-muted/40 border focus:outline-none focus:ring-2 transition-all placeholder:text-muted-foreground/50 ${errors.linkedin
+                          ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20'
+                          : 'border-border/30 focus:border-primary focus:ring-primary/20'
+                        }`}
                     />
+                    {errors.linkedin && (
+                      <p className="text-[11px] text-red-400 mt-1.5 font-medium">{errors.linkedin}</p>
+                    )}
                   </div>
                   {user.role === 'applicant' && (
                     <div>
@@ -243,9 +312,18 @@ export function ProfileSetup() {
                         type="url"
                         placeholder="https://github.com/username"
                         value={form.github}
-                        onChange={e => setForm({ ...form, github: e.target.value })}
-                        className="w-full px-4 py-3 text-sm rounded-xl bg-muted/40 border border-border/30 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
+                        onChange={e => {
+                          setForm({ ...form, github: e.target.value })
+                          if (errors.github) setErrors({ ...errors, github: '' })
+                        }}
+                        className={`w-full px-4 py-3 text-sm rounded-xl bg-muted/40 border focus:outline-none focus:ring-2 transition-all placeholder:text-muted-foreground/50 ${errors.github
+                            ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20'
+                            : 'border-border/30 focus:border-primary focus:ring-primary/20'
+                          }`}
                       />
+                      {errors.github && (
+                        <p className="text-[11px] text-red-400 mt-1.5 font-medium">{errors.github}</p>
+                      )}
                     </div>
                   )}
                 </motion.div>
@@ -277,11 +355,10 @@ export function ProfileSetup() {
                               key={style}
                               type="button"
                               onClick={() => setForm({ ...form, workStyle: style })}
-                              className={`py-2 text-xs font-semibold rounded-lg border transition-all ${
-                                form.workStyle === style
+                              className={`py-2 text-xs font-semibold rounded-lg border transition-all ${form.workStyle === style
                                   ? 'bg-primary/10 border-primary text-primary'
                                   : 'bg-muted/20 border-border/30 text-muted-foreground hover:border-primary/30'
-                              }`}
+                                }`}
                             >
                               {style}
                             </button>
@@ -300,11 +377,10 @@ export function ProfileSetup() {
                               key={salary}
                               type="button"
                               onClick={() => setForm({ ...form, salaryRange: salary })}
-                              className={`py-2.5 text-xs font-semibold rounded-lg border transition-all ${
-                                form.salaryRange === salary
+                              className={`py-2.5 text-xs font-semibold rounded-lg border transition-all ${form.salaryRange === salary
                                   ? 'bg-primary/10 border-primary text-primary'
                                   : 'bg-muted/20 border-border/30 text-muted-foreground hover:border-primary/30'
-                              }`}
+                                }`}
                             >
                               {salary}
                             </button>
@@ -344,11 +420,10 @@ export function ProfileSetup() {
                               key={priority}
                               type="button"
                               onClick={() => setForm({ ...form, hiringPriority: priority })}
-                              className={`py-3 text-xs font-semibold rounded-lg border transition-all ${
-                                form.hiringPriority === priority
+                              className={`py-3 text-xs font-semibold rounded-lg border transition-all ${form.hiringPriority === priority
                                   ? 'bg-accent/15 border-accent text-accent'
                                   : 'bg-muted/20 border-border/30 text-muted-foreground hover:border-accent/30'
-                              }`}
+                                }`}
                             >
                               {priority}
                             </button>
@@ -365,11 +440,10 @@ export function ProfileSetup() {
                               key={style}
                               type="button"
                               onClick={() => setForm({ ...form, workStyle: style })}
-                              className={`py-2 text-xs font-semibold rounded-lg border transition-all ${
-                                form.workStyle === style
+                              className={`py-2 text-xs font-semibold rounded-lg border transition-all ${form.workStyle === style
                                   ? 'bg-primary/10 border-primary text-primary'
                                   : 'bg-muted/20 border-border/30 text-muted-foreground hover:border-primary/30'
-                              }`}
+                                }`}
                             >
                               {style}
                             </button>

@@ -20,6 +20,7 @@ export function AuthPage() {
   const [step, setStep] = useState(1)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const [form, setForm] = useState({
     name: '',
@@ -31,15 +32,69 @@ export function AuthPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (mode === 'signup' && step === 1) {
-      if (!form.name || !form.email || !form.password) {
-        toast.error('Please fill in all fields')
+    
+    const newErrors: Record<string, string> = {}
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    
+    if (mode === 'signup') {
+      if (step === 1) {
+        if (!form.name.trim()) {
+          newErrors.name = 'Full name is required.'
+        } else if (form.name.trim().length < 2) {
+          newErrors.name = 'Name must be at least 2 characters.'
+        }
+        if (!form.email.trim()) {
+          newErrors.email = 'Email address is required.'
+        } else if (!emailRegex.test(form.email)) {
+          newErrors.email = 'Please enter a valid email address.'
+        }
+        if (!form.password) {
+          newErrors.password = 'Password is required.'
+        } else if (form.password.length < 6) {
+          newErrors.password = 'Password must be at least 6 characters.'
+        }
+        
+        if (Object.keys(newErrors).length > 0) {
+          setErrors(newErrors)
+          toast.error('Please fix the validation errors before continuing.')
+          return
+        }
+        
+        setErrors({})
+        setStep(2)
+        return
+      } else {
+        if (role === 'recruiter' && !form.company.trim()) {
+          newErrors.company = 'Company name is required.'
+        }
+        if (role === 'applicant' && !form.title.trim()) {
+          newErrors.title = 'Desired job title is required.'
+        }
+        
+        if (Object.keys(newErrors).length > 0) {
+          setErrors(newErrors)
+          toast.error('Please fill in the required field.')
+          return
+        }
+      }
+    } else {
+      if (!form.email.trim()) {
+        newErrors.email = 'Email address is required.'
+      } else if (!emailRegex.test(form.email)) {
+        newErrors.email = 'Please enter a valid email address.'
+      }
+      if (!form.password) {
+        newErrors.password = 'Password is required.'
+      }
+      
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors)
+        toast.error('Please enter your email and password correctly.')
         return
       }
-      setStep(2)
-      return
     }
 
+    setErrors({})
     setLoading(true)
     try {
       if (mode === 'signup') {
@@ -64,11 +119,6 @@ export function AuthPage() {
         toast.success('Account created successfully!')
         navigate('/profile-setup')
       } else {
-        if (!form.email || !form.password) {
-          toast.error('Please enter email and password')
-          setLoading(false)
-          return
-        }
         const userCredential = await signInWithEmailAndPassword(auth, form.email, form.password)
         const firebaseUser = userCredential.user
 
@@ -255,9 +305,19 @@ export function AuthPage() {
                         type="text"
                         placeholder="Jordan Lee"
                         value={form.name}
-                        onChange={e => setForm({ ...form, name: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-muted border border-border focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground"
+                        onChange={e => {
+                          setForm({ ...form, name: e.target.value })
+                          if (errors.name) setErrors({ ...errors, name: '' })
+                        }}
+                        className={`w-full px-4 py-3 rounded-xl bg-muted border focus:outline-none focus:ring-2 transition-all placeholder:text-muted-foreground ${
+                          errors.name 
+                            ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20' 
+                            : 'border-border focus:border-primary focus:ring-primary/20'
+                        }`}
                       />
+                      {errors.name && (
+                        <p className="text-[11px] text-red-400 mt-1 font-medium">{errors.name}</p>
+                      )}
                     </div>
                   )}
                   <div>
@@ -266,9 +326,19 @@ export function AuthPage() {
                       type="email"
                       placeholder="you@company.com"
                       value={form.email}
-                      onChange={e => setForm({ ...form, email: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-muted border border-border focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground"
+                      onChange={e => {
+                        setForm({ ...form, email: e.target.value })
+                        if (errors.email) setErrors({ ...errors, email: '' })
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl bg-muted border focus:outline-none focus:ring-2 transition-all placeholder:text-muted-foreground ${
+                        errors.email 
+                          ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20' 
+                          : 'border-border focus:border-primary focus:ring-primary/20'
+                      }`}
                     />
+                    {errors.email && (
+                      <p className="text-[11px] text-red-400 mt-1 font-medium">{errors.email}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1.5">Password</label>
@@ -277,8 +347,15 @@ export function AuthPage() {
                         type={showPassword ? 'text' : 'password'}
                         placeholder="••••••••"
                         value={form.password}
-                        onChange={e => setForm({ ...form, password: e.target.value })}
-                        className="w-full px-4 py-3 pr-12 rounded-xl bg-muted border border-border focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground"
+                        onChange={e => {
+                          setForm({ ...form, password: e.target.value })
+                          if (errors.password) setErrors({ ...errors, password: '' })
+                        }}
+                        className={`w-full px-4 py-3 pr-12 rounded-xl bg-muted border focus:outline-none focus:ring-2 transition-all placeholder:text-muted-foreground ${
+                          errors.password 
+                            ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20' 
+                            : 'border-border focus:border-primary focus:ring-primary/20'
+                        }`}
                       />
                       <button
                         type="button"
@@ -288,6 +365,9 @@ export function AuthPage() {
                         {showPassword ? <EyeOff size={18} strokeWidth={1.75} className="transition-transform group-hover:scale-105" /> : <Eye size={18} strokeWidth={1.75} className="transition-transform group-hover:scale-105" />}
                       </button>
                     </div>
+                    {errors.password && (
+                      <p className="text-[11px] text-red-400 mt-1 font-medium">{errors.password}</p>
+                    )}
                   </div>
                 </motion.div>
               ) : (
@@ -306,9 +386,26 @@ export function AuthPage() {
                       type="text"
                       placeholder={role === 'recruiter' ? 'TechCorp AI' : 'Senior Frontend Engineer'}
                       value={role === 'recruiter' ? form.company : form.title}
-                      onChange={e => role === 'recruiter' ? setForm({ ...form, company: e.target.value }) : setForm({ ...form, title: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-muted border border-border focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground"
+                      onChange={e => {
+                        if (role === 'recruiter') {
+                          setForm({ ...form, company: e.target.value })
+                          if (errors.company) setErrors({ ...errors, company: '' })
+                        } else {
+                          setForm({ ...form, title: e.target.value })
+                          if (errors.title) setErrors({ ...errors, title: '' })
+                        }
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl bg-muted border focus:outline-none focus:ring-2 transition-all placeholder:text-muted-foreground ${
+                        (role === 'recruiter' ? errors.company : errors.title)
+                          ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20' 
+                          : 'border-border focus:border-primary focus:ring-primary/20'
+                      }`}
                     />
+                    {role === 'recruiter' ? (
+                      errors.company && <p className="text-[11px] text-red-400 mt-1 font-medium">{errors.company}</p>
+                    ) : (
+                      errors.title && <p className="text-[11px] text-red-400 mt-1 font-medium">{errors.title}</p>
+                    )}
                   </div>
                   <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 group/ai">
                     <div className="flex items-center gap-2 mb-2">
