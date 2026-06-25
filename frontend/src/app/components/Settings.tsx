@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { Layout } from './Layout'
 import {
@@ -6,9 +6,12 @@ import {
   ChevronRight, Zap, Upload
 } from 'lucide-react'
 import { motion } from 'motion/react'
+import { toast } from 'sonner'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 
 export function Settings() {
-  const { user, darkMode, toggleDarkMode } = useApp()
+  const { user, setUser, darkMode, toggleDarkMode } = useApp()
   const [saved, setSaved] = useState(false)
 
   const [profileForm, setProfileForm] = useState({
@@ -16,15 +19,101 @@ export function Settings() {
     email: user?.email || '',
     title: user?.title || '',
     company: user?.company || '',
-    location: 'San Francisco, CA',
-    bio: 'Senior frontend engineer with 7 years of experience building scalable web applications.',
-    website: 'https://portfolio.dev',
-    linkedin: 'linkedin.com/in/alexrivera',
-    github: 'github.com/alexrivera',
+    location: user?.location || '',
+    bio: user?.bio || '',
+    website: user?.website || '',
+    linkedin: user?.linkedin || '',
+    github: user?.github || '',
   })
 
+  const [aiSettings, setAiSettings] = useState({
+    workStyle: user?.workStyle || 'Remote',
+    roleLevel: user?.roleLevel || 'Senior',
+    salaryRange: user?.salaryRange || '$120k–$150k',
+    relocation: user?.relocation || 'No',
+    hiringPriority: user?.hiringPriority || 'Technical Depth',
+  })
+
+  useEffect(() => {
+    if (user) {
+      setProfileForm({
+        name: user.name || '',
+        email: user.email || '',
+        title: user.title || '',
+        company: user.company || '',
+        location: user.location || '',
+        bio: user.bio || '',
+        website: user.website || '',
+        linkedin: user.linkedin || '',
+        github: user.github || '',
+      })
+      setAiSettings({
+        workStyle: user.workStyle || 'Remote',
+        roleLevel: user.roleLevel || 'Senior',
+        salaryRange: user.salaryRange || '$120k–$150k',
+        relocation: user.relocation || 'No',
+        hiringPriority: user.hiringPriority || 'Technical Depth',
+      })
+    }
+  }, [user])
+
   const handleSave = async () => {
+    if (!user) return
+
+    const updatedProfile = {
+      role: user.role,
+      avatar: user.avatar,
+      title: profileForm.title,
+      company: profileForm.company,
+      location: profileForm.location,
+      bio: profileForm.bio,
+      website: profileForm.website,
+      linkedin: profileForm.linkedin,
+      github: user.role === 'applicant' ? profileForm.github : undefined,
+      workStyle: aiSettings.workStyle,
+      roleLevel: aiSettings.roleLevel,
+      salaryRange: user.role === 'applicant' ? aiSettings.salaryRange : undefined,
+      relocation: user.role === 'applicant' ? aiSettings.relocation : undefined,
+      hiringPriority: user.role === 'recruiter' ? aiSettings.hiringPriority : undefined,
+      profileSetupCompleted: true,
+    }
+
+    try {
+      await setDoc(doc(db, 'users', user.id), {
+        name: user.name,
+        email: user.email,
+        ...updatedProfile
+      }, { merge: true })
+    } catch (err) {
+      console.error('Error saving settings to Firestore:', err)
+      toast.error('Failed to update settings in database.')
+      return
+    }
+
+    // Save details to LocalStorage under user uid
+    localStorage.setItem(`jobnatics_profile_${user.id}`, JSON.stringify(updatedProfile))
+
+    // Update global app state
+    setUser({
+      ...user,
+      name: user.name,
+      email: user.email,
+      title: profileForm.title,
+      company: profileForm.company,
+      location: profileForm.location,
+      bio: profileForm.bio,
+      website: profileForm.website,
+      linkedin: profileForm.linkedin,
+      github: updatedProfile.github,
+      workStyle: updatedProfile.workStyle,
+      roleLevel: updatedProfile.roleLevel,
+      salaryRange: updatedProfile.salaryRange,
+      relocation: updatedProfile.relocation,
+      hiringPriority: updatedProfile.hiringPriority,
+    })
+
     setSaved(true)
+    toast.success('Settings updated successfully!')
     setTimeout(() => setSaved(false), 3000)
   }
 
@@ -62,20 +151,27 @@ export function Settings() {
             <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">Personal Information</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {[
-                { label: 'Full Name', key: 'name', type: 'text' },
-                { label: 'Email Address', key: 'email', type: 'email' },
+                { label: 'Full Name', key: 'name', type: 'text', disabled: true },
+                { label: 'Email Address', key: 'email', type: 'email', disabled: true },
                 { label: 'Job Title', key: 'title', type: 'text' },
                 { label: 'Company', key: 'company', type: 'text' },
                 { label: 'Location', key: 'location', type: 'text' },
                 { label: 'Website', key: 'website', type: 'url' },
+                ...(user?.role === 'applicant' ? [{ label: 'GitHub Profile', key: 'github', type: 'url' }] : []),
+                { label: 'LinkedIn Profile', key: 'linkedin', type: 'url' },
               ].map(field => (
                 <div key={field.key}>
                   <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">{field.label}</label>
                   <input
                     type={field.type}
-                    value={profileForm[field.key as keyof typeof profileForm]}
+                    value={profileForm[field.key as keyof typeof profileForm] || ''}
                     onChange={e => setProfileForm({ ...profileForm, [field.key]: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all"
+                    disabled={field.disabled}
+                    className={`w-full px-3 py-2 rounded-lg border text-xs transition-all text-foreground ${
+                      field.disabled
+                        ? 'bg-muted/40 border-border/20 opacity-60 cursor-not-allowed'
+                        : 'bg-muted/20 border-border/30 focus:outline-none focus:border-primary'
+                    }`}
                   />
                 </div>
               ))}
@@ -85,7 +181,7 @@ export function Settings() {
                   rows={3}
                   value={profileForm.bio}
                   onChange={e => setProfileForm({ ...profileForm, bio: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all resize-none leading-normal"
+                  className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all resize-none leading-normal text-foreground"
                 />
               </div>
             </div>
@@ -97,20 +193,81 @@ export function Settings() {
               <Sparkles size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary transition-transform duration-300 group-hover:scale-110 animate-pulse" />
               <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">AI Profile Settings</h2>
             </div>
-            <div className="space-y-1">
-              {[
-                { label: 'Preferred Work Style', value: 'Remote / Hybrid' },
-                { label: 'Target Role Level', value: 'Senior / Staff' },
-                { label: 'Expected Salary Range', value: '$160k–$220k' },
-                { label: 'Open to Relocation', value: 'Yes (SF Bay Area)' },
-              ].map(item => (
-                <div key={item.label} className="flex items-center justify-between py-3 border-b border-border/20 last:border-0">
-                  <span className="text-xs text-muted-foreground">{item.label}</span>
-                  <button className="flex items-center gap-1 text-xs font-semibold hover:text-primary transition-colors text-foreground group/btn">
-                    {item.value} <ChevronRight size={12} strokeWidth={1.75} className="text-muted-foreground group-hover/btn:translate-x-0.5 transition-transform duration-200" />
-                  </button>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Preferred Work Style</label>
+                <select
+                  value={aiSettings.workStyle}
+                  onChange={e => setAiSettings({ ...aiSettings, workStyle: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all text-foreground"
+                >
+                  <option value="Remote">Remote</option>
+                  <option value="Hybrid">Hybrid</option>
+                  <option value="On-site">On-site</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Target Role Level</label>
+                <select
+                  value={aiSettings.roleLevel}
+                  onChange={e => setAiSettings({ ...aiSettings, roleLevel: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all text-foreground"
+                >
+                  <option value="Entry">Entry</option>
+                  <option value="Mid">Mid</option>
+                  <option value="Senior">Senior</option>
+                  <option value="Lead">Lead</option>
+                  <option value="Executive">Executive</option>
+                </select>
+              </div>
+
+              {user?.role === 'applicant' ? (
+                <>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Expected Salary Range</label>
+                    <select
+                      value={aiSettings.salaryRange}
+                      onChange={e => setAiSettings({ ...aiSettings, salaryRange: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all text-foreground"
+                    >
+                      <option value="$80k–$100k">$80k – $100k</option>
+                      <option value="$100k–$120k">$100k – $120k</option>
+                      <option value="$120k–$150k">$120k – $150k</option>
+                      <option value="$150k–$180k">$150k – $180k</option>
+                      <option value="$180k–$220k">$180k – $220k</option>
+                      <option value="$220k+">$220k+</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Open to Relocation</label>
+                    <select
+                      value={aiSettings.relocation}
+                      onChange={e => setAiSettings({ ...aiSettings, relocation: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all text-foreground"
+                    >
+                      <option value="No">No</option>
+                      <option value="Yes">Yes</option>
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Hiring Priority</label>
+                  <select
+                    value={aiSettings.hiringPriority}
+                    onChange={e => setAiSettings({ ...aiSettings, hiringPriority: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all text-foreground"
+                  >
+                    <option value="Technical Depth">Technical Depth</option>
+                    <option value="Culture Fit">Culture Fit</option>
+                    <option value="Delivery Speed">Delivery Speed</option>
+                    <option value="Cost Efficiency">Cost Efficiency</option>
+                  </select>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 

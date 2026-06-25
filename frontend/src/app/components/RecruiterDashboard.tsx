@@ -16,8 +16,8 @@ import { motion } from 'motion/react'
 function MatchBadge({ score }: { score: number }) {
   const color = score >= 90 ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
     : score >= 80 ? 'bg-primary/5 text-primary border-primary/10'
-    : score >= 70 ? 'bg-amber-500/5 text-amber-400 border-amber-500/10'
-    : 'bg-muted/30 text-muted-foreground border-border/30'
+      : score >= 70 ? 'bg-amber-500/5 text-amber-400 border-amber-500/10'
+        : 'bg-muted/30 text-muted-foreground border-border/30'
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border ${color}`}>
       <Sparkles size={10} /> {score}%
@@ -72,7 +72,7 @@ export function RecruiterDashboard() {
   return (
     <Layout>
       <div className="p-6 max-w-7xl mx-auto">
-        
+
         {/* Welcome Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-6 border-b border-border/30">
           <div>
@@ -139,9 +139,8 @@ export function RecruiterDashboard() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-3 text-xs font-bold uppercase tracking-wider transition-all relative ${
-                activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-              }`}
+              className={`pb-3 text-xs font-bold uppercase tracking-wider transition-all relative ${activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                }`}
             >
               {tab}
               {activeTab === tab && (
@@ -156,10 +155,10 @@ export function RecruiterDashboard() {
 
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            
+
             {/* Left column 2/3 */}
             <div className="xl:col-span-2 space-y-6">
-              
+
               {/* Hiring funnel */}
               <div className="p-5 rounded-xl bg-card border border-border/30">
                 <div className="flex items-center justify-between mb-4">
@@ -222,11 +221,10 @@ export function RecruiterDashboard() {
                           <td className="px-5 py-3.5"><MatchBadge score={job.match} /></td>
                           <td className="px-5 py-3.5 text-xs text-muted-foreground">{job.views.toLocaleString()}</td>
                           <td className="px-5 py-3.5">
-                            <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${
-                              job.status === 'Active'
+                            <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${job.status === 'Active'
                                 ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
                                 : 'bg-muted/30 text-muted-foreground border-border/30'
-                            }`}>
+                              }`}>
                               {job.status}
                             </span>
                           </td>
@@ -267,7 +265,7 @@ export function RecruiterDashboard() {
 
             {/* Right sidebar 1/3 */}
             <div className="space-y-6">
-              
+
               {/* AI top candidates */}
               <div className="p-5 rounded-xl bg-card border border-border/30">
                 <div className="flex items-center justify-between mb-4">
@@ -338,29 +336,6 @@ export function RecruiterDashboard() {
                 </div>
               </div>
 
-              {/* AI Insights */}
-              <div className="p-5 rounded-xl bg-card border border-border/30">
-                <div className="flex items-center gap-1.5 mb-4">
-                  <Sparkles size={14} className="text-primary" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">AI Recruiter Insights</h3>
-                </div>
-                <div className="space-y-3">
-                  {aiInsights.map((insight, i) => {
-                    const Icon = insight.icon
-                    const borderCls = insight.type === 'positive' ? 'border-emerald-500/10 bg-emerald-500/5 text-emerald-400' :
-                      insight.type === 'warning' ? 'border-amber-500/10 bg-amber-500/5 text-amber-400' :
-                      'border-primary/10 bg-primary/5 text-primary'
-                    return (
-                      <div key={i} className="flex gap-2.5 items-start group">
-                        <div className={`p-1.5 rounded border ${borderCls} flex-shrink-0 mt-0.5 transition-transform duration-200 group-hover:scale-105`}>
-                          <Icon size={12} strokeWidth={1.75} fill={insight.type === 'positive' || insight.type === 'tip' ? 'currentColor' : 'none'} fillOpacity={0.15} />
-                        </div>
-                        <p className="text-xs text-muted-foreground leading-normal transition-colors group-hover:text-foreground">{insight.text}</p>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
 
             </div>
           </div>
@@ -423,11 +398,10 @@ export function RecruiterDashboard() {
                         <span className={`text-[10px] px-2 py-0.5 rounded border uppercase font-bold ${stageColors[candidate.stage]}`}>
                           {stageLabels[candidate.stage]}
                         </span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded border uppercase font-bold ${
-                          candidate.status === 'Available' ? 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10' :
-                          candidate.status === 'Open to offers' ? 'text-accent bg-accent/5 border-accent/10' :
-                          'text-muted-foreground bg-muted/20 border-border/30'
-                        }`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded border uppercase font-bold ${candidate.status === 'Available' ? 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10' :
+                            candidate.status === 'Open to offers' ? 'text-accent bg-accent/5 border-accent/10' :
+                              'text-muted-foreground bg-muted/20 border-border/30'
+                          }`}>
                           {candidate.status}
                         </span>
                       </div>
@@ -470,7 +444,7 @@ export function RecruiterDashboard() {
 
         {activeTab === 'analytics' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
+
             <div className="p-5 rounded-xl bg-card border border-border/30">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-1.5">
                 <BarChart3 size={14} className="text-primary" />

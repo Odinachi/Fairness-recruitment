@@ -6,6 +6,8 @@ import {
   CheckCircle2, ArrowRight, ArrowLeft, Building2, Target, DollarSign
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 import confetti from 'canvas-confetti'
 import { toast } from 'sonner'
 
@@ -106,6 +108,19 @@ export function ProfileSetup() {
       relocation: user.role === 'applicant' ? form.relocation : undefined,
       hiringPriority: user.role === 'recruiter' ? form.hiringPriority : undefined,
       profileSetupCompleted: true, // Complete onboarding!
+    }
+
+    try {
+      await setDoc(doc(db, 'users', user.id), {
+        name: user.name,
+        email: user.email,
+        ...updatedProfile
+      }, { merge: true })
+    } catch (err) {
+      console.error('Error saving user profile to Firestore:', err)
+      toast.error('Failed to save profile to database.')
+      setLoading(false)
+      return
     }
 
     // Save details to LocalStorage under user uid

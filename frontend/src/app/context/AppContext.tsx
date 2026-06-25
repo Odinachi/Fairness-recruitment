@@ -40,6 +40,16 @@ export interface User {
   company?: string
   title?: string
   profileSetupCompleted?: boolean
+  bio?: string
+  location?: string
+  website?: string
+  linkedin?: string
+  github?: string
+  workStyle?: string
+  roleLevel?: string
+  salaryRange?: string
+  relocation?: string
+  hiringPriority?: string
 }
 
 interface AppContextType {
@@ -309,37 +319,130 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Firebase auth state listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    let unsubUserDoc: (() => void) | null = null
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      // Clean up previous user document listener if any
+      if (unsubUserDoc) {
+        unsubUserDoc()
+        unsubUserDoc = null
+      }
+
       if (firebaseUser) {
-        // Retrieve custom fields from LocalStorage
+        // First, check if there is a local cache to avoid flash of un-onboarded state while loading
         const cachedProfile = localStorage.getItem(`jobnatics_profile_${firebaseUser.uid}`)
-        let profile = cachedProfile ? JSON.parse(cachedProfile) : null
-        
-        if (!profile) {
-          // Default fallback if cache is missing
-          profile = {
-            role: 'applicant',
-            avatar: firebaseUser.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
-            title: 'Senior Frontend Engineer',
-            profileSetupCompleted: false,
+        if (cachedProfile) {
+          try {
+            const profile = JSON.parse(cachedProfile)
+            setUser({
+              id: firebaseUser.uid,
+              name: profile.name || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+              email: firebaseUser.email || '',
+              role: profile.role || 'applicant',
+              avatar: profile.avatar || firebaseUser.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
+              company: profile.company,
+              title: profile.title,
+              profileSetupCompleted: !!profile.profileSetupCompleted,
+              bio: profile.bio || '',
+              location: profile.location || '',
+              website: profile.website || '',
+              linkedin: profile.linkedin || '',
+              github: profile.github || '',
+              workStyle: profile.workStyle || 'Remote',
+              roleLevel: profile.roleLevel || 'Senior',
+              salaryRange: profile.salaryRange || '$120k–$150k',
+              relocation: profile.relocation || 'No',
+              hiringPriority: profile.hiringPriority || 'Technical Depth',
+            })
+          } catch (e) {
+            console.error('Error parsing cached profile:', e)
           }
         }
-        
-        setUser({
-          id: firebaseUser.uid,
-          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-          email: firebaseUser.email || '',
-          role: profile.role,
-          avatar: profile.avatar || firebaseUser.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
-          company: profile.company,
-          title: profile.title,
-          profileSetupCompleted: !!profile.profileSetupCompleted,
+
+        // Set up real-time listener on user doc
+        unsubUserDoc = onSnapshot(doc(db, 'users', firebaseUser.uid), (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data()
+            const updatedUser = {
+              id: firebaseUser.uid,
+              name: data.name || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+              email: firebaseUser.email || '',
+              role: data.role || 'applicant',
+              avatar: data.avatar || firebaseUser.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
+              company: data.company,
+              title: data.title,
+              profileSetupCompleted: !!data.profileSetupCompleted,
+              bio: data.bio || '',
+              location: data.location || '',
+              website: data.website || '',
+              linkedin: data.linkedin || '',
+              github: data.github || '',
+              workStyle: data.workStyle || 'Remote',
+              roleLevel: data.roleLevel || 'Senior',
+              salaryRange: data.salaryRange || '$120k–$150k',
+              relocation: data.relocation || 'No',
+              hiringPriority: data.hiringPriority || 'Technical Depth',
+            }
+            setUser(updatedUser)
+            // Update LocalStorage cache
+            localStorage.setItem(`jobnatics_profile_${firebaseUser.uid}`, JSON.stringify(updatedUser))
+          } else {
+            // User doc does not exist in Firestore yet (e.g. newly signed up or database is cleared)
+            // Retrieve from LocalStorage or create defaults, then save to Firestore
+            const cachedProfile = localStorage.getItem(`jobnatics_profile_${firebaseUser.uid}`)
+            let profile = cachedProfile ? null : null
+            try {
+              profile = cachedProfile ? JSON.parse(cachedProfile) : null
+            } catch (e) {
+              console.error('Error parsing cached profile during init:', e)
+            }
+            if (!profile) {
+              profile = {
+                role: 'applicant',
+                avatar: firebaseUser.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
+                title: 'Senior Frontend Engineer',
+                profileSetupCompleted: false,
+              }
+            }
+            const initialUser = {
+              name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+              email: firebaseUser.email || '',
+              role: profile.role,
+              avatar: profile.avatar || firebaseUser.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
+              company: profile.company,
+              title: profile.title,
+              profileSetupCompleted: !!profile.profileSetupCompleted,
+              bio: profile.bio || '',
+              location: profile.location || '',
+              website: profile.website || '',
+              linkedin: profile.linkedin || '',
+              github: profile.github || '',
+              workStyle: profile.workStyle || 'Remote',
+              roleLevel: profile.roleLevel || 'Senior',
+              salaryRange: profile.salaryRange || '$120k–$150k',
+              relocation: profile.relocation || 'No',
+              hiringPriority: profile.hiringPriority || 'Technical Depth',
+            }
+            setUser({ id: firebaseUser.uid, ...initialUser })
+            
+            // Create user document in Firestore
+            setDoc(doc(db, 'users', firebaseUser.uid), initialUser)
+              .catch(err => console.error('Error initializing user doc in Firestore:', err))
+          }
+        }, (error) => {
+          console.error('Error in user doc snapshot listener:', error)
         })
       } else {
         setUser(null)
       }
     })
-    return unsubscribe
+
+    return () => {
+      unsubscribeAuth()
+      if (unsubUserDoc) {
+        unsubUserDoc()
+      }
+    }
   }, [])
 
   const addMessage = async (msg: Message) => {

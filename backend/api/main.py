@@ -116,7 +116,6 @@ df_resumes_pool = None
 optimizer_a = None
 optimizer_b = None
 optimizer_c = None
-db_data = {}
 
 
 # ── Text preprocessing ─────────────────────────────────────────────────────────
@@ -145,22 +144,9 @@ def preprocess_text(text: str) -> str:
 
 @app.on_event("startup")
 def load_all():
-    global df_jobs_pool, df_resumes_pool, optimizer_a, optimizer_b, optimizer_c, db_data
+    global df_jobs_pool, df_resumes_pool, optimizer_a, optimizer_b, optimizer_c
 
     data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
-
-    # Load mock_db.json
-    db_path = os.path.join(data_dir, "mock_db.json")
-    if os.path.exists(db_path):
-        try:
-            import json
-            with open(db_path, "r", encoding="utf-8") as f:
-                db_data = json.load(f)
-            print(f"Loaded database from mock_db.json with keys: {list(db_data.keys())}")
-        except Exception as e:
-            print(f"WARNING: Could not load mock_db.json: {e}")
-    else:
-        print(f"WARNING: mock_db.json not found at {db_path}")
 
     # Load jobs
     jobs_path = os.path.join(data_dir, "jobs_clean.csv")
@@ -519,24 +505,3 @@ def batch_match(payload: BatchPayload):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/db/{key}")
-def get_db_data(key: str):
-    if key not in db_data:
-        raise HTTPException(status_code=404, detail=f"Key '{key}' not found in database.")
-    return db_data[key]
-
-
-@app.post("/api/db/{key}")
-def post_db_data(key: str, payload: dict):
-    db_data[key] = payload
-    try:
-        import json
-        data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
-        db_path = os.path.join(data_dir, "mock_db.json")
-        with open(db_path, "w", encoding="utf-8") as f:
-            json.dump(db_data, f, indent=2)
-    except Exception as e:
-        print(f"WARNING: Could not save mock_db.json: {e}")
-    return {"status": "success"}

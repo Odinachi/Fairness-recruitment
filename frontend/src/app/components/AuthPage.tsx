@@ -4,7 +4,8 @@ import { useApp, User } from '../context/AppContext'
 import { Zap, Eye, EyeOff, ArrowLeft, Sparkles, Users, CheckCircle2, ArrowRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
-import { auth } from '../firebase'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { auth, db } from '../firebase'
 import { toast } from 'sonner'
 
 type Mode = 'signin' | 'signup'
@@ -106,6 +107,8 @@ export function AuthPage() {
         })
 
         const profile = {
+          name: form.name,
+          email: form.email,
           role,
           company: role === 'recruiter' ? form.company : undefined,
           title: role === 'applicant' ? form.title : 'Senior Frontend Engineer',
@@ -114,6 +117,8 @@ export function AuthPage() {
             : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
           profileSetupCompleted: false,
         }
+
+        await setDoc(doc(db, 'users', firebaseUser.uid), profile)
         localStorage.setItem(`jobnatics_profile_${firebaseUser.uid}`, JSON.stringify(profile))
 
         toast.success('Account created successfully!')
@@ -122,9 +127,19 @@ export function AuthPage() {
         const userCredential = await signInWithEmailAndPassword(auth, form.email, form.password)
         const firebaseUser = userCredential.user
 
-        const cachedProfile = localStorage.getItem(`jobnatics_profile_${firebaseUser.uid}`)
-        const profile = cachedProfile ? JSON.parse(cachedProfile) : null
-        const redirectRole = profile?.role || 'applicant'
+        const userDocRef = doc(db, 'users', firebaseUser.uid)
+        const userDocSnap = await getDoc(userDocRef)
+        let redirectRole = 'applicant'
+
+        if (userDocSnap.exists()) {
+          const profileData = userDocSnap.data()
+          redirectRole = profileData.role || 'applicant'
+          localStorage.setItem(`jobnatics_profile_${firebaseUser.uid}`, JSON.stringify(profileData))
+        } else {
+          const cachedProfile = localStorage.getItem(`jobnatics_profile_${firebaseUser.uid}`)
+          const profile = cachedProfile ? JSON.parse(cachedProfile) : null
+          redirectRole = profile?.role || 'applicant'
+        }
 
         toast.success(`Welcome back, ${firebaseUser.displayName || 'User'}!`)
         navigate(redirectRole === 'recruiter' ? '/app/recruiter' : '/app/applicant')

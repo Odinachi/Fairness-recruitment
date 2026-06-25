@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, connectAuthEmulator } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import { initializeFirestore, connectFirestoreEmulator } from 'firebase/firestore'
 
 // Safe default demo configuration for development/fallback.
 // Real environment config can be injected via VITE_FIREBASE_* environment variables.
@@ -15,7 +15,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
-const db = getFirestore(app)
+const db = initializeFirestore(app, {
+  ignoreUndefinedProperties: true
+})
 
 // Connect to Emulator if VITE_USE_FIREBASE_EMULATOR is 'true'
 // or by default in development if VITE_FIREBASE_API_KEY is not set.
@@ -25,6 +27,9 @@ const useEmulator = import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true' ||
 if (useEmulator) {
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
   console.log('Firebase Auth connected to local emulator at http://127.0.0.1:9099')
+
+  connectFirestoreEmulator(db, '127.0.0.1', 8080)
+  console.log('Firebase Firestore connected to local emulator at http://127.0.0.1:8080')
 }
 
 export { app, auth, db }
