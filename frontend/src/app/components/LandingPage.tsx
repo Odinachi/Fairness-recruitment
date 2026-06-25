@@ -148,13 +148,13 @@ export function LandingPage() {
             </span>
           </div>
 
-          <div className="hidden md:flex items-center gap-8">
+          {/* <div className="hidden md:flex items-center gap-8">
             {['Features', 'How It Works', 'Pricing', 'Blog'].map(item => (
               <a key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {item}
               </a>
             ))}
-          </div>
+          </div> */}
 
           <div className="hidden md:flex items-center gap-3">
             <button onClick={toggleDarkMode} className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors">
@@ -176,7 +176,7 @@ export function LandingPage() {
           </button>
         </div>
 
-        {mobileMenuOpen && (
+        {/* {mobileMenuOpen && (
           <div className="md:hidden bg-card border-b border-border px-4 py-4 space-y-3">
             {['Features', 'How It Works', 'Pricing'].map(item => (
               <a key={item} href="#" className="block text-sm text-muted-foreground">{item}</a>
@@ -186,7 +186,7 @@ export function LandingPage() {
               <button onClick={() => handleGetStarted()} className="w-full py-2 text-sm bg-primary text-white rounded-lg">Get Started Free</button>
             </div>
           </div>
-        )}
+        )} */}
       </nav>
 
       {/* Hero */}
@@ -390,11 +390,10 @@ export function LandingPage() {
               <button
                 key={role}
                 onClick={() => setActiveRole(role)}
-                className={`px-6 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 ${
-                  activeRole === role
-                    ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                    : 'bg-card border border-border text-muted-foreground hover:text-foreground'
-                }`}
+                className={`px-6 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 ${activeRole === role
+                  ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                  : 'bg-card border border-border text-muted-foreground hover:text-foreground'
+                  }`}
               >
                 {role === 'applicant' ? '👤 Job Seeker' : '🏢 Recruiter'}
               </button>
@@ -465,45 +464,9 @@ export function LandingPage() {
         </div>
       </section>
 
-   
 
-      {/* CTA */}
-      <section className="py-24 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="relative p-12 rounded-3xl bg-gradient-to-br from-primary/20 via-card to-accent/10 border border-primary/20 overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent/10 rounded-full blur-3xl" />
-            <div className="relative z-10">
-              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-2xl shadow-primary/30">
-                <Zap size={28} className="text-white" />
-              </div>
-              <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(1.75rem, 4vw, 3rem)', fontWeight: 800 }} className="mb-4">
-                Ready to transform your hiring?
-              </h2>
-              <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-                Join 200,000+ professionals who use Jobnatics AI to find opportunities and talent that actually fit.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <button
-                  onClick={() => handleGetStarted()}
-                  className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-primary text-white font-semibold hover:bg-primary/90 shadow-xl shadow-primary/30 transition-all hover:scale-105"
-                >
-                  <Globe size={18} />
-                  Start Free Today
-                  <ArrowRight size={18} />
-                </button>
-                <button
-                  onClick={() => handleGetStarted('recruiter')}
-                  className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-border hover:border-primary/40 font-semibold transition-all"
-                >
-                  <Building2 size={18} />
-                  Book a Demo
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+
+
 
       {/* Footer */}
       <footer className="border-t border-border py-12 px-4">

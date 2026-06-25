@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { useApp } from '../context/AppContext'
 import { Layout } from './Layout'
 import {
@@ -30,18 +30,39 @@ function MatchBadge({ match }: { match: number }) {
 export function JobListings() {
   const navigate = useNavigate()
   const { user } = useApp()
+  const [searchParams] = useSearchParams()
+  const filterParam = searchParams.get('filter')
+
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
   const [activeRemote, setActiveRemote] = useState('All')
   const [activeLevel, setActiveLevel] = useState('All')
   const [sortBy, setSortBy] = useState<'match' | 'date' | 'salary'>('match')
-  const [savedJobs, setSavedJobs] = useState<string[]>([])
   const [showFilters, setShowFilters] = useState(false)
-  const [appliedJobs, setAppliedJobs] = useState<string[]>([])
+
+  const [savedJobs, setSavedJobs] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('jobnatics_saved_jobs')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+
+  const [appliedJobs, setAppliedJobs] = useState<string[]>(() => {
+    try {
+      const applied = localStorage.getItem('jobnatics_applied_jobs')
+      return applied ? JSON.parse(applied) : []
+    } catch {
+      return []
+    }
+  })
 
   const filtered = useMemo(() => {
     return jobs
       .filter(j => {
+        if (filterParam === 'saved' && !savedJobs.includes(j.id)) return false
+
         const matchesSearch = !search || j.title.toLowerCase().includes(search.toLowerCase()) || j.company.toLowerCase().includes(search.toLowerCase()) || j.skills.some(s => s.toLowerCase().includes(search.toLowerCase()))
         const matchesCat = activeCategory === 'All' || j.category === activeCategory
         const matchesRemote = activeRemote === 'All' || j.remote.toLowerCase() === activeRemote.toLowerCase().replace('-', '').replace(' ', '')
@@ -53,16 +74,25 @@ export function JobListings() {
         if (sortBy === 'salary') return b.salaryMax - a.salaryMax
         return 0
       })
-  }, [search, activeCategory, activeRemote, activeLevel, sortBy])
+  }, [search, activeCategory, activeRemote, activeLevel, sortBy, filterParam, savedJobs])
 
   const toggleSave = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    setSavedJobs(prev => prev.includes(id) ? prev.filter(j => j !== id) : [...prev, id])
+    setSavedJobs(prev => {
+      const updated = prev.includes(id) ? prev.filter(j => j !== id) : [...prev, id]
+      localStorage.setItem('jobnatics_saved_jobs', JSON.stringify(updated))
+      return updated
+    })
   }
 
   const handleApply = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    setAppliedJobs(prev => prev.includes(id) ? prev : [...prev, id])
+    setAppliedJobs(prev => {
+      if (prev.includes(id)) return prev
+      const updated = [...prev, id]
+      localStorage.setItem('jobnatics_applied_jobs', JSON.stringify(updated))
+      return updated
+    })
   }
 
   return (
@@ -71,14 +101,18 @@ export function JobListings() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="mb-1" style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.75rem', fontWeight: 700 }}>
-            {user ? (
+            {filterParam === 'saved' ? (
+              <span>Your Saved Jobs <span className="text-primary">({filtered.length})</span></span>
+            ) : user ? (
               <span>Your AI-Matched Jobs <span className="text-primary">({filtered.length})</span></span>
             ) : (
               'Explore Jobs'
             )}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {user
+            {filterParam === 'saved'
+              ? 'Keep track of positions you have bookmarked'
+              : user
               ? 'Ranked by AI match score based on your skills, experience, and career goals'
               : 'Find your next opportunity from thousands of vetted companies'
             }

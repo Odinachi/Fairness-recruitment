@@ -17,23 +17,17 @@ interface NavItem {
 const applicantNav: NavItem[] = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/app/applicant' },
   { label: 'Job Feed', icon: Briefcase, path: '/jobs' },
-  { label: 'Applications', icon: FileText, path: '/app/applicant' },
-  { label: 'AI Matches', icon: Sparkles, path: '/ai', badge: 12 },
-  { label: 'Messages', icon: MessageSquare, path: '/messages', badge: 3 },
-  { label: 'Notifications', icon: Bell, path: '/notifications', badge: 5 },
-  { label: 'Saved Jobs', icon: Bookmark, path: '/jobs' },
+  { label: 'Applications', icon: FileText, path: '/app/applicant?tab=applications' },
+  { label: 'Saved Jobs', icon: Bookmark, path: '/jobs?filter=saved' },
   { label: 'Profile', icon: UserCircle, path: '/profile/me' },
 ]
 
 const recruiterNav: NavItem[] = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/app/recruiter' },
   { label: 'Job Postings', icon: Briefcase, path: '/jobs' },
-  { label: 'Candidates', icon: Users, path: '/profile/1' },
-  { label: 'AI Rankings', icon: Sparkles, path: '/ai', badge: 8 },
-  { label: 'Messages', icon: MessageSquare, path: '/messages', badge: 2 },
-  { label: 'Analytics', icon: BarChart3, path: '/app/recruiter' },
-  { label: 'Notifications', icon: Bell, path: '/notifications', badge: 4 },
-  { label: 'Company', icon: Building2, path: '/app/recruiter' },
+  { label: 'Candidates', icon: Users, path: '/app/recruiter?tab=candidates' },
+  { label: 'Analytics', icon: BarChart3, path: '/app/recruiter?tab=analytics' },
+  { label: 'Company', icon: Building2, path: '/company/stripe' },
 ]
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -86,7 +80,27 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="space-y-1">
             {nav.map((item) => {
               const Icon = item.icon
-              const active = location.pathname === item.path
+              const active = (() => {
+                const itemPathWithoutSearch = item.path.split('?')[0];
+                const itemSearch = item.path.split('?')[1] || '';
+                
+                if (location.pathname !== itemPathWithoutSearch) return false;
+                
+                if (itemSearch) {
+                  const params = new URLSearchParams(location.search);
+                  const itemParams = new URLSearchParams(itemSearch);
+                  for (const [key, val] of itemParams.entries()) {
+                    if (params.get(key) !== val) return false;
+                  }
+                  return true;
+                } else {
+                  if (!location.search) return true;
+                  const params = new URLSearchParams(location.search);
+                  const hasOtherTab = params.has('tab') && params.get('tab') !== 'overview';
+                  const hasOtherFilter = params.has('filter') && params.get('filter') !== 'all';
+                  return !hasOtherTab && !hasOtherFilter;
+                }
+              })()
               return (
                 <button
                   key={item.label}
@@ -187,13 +201,7 @@ export function Layout({ children }: { children: ReactNode }) {
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
 
-            <button
-              onClick={() => navigate('/notifications')}
-              className="relative w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            >
-              <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
-            </button>
+
 
             {user && (
               <button className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-lg hover:bg-muted transition-colors">
