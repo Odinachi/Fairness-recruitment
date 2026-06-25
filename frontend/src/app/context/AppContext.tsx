@@ -133,13 +133,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [darkMode])
 
-  // Bootstrap database if empty
+  const [bootstrapped, setBootstrapped] = useState(false)
+
+  // Bootstrap database if empty and user is logged in
   useEffect(() => {
+    if (!user || bootstrapped) return
+
     const bootstrapFirestore = async () => {
       try {
         const jobsSnap = await getDocs(query(collection(db, 'jobs'), limit(1)))
         if (jobsSnap.empty) {
           console.log('Firestore is empty. Bootstrapping database from mockData...')
+          setBootstrapped(true) // prevent double runs
 
           const promises: Promise<any>[] = []
 
@@ -191,6 +196,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
           await Promise.all(promises)
           console.log('Database successfully bootstrapped in Firestore!')
+        } else {
+          setBootstrapped(true)
         }
       } catch (err) {
         console.error('Error bootstrapping Firestore:', err)
@@ -200,16 +207,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     bootstrapFirestore()
-  }, [])
+  }, [user, bootstrapped])
 
-  // Listen to Firestore real-time updates
+  // Listen to Firestore real-time updates when user is authenticated
   useEffect(() => {
+    if (!user) {
+      // Clear data to initial mock values or empty when logged out
+      setJobs(initialJobs)
+      setCandidates(initialCandidates)
+      setConversations(initialConversations)
+      setMessages(initialMessages)
+      setNotifications(initialNotifications)
+      setApplicantApplications(initialApplicantApplications)
+      setApplicationChartData(initialApplicationChartData)
+      setRecruiterHiringData(initialRecruiterHiringData)
+      setRecruiterJobPostings(initialRecruiterJobPostings)
+      setSourceData(initialSourceData)
+      setMonthlyHireData(initialMonthlyHireData)
+      setLoadingData(false)
+      return
+    }
+
+    console.log('User authenticated. Starting real-time Firestore listeners...')
+    setLoadingData(true)
+
     const unsubJobs = onSnapshot(collection(db, 'jobs'), (snapshot) => {
       const list: Job[] = []
       snapshot.forEach(docSnap => {
         list.push({ ...docSnap.data(), id: docSnap.id } as Job)
       })
       if (list.length > 0) setJobs(list)
+      setLoadingData(false)
+    }, err => {
+      console.error('Error listening to jobs:', err)
+      setLoadingData(false)
     })
 
     const unsubCandidates = onSnapshot(collection(db, 'candidates'), (snapshot) => {
@@ -218,7 +249,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         list.push({ ...docSnap.data(), id: docSnap.id } as Candidate)
       })
       if (list.length > 0) setCandidates(list)
-    })
+    }, err => console.error('Error listening to candidates:', err))
 
     const unsubConversations = onSnapshot(collection(db, 'conversations'), (snapshot) => {
       const list: Conversation[] = []
@@ -226,7 +257,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         list.push({ ...docSnap.data(), id: docSnap.id } as Conversation)
       })
       if (list.length > 0) setConversations(list)
-    })
+    }, err => console.error('Error listening to conversations:', err))
 
     const unsubMessages = onSnapshot(collection(db, 'messages'), (snapshot) => {
       const map: Record<string, Message[]> = {}
@@ -244,7 +275,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       })
 
       if (Object.keys(map).length > 0) setMessages(map)
-    })
+    }, err => console.error('Error listening to messages:', err))
 
     const unsubNotifications = onSnapshot(collection(db, 'notifications'), (snapshot) => {
       const list: Notification[] = []
@@ -252,7 +283,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         list.push({ ...docSnap.data(), id: docSnap.id } as Notification)
       })
       if (list.length > 0) setNotifications(list)
-    })
+    }, err => console.error('Error listening to notifications:', err))
 
     const unsubApplicantApplications = onSnapshot(collection(db, 'applicantApplications'), (snapshot) => {
       const list: any[] = []
@@ -260,7 +291,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         list.push({ ...docSnap.data(), id: docSnap.id })
       })
       if (list.length > 0) setApplicantApplications(list)
-    })
+    }, err => console.error('Error listening to applicantApplications:', err))
 
     const unsubApplicationChartData = onSnapshot(collection(db, 'applicationChartData'), (snapshot) => {
       const list: any[] = []
@@ -268,7 +299,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         list.push(docSnap.data())
       })
       if (list.length > 0) setApplicationChartData(list)
-    })
+    }, err => console.error('Error listening to applicationChartData:', err))
 
     const unsubRecruiterHiringData = onSnapshot(collection(db, 'recruiterHiringData'), (snapshot) => {
       const list: any[] = []
@@ -276,7 +307,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         list.push(docSnap.data())
       })
       if (list.length > 0) setRecruiterHiringData(list)
-    })
+    }, err => console.error('Error listening to recruiterHiringData:', err))
 
     const unsubRecruiterJobPostings = onSnapshot(collection(db, 'recruiterJobPostings'), (snapshot) => {
       const list: any[] = []
@@ -284,7 +315,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         list.push({ ...docSnap.data(), id: docSnap.id })
       })
       if (list.length > 0) setRecruiterJobPostings(list)
-    })
+    }, err => console.error('Error listening to recruiterJobPostings:', err))
 
     const unsubSourceData = onSnapshot(collection(db, 'sourceData'), (snapshot) => {
       const list: any[] = []
@@ -292,7 +323,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         list.push(docSnap.data())
       })
       if (list.length > 0) setSourceData(list)
-    })
+    }, err => console.error('Error listening to sourceData:', err))
 
     const unsubMonthlyHireData = onSnapshot(collection(db, 'monthlyHireData'), (snapshot) => {
       const list: any[] = []
@@ -300,9 +331,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         list.push(docSnap.data())
       })
       if (list.length > 0) setMonthlyHireData(list)
-    })
+    }, err => console.error('Error listening to monthlyHireData:', err))
 
     return () => {
+      console.log('User unauthenticated or changed. Cleaning up Firestore listeners...')
       unsubJobs()
       unsubCandidates()
       unsubConversations()
@@ -315,7 +347,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       unsubSourceData()
       unsubMonthlyHireData()
     }
-  }, [])
+  }, [user])
 
   // Firebase auth state listener
   useEffect(() => {
