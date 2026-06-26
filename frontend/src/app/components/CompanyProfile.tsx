@@ -196,10 +196,10 @@ export function CompanyProfile() {
                   <Briefcase size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary animate-pulse" />
                   Open Roles at {company.name}
                 </h2>
-                <span className="text-xs text-muted-foreground">{companyJobs.length || 1} open</span>
+                <span className="text-xs text-muted-foreground">{companyJobs.length} open</span>
               </div>
               <div className="space-y-3">
-                {(companyJobs.length > 0 ? companyJobs : [jobs[0]]).map(job => (
+                {(companyJobs.length > 0 ? companyJobs : []).map(job => (
                   <div
                     key={job.id}
                     className="flex items-center gap-4 p-3 rounded-xl bg-muted/30 border border-border hover:border-primary/20 hover:bg-muted/50 transition-all cursor-pointer group"
@@ -221,6 +221,9 @@ export function CompanyProfile() {
                     <ChevronRight size={14} strokeWidth={1.75} className="text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
                   </div>
                 ))}
+                {companyJobs.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No open roles listed yet.</p>
+                )}
               </div>
               <button
                 onClick={() => navigate('/jobs')}

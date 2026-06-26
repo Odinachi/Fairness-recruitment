@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useApp } from '../context/AppContext'
 import { Layout } from './Layout'
@@ -14,31 +14,6 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar
 } from 'recharts'
 import { motion } from 'motion/react'
-
-const skillsData = [
-  { skill: 'React', score: 95 },
-  { skill: 'TypeScript', score: 88 },
-  { skill: 'Node.js', score: 82 },
-  { skill: 'GraphQL', score: 76 },
-  { skill: 'AWS', score: 70 },
-  { skill: 'Python', score: 65 },
-]
-
-const radarData = [
-  { subject: 'Skills Match', A: 94, fullMark: 100 },
-  { subject: 'Experience', A: 87, fullMark: 100 },
-  { subject: 'Education', A: 90, fullMark: 100 },
-  { subject: 'Culture Fit', A: 85, fullMark: 100 },
-  { subject: 'Growth', A: 92, fullMark: 100 },
-  { subject: 'Salary Fit', A: 88, fullMark: 100 },
-]
-
-const aiInsights = [
-  { icon: TrendingUp, text: 'Your TypeScript skills are in the top 12% of candidates in SF', type: 'positive' },
-  { icon: Target, text: 'Adding "System Design" to your skills could boost matches by 18%', type: 'tip' },
-  { icon: Award, text: 'Your GitHub activity score is exceptional — mention it more prominently', type: 'positive' },
-  { icon: AlertCircle, text: 'Gap detected: Most Senior roles require AWS certification', type: 'warning' },
-]
 
 const stageColors: Record<string, string> = {
   interview: 'text-primary bg-primary/5 border-primary/10',
@@ -68,6 +43,103 @@ function MatchBadge({ match }: { match: number }) {
       {match}% Match
     </span>
   )
+}
+
+// Derive profile completeness score from the user object (0-100)
+function calcProfileScore(user: any): number {
+  if (!user) return 0
+  let score = 40 // base for being signed in
+  if (user.name) score += 5
+  if (user.title) score += 10
+  if (user.bio && user.bio.length > 10) score += 10
+  if (user.location) score += 5
+  if (user.linkedin) score += 5
+  if (user.github) score += 5
+  if (user.workStyle) score += 5
+  if (user.salaryRange) score += 5
+  if (user.roleLevel) score += 5
+  if (user.website) score += 5
+  return Math.min(score, 100)
+}
+
+// Build AI insights based on real user profile data
+function buildInsights(user: any) {
+  const insights: { icon: any; text: string; type: string }[] = []
+
+  if (user?.roleLevel === 'Senior' || user?.roleLevel === 'Lead' || user?.roleLevel === 'Executive') {
+    insights.push({ icon: TrendingUp, text: `Your ${user.roleLevel}-level positioning is in high demand — match rates are 18% above average for this tier.`, type: 'positive' })
+  } else {
+    insights.push({ icon: TrendingUp, text: `${user?.roleLevel || 'Mid'}-level roles have strong market demand right now — great time to apply.`, type: 'positive' })
+  }
+
+  if (user?.github) {
+    insights.push({ icon: Award, text: `Your GitHub profile is linked — this boosts recruiter confidence and increases interview invites by ~30%.`, type: 'positive' })
+  } else {
+    insights.push({ icon: Award, text: `Adding your GitHub profile could increase interview invites by ~30% for technical roles.`, type: 'tip' })
+  }
+
+  if (user?.workStyle === 'Remote') {
+    insights.push({ icon: Target, text: `Remote preference opens up a global job pool — 3× more positions available vs. on-site only.`, type: 'tip' })
+  } else if (user?.workStyle === 'Hybrid') {
+    insights.push({ icon: Target, text: `Hybrid preference aligns with 65% of active job postings — strong match potential.`, type: 'tip' })
+  } else {
+    insights.push({ icon: Target, text: `On-site preference puts you in a focused pool with less competition from remote-only candidates.`, type: 'tip' })
+  }
+
+  if (!user?.bio || user.bio.length < 30) {
+    insights.push({ icon: AlertCircle, text: `A detailed bio helps the AI match you to niche roles. Add 2–3 sentences about your specialization.`, type: 'warning' })
+  } else {
+    insights.push({ icon: AlertCircle, text: `Your profile bio is set — the AI uses it to match you to specialized roles beyond just your job title.`, type: 'positive' })
+  }
+
+  return insights.slice(0, 4)
+}
+
+// Build skill radar from role level + work style
+function buildRadarData(user: any) {
+  const roleScores: Record<string, number> = { Entry: 65, Mid: 76, Senior: 88, Lead: 93, Executive: 96 }
+  const base = roleScores[user?.roleLevel || 'Mid'] || 80
+  return [
+    { subject: 'Skills Match', A: Math.min(base + 6, 100), fullMark: 100 },
+    { subject: 'Experience', A: Math.max(base - 3, 60), fullMark: 100 },
+    { subject: 'Education', A: Math.max(base - 5, 60), fullMark: 100 },
+    { subject: 'Culture Fit', A: user?.workStyle === 'Remote' ? Math.min(base + 3, 100) : base, fullMark: 100 },
+    { subject: 'Growth', A: Math.min(base + 4, 100), fullMark: 100 },
+    { subject: 'Salary Fit', A: base, fullMark: 100 },
+  ]
+}
+
+// Build career path suggestions based on role level
+function buildCareerPaths(user: any) {
+  const level = user?.roleLevel || 'Mid'
+  const paths: Record<string, any[]> = {
+    Entry: [
+      { path: 'Mid-Level Engineer', timeline: '1–2 years', salary: '$90k–$120k', probability: 85, skills: ['System Design Basics', 'Code Review', 'Testing'] },
+      { path: 'Specialist', timeline: '2–3 years', salary: '$100k–$140k', probability: 70, skills: ['Deep Expertise', 'Architecture', 'Mentoring'] },
+      { path: 'Tech Lead', timeline: '3–5 years', salary: '$130k–$180k', probability: 52, skills: ['Leadership', 'Planning', 'Cross-team Collab'] },
+    ],
+    Mid: [
+      { path: 'Senior Engineer', timeline: '1–2 years', salary: '$130k–$180k', probability: 82, skills: ['System Design', 'Mentoring', 'Architecture'] },
+      { path: 'Tech Lead', timeline: '2–3 years', salary: '$160k–$210k', probability: 67, skills: ['Leadership', 'Roadmap', 'Technical Strategy'] },
+      { path: 'Engineering Manager', timeline: '3–5 years', salary: '$180k–$240k', probability: 50, skills: ['People Management', 'Hiring', 'OKRs'] },
+    ],
+    Senior: [
+      { path: 'Staff Engineer', timeline: '2–3 years', salary: '$220k–$310k', probability: 78, skills: ['System Design', 'Leadership', 'Architecture'] },
+      { path: 'Engineering Manager', timeline: '2–4 years', salary: '$200k–$280k', probability: 65, skills: ['People Management', 'Roadmap', 'Hiring'] },
+      { path: 'Principal Architect', timeline: '4–6 years', salary: '$260k–$380k', probability: 52, skills: ['Enterprise Architecture', 'Cloud Strategy', 'CTO skills'] },
+    ],
+    Lead: [
+      { path: 'Principal Engineer', timeline: '1–3 years', salary: '$260k–$360k', probability: 80, skills: ['Cross-org Impact', 'Technical Vision', 'Governance'] },
+      { path: 'VP of Engineering', timeline: '3–5 years', salary: '$280k–$400k', probability: 60, skills: ['Org Design', 'P&L', 'Executive Presence'] },
+      { path: 'CTO', timeline: '5–8 years', salary: '$350k–$600k+', probability: 42, skills: ['Strategy', 'Fundraising', 'Board Reporting'] },
+    ],
+    Executive: [
+      { path: 'CTO', timeline: '0–2 years', salary: '$350k–$600k+', probability: 82, skills: ['Strategy', 'Fundraising', 'Board Reporting'] },
+      { path: 'VP Engineering', timeline: '0–1 year', salary: '$300k–$450k', probability: 88, skills: ['Org Design', 'P&L', 'Executive Presence'] },
+      { path: 'Advisor/Investor', timeline: '1–3 years', salary: 'Equity-based', probability: 65, skills: ['Portfolio', 'Network', 'Domain Expertise'] },
+    ],
+  }
+  return paths[level] || paths['Mid']
 }
 
 export function ApplicantDashboard() {
@@ -105,6 +177,61 @@ export function ApplicantDashboard() {
     })
   }
 
+  // Derived from real user profile
+  const profileScore = calcProfileScore(user)
+  const aiInsights = buildInsights(user)
+  const radarData = buildRadarData(user)
+  const careerPaths = buildCareerPaths(user)
+
+  // Applications stats derived from actual data
+  const totalApplications = applicantApplications.length
+  const interviewCount = applicantApplications.filter(a => a.status === 'interview').length
+  const avgMatch = totalApplications > 0
+    ? Math.round(applicantApplications.reduce((sum, a) => sum + (a.match || 0), 0) / totalApplications)
+    : 0
+
+  // Pipeline counts from real data
+  const stageCount = (stage: string) => applicantApplications.filter(a => a.status === stage).length
+
+  // Skills from user title / role level — derive a representative set
+  const roleSkillMap: Record<string, { skill: string; score: number }[]> = {
+    Senior: [
+      { skill: 'React / Vue', score: 92 }, { skill: 'TypeScript', score: 88 },
+      { skill: 'Node.js', score: 82 }, { skill: 'System Design', score: 75 },
+      { skill: 'Cloud (AWS/GCP)', score: 68 }, { skill: 'CI/CD', score: 72 },
+    ],
+    Lead: [
+      { skill: 'Technical Leadership', score: 94 }, { skill: 'Architecture', score: 90 },
+      { skill: 'System Design', score: 88 }, { skill: 'Cloud Strategy', score: 82 },
+      { skill: 'Mentoring', score: 85 }, { skill: 'Code Review', score: 92 },
+    ],
+    Executive: [
+      { skill: 'Engineering Strategy', score: 95 }, { skill: 'Org Design', score: 90 },
+      { skill: 'Technical Roadmap', score: 88 }, { skill: 'Stakeholder Mgmt', score: 92 },
+      { skill: 'P&L Ownership', score: 80 }, { skill: 'Hiring & Culture', score: 86 },
+    ],
+    Mid: [
+      { skill: 'Frontend Dev', score: 82 }, { skill: 'TypeScript', score: 78 },
+      { skill: 'REST APIs', score: 75 }, { skill: 'Testing', score: 70 },
+      { skill: 'Git Workflow', score: 85 }, { skill: 'Agile / Scrum', score: 72 },
+    ],
+    Entry: [
+      { skill: 'HTML / CSS', score: 88 }, { skill: 'JavaScript', score: 80 },
+      { skill: 'React Basics', score: 72 }, { skill: 'Version Control', score: 75 },
+      { skill: 'Problem Solving', score: 78 }, { skill: 'Communication', score: 82 },
+    ],
+  }
+  const skillsData = roleSkillMap[user?.roleLevel || 'Mid'] || roleSkillMap['Mid']
+
+  // Completeness sub-scores
+  const completenessScore = Math.round(
+    ((user?.name ? 1 : 0) + (user?.bio && user.bio.length > 10 ? 1 : 0) + (user?.location ? 1 : 0) +
+     (user?.linkedin ? 1 : 0) + (user?.github ? 1 : 0) + (user?.title ? 1 : 0)) / 6 * 100
+  )
+  const roleScoreMap: Record<string, number> = { Entry: 70, Mid: 80, Senior: 90, Lead: 95, Executive: 98 }
+  const skillsAlignmentScore = roleScoreMap[user?.roleLevel || 'Mid'] || 80
+  const experienceScore = Math.max(skillsAlignmentScore - 5, 60)
+
   return (
     <Layout>
       <div className="p-6 max-w-7xl mx-auto">
@@ -120,7 +247,8 @@ export function ApplicantDashboard() {
               Good morning, {user?.name?.split(' ')[0]} 👋
             </h1>
             <p className="text-xs text-muted-foreground mt-1">
-              12 new job matches today · Your profile is 87% complete · 2 recruiters viewed your profile
+              {topJobs.length} AI-matched jobs available · Profile {profileScore}% complete
+              {user?.workStyle ? ` · ${user.workStyle} preference` : ''}
             </p>
           </div>
           <div className="flex gap-2">
@@ -141,10 +269,10 @@ export function ApplicantDashboard() {
         {/* Stats row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {[
-            { label: 'Applications', value: '12', change: '+3 this week', icon: FileText, color: 'text-primary' },
-            { label: 'Interviews', value: '3', change: '1 scheduled', icon: MessageSquare, color: 'text-emerald-400' },
-            { label: 'Avg Match %', value: '84%', change: '+6% vs last month', icon: Target, color: 'text-accent' },
-            { label: 'Profile Views', value: '47', change: '+12 this week', icon: Eye, color: 'text-purple-400' },
+            { label: 'Applications', value: String(totalApplications || applicantApplications.length), change: `${totalApplications} total tracked`, icon: FileText, color: 'text-primary' },
+            { label: 'Interviews', value: String(interviewCount), change: interviewCount > 0 ? `${interviewCount} scheduled` : 'None yet', icon: MessageSquare, color: 'text-emerald-400' },
+            { label: 'Avg Match %', value: avgMatch > 0 ? `${avgMatch}%` : `—`, change: user?.roleLevel ? `${user.roleLevel} level` : 'Apply to see matches', icon: Target, color: 'text-accent' },
+            { label: 'Profile Score', value: `${profileScore}`, change: profileScore >= 80 ? 'Great profile!' : 'Keep completing', icon: Eye, color: 'text-purple-400' },
           ].map((stat) => {
             const Icon = stat.icon
             return (
@@ -283,11 +411,11 @@ export function ApplicantDashboard() {
             {/* Right sidebar - 1/3 width */}
             <div className="space-y-6">
               
-              {/* AI Profile Score */}
+              {/* AI Profile Score — derived from actual user data */}
               <div className="p-5 rounded-xl bg-card border border-border/30">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">AI Profile Score</h3>
-                  <span className="text-[10px] text-muted-foreground">vs 89% avg</span>
+                  <span className="text-[10px] text-muted-foreground">{profileScore >= 80 ? 'Strong' : profileScore >= 60 ? 'Good' : 'Needs work'}</span>
                 </div>
                 <div className="flex items-center justify-center mb-6">
                   <div className="relative w-28 h-28">
@@ -297,20 +425,20 @@ export function ApplicantDashboard() {
                         cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="6"
                         strokeLinecap="round"
                         className="text-primary"
-                        strokeDasharray={`${87 * 2.64} 300`}
+                        strokeDasharray={`${profileScore * 2.64} 300`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="font-bold text-foreground leading-none" style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.75rem' }}>87</span>
+                      <span className="font-bold text-foreground leading-none" style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.75rem' }}>{profileScore}</span>
                       <span className="text-[10px] text-muted-foreground mt-1">/ 100</span>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-3">
                   {[
-                    { label: 'Skills Alignment', score: 94 },
-                    { label: 'Experience relevance', score: 87 },
-                    { label: 'Completeness', score: 81 },
+                    { label: 'Skills Alignment', score: skillsAlignmentScore },
+                    { label: 'Experience Relevance', score: experienceScore },
+                    { label: 'Profile Completeness', score: completenessScore },
                   ].map(item => (
                     <div key={item.label}>
                       <div className="flex justify-between text-xs mb-1.5">
@@ -328,7 +456,7 @@ export function ApplicantDashboard() {
                 </div>
               </div>
 
-              {/* AI Insights */}
+              {/* AI Insights — derived from user profile */}
               <div className="p-5 rounded-xl bg-card border border-border/30">
                 <div className="flex items-center gap-1.5 mb-4">
                   <Brain size={14} className="text-primary" />
@@ -391,17 +519,17 @@ export function ApplicantDashboard() {
           <div className="space-y-6">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Application Tracker</h2>
-              <span className="text-xs text-muted-foreground">12 total applications</span>
+              <span className="text-xs text-muted-foreground">{totalApplications} total applications</span>
             </div>
 
-            {/* Pipeline stages */}
+            {/* Pipeline stages — from real data */}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 border-b border-border/30 pb-6 mb-6">
               {[
-                { stage: 'Applied', count: 5, color: 'text-muted-foreground' },
-                { stage: 'Screening', count: 3, color: 'text-accent' },
-                { stage: 'Interview', count: 2, color: 'text-primary' },
-                { stage: 'Offer', count: 1, color: 'text-emerald-400' },
-                { stage: 'Rejected', count: 1, color: 'text-red-400' },
+                { stage: 'Applied', count: stageCount('applied'), color: 'text-muted-foreground' },
+                { stage: 'Screening', count: stageCount('review'), color: 'text-accent' },
+                { stage: 'Interview', count: stageCount('interview'), color: 'text-primary' },
+                { stage: 'Offer', count: stageCount('offer'), color: 'text-emerald-400' },
+                { stage: 'Rejected', count: stageCount('rejected'), color: 'text-red-400' },
               ].map(s => (
                 <div key={s.stage} className="text-left py-2 px-1">
                   <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">{s.stage}</div>
@@ -488,12 +616,16 @@ export function ApplicantDashboard() {
         {activeTab === 'insights' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
-            {/* Skills radar */}
+            {/* Skills radar — derived from user role level */}
             <div className="p-5 rounded-xl bg-card border border-border/30">
               <div className="flex items-center gap-1.5 mb-4">
                 <Brain size={14} className="text-primary" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">AI Match Profile</h3>
               </div>
+              <p className="text-[10px] text-muted-foreground mb-3">
+                Based on your {user?.roleLevel || 'current'} level profile
+                {user?.workStyle ? ` · ${user.workStyle} preference` : ''}
+              </p>
               <div className="flex items-center justify-center">
                 <ResponsiveContainer width="100%" height={260}>
                   <RadarChart data={radarData}>
@@ -505,12 +637,15 @@ export function ApplicantDashboard() {
               </div>
             </div>
 
-            {/* Skill strength bars */}
+            {/* Skill strength bars — derived from user role level */}
             <div className="p-5 rounded-xl bg-card border border-border/30">
-              <div className="flex items-center gap-1.5 mb-4">
+              <div className="flex items-center gap-1.5 mb-1">
                 <Target size={14} className="text-accent" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Skill Strength Analysis</h3>
               </div>
+              <p className="text-[10px] text-muted-foreground mb-4">
+                Typical skills for a {user?.roleLevel || 'Mid'}-level {user?.title || 'professional'}
+              </p>
               <div className="space-y-4">
                 {skillsData.map(skill => (
                   <div key={skill.skill}>
@@ -535,23 +670,27 @@ export function ApplicantDashboard() {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-primary">AI Recommendation</span>
                 </div>
                 <p className="text-xs text-muted-foreground leading-normal">
-                  Adding Python to your active skill set would make you eligible for 23 additional high-match roles.
+                  {user?.roleLevel === 'Senior' || user?.roleLevel === 'Lead'
+                    ? `Focus on System Design and Cloud Architecture to unlock Staff-level and Principal roles.`
+                    : user?.roleLevel === 'Entry'
+                    ? `Building a portfolio project and getting AWS Cloud Practitioner certified could accelerate your career by 12–18 months.`
+                    : `Deepening expertise in your strongest skill area and gaining leadership experience will position you for senior roles.`}
                 </p>
               </div>
             </div>
 
-            {/* Career path suggestions */}
+            {/* Career path suggestions — derived from user's role level */}
             <div className="p-5 rounded-xl bg-card border border-border/30 lg:col-span-2 group">
-              <div className="flex items-center gap-1.5 mb-4">
+              <div className="flex items-center gap-1.5 mb-1">
                 <TrendingUp size={14} strokeWidth={1.75} className="text-emerald-400 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">AI Career Path Analysis</h3>
               </div>
+              <p className="text-[10px] text-muted-foreground mb-4">
+                Paths projected from your current {user?.roleLevel || 'Mid'} level
+                {user?.salaryRange ? ` · Target salary: ${user.salaryRange}` : ''}
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {[
-                  { path: 'Staff Engineer', timeline: '2–3 years', salary: '$220k–$310k', probability: 78, skills: ['System Design', 'Leadership', 'Architecture'] },
-                  { path: 'Engineering Manager', timeline: '2–4 years', salary: '$200k–$280k', probability: 65, skills: ['People Management', 'Roadmap', 'Hiring'] },
-                  { path: 'Principal Architect', timeline: '4–6 years', salary: '$260k–$380k', probability: 52, skills: ['Enterprise Architecture', 'Cloud Strategy', 'CTO skills'] },
-                ].map((path) => (
+                {careerPaths.map((path) => (
                   <div key={path.path} className="p-4 rounded-xl border border-border/30 bg-muted/10 hover:border-primary/20 transition-all">
                     <div className="flex items-start justify-between mb-2">
                       <div>
@@ -568,7 +707,7 @@ export function ApplicantDashboard() {
                     </div>
                     <div className="text-xs text-emerald-400 font-semibold mb-3">{path.salary}</div>
                     <div className="flex flex-wrap gap-1">
-                      {path.skills.map(s => (
+                      {path.skills.map((s: string) => (
                         <span key={s} className="text-[9px] px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground border border-border/20">{s}</span>
                       ))}
                     </div>

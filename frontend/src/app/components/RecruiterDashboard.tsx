@@ -62,11 +62,22 @@ export function RecruiterDashboard() {
     }
   }
 
+  // Build AI insights using real candidate names from Firestore
+  const highRiskCandidates = candidates.filter(c => c.aiScore >= 85 && (c.stage === 'interview' || c.stage === 'offer'))
+  const unreviewedCandidates = candidates.filter(c => c.stage === 'applied')
+  const openJobs = recruiterJobPostings.filter(j => j.status === 'active')
+
   const aiInsights = [
-    { icon: TrendingUp, text: 'Your avg time-to-fill is 18 days — 24% faster than industry average', type: 'positive' },
-    { icon: Star, text: 'Alex Chen & Marcus Williams are showing signs of competing offers — act fast', type: 'warning' },
-    { icon: Brain, text: 'ML Engineer role has 95% match candidates you haven\'t reviewed yet', type: 'tip' },
-    { icon: AlertCircle, text: 'DevOps role has been paused for 14 days — consider reactivating', type: 'warning' },
+    { icon: TrendingUp, text: `Your avg time-to-fill is 18 days — 24% faster than industry average`, type: 'positive' },
+    highRiskCandidates.length >= 2
+      ? { icon: Star, text: `${highRiskCandidates[0].name} & ${highRiskCandidates[1].name} are at offer/interview stage — act fast to prevent competing offers`, type: 'warning' }
+      : highRiskCandidates.length === 1
+      ? { icon: Star, text: `${highRiskCandidates[0].name} is at ${highRiskCandidates[0].stage} stage with a ${highRiskCandidates[0].aiScore}% match — consider fast-tracking`, type: 'warning' }
+      : { icon: Star, text: `No high-priority candidates at risk yet — your pipeline looks stable`, type: 'positive' },
+    { icon: Brain, text: `${unreviewedCandidates.length} candidate${unreviewedCandidates.length !== 1 ? 's' : ''} in your pipeline haven't been reviewed yet`, type: 'tip' },
+    openJobs.length > 0
+      ? { icon: AlertCircle, text: `${openJobs.length} active job${openJobs.length !== 1 ? 's' : ''} open — keep refreshing listings to attract top talent`, type: 'tip' }
+      : { icon: AlertCircle, text: 'No active job postings — post a new role to start receiving applicants', type: 'warning' },
   ]
 
   return (
@@ -84,7 +95,7 @@ export function RecruiterDashboard() {
               Welcome back, {user?.name?.split(' ')[0]} 👋
             </h1>
             <p className="text-xs text-muted-foreground mt-1">
-              {user?.company || 'Your company'} · 8 new applicants today · 3 interviews scheduled · 2 AI shortlists ready
+              {user?.company || 'Your company'} · {candidates.length} total applicants · {candidates.filter(c => c.stage === 'interview').length} interviews · {unreviewedCandidates.length} pending review
             </p>
           </div>
           <div className="flex gap-2">
@@ -105,10 +116,10 @@ export function RecruiterDashboard() {
         {/* Stats row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {[
-            { label: 'Active Jobs', value: '5', change: '+1 this week', icon: Briefcase, color: 'text-primary' },
-            { label: 'Total Applicants', value: '437', change: '+24 today', icon: Users, color: 'text-accent' },
-            { label: 'Interviews', value: '8', change: '3 this week', icon: Calendar, color: 'text-purple-400' },
-            { label: 'Avg Time to Hire', value: '18d', change: '↓6d vs last month', icon: Clock, color: 'text-emerald-400' },
+            { label: 'Active Jobs', value: String(openJobs.length || recruiterJobPostings.length), change: `${recruiterJobPostings.length} total listings`, icon: Briefcase, color: 'text-primary' },
+            { label: 'Total Applicants', value: String(candidates.length), change: `${unreviewedCandidates.length} unreviewed`, icon: Users, color: 'text-accent' },
+            { label: 'Interviews', value: String(candidates.filter(c => c.stage === 'interview').length), change: `${candidates.filter(c => c.stage === 'offer').length} at offer stage`, icon: Calendar, color: 'text-purple-400' },
+            { label: 'Avg AI Score', value: candidates.length > 0 ? `${Math.round(candidates.reduce((s, c) => s + c.aiScore, 0) / candidates.length)}%` : '—', change: 'across all candidates', icon: Clock, color: 'text-emerald-400' },
           ].map((stat) => {
             const Icon = stat.icon
             return (

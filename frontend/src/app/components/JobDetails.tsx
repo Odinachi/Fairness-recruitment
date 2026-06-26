@@ -22,13 +22,12 @@ const matchBreakdown = [
 export function JobDetails() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user, jobs } = useApp()
+  const { user, jobs, loadingData } = useApp()
   const [saved, setSaved] = useState(false)
   const [applied, setApplied] = useState(false)
   const [applyLoading, setApplyLoading] = useState(false)
 
-  const job = jobs.find(j => j.id === id) || jobs[0]
-  const relatedJobs = jobs.filter(j => j.id !== job.id && j.category === job.category).slice(0, 3)
+  const job = jobs.find(j => j.id === id)
 
   const handleApply = async () => {
     setApplyLoading(true)
@@ -37,6 +36,38 @@ export function JobDetails() {
     setApplyLoading(false)
   }
 
+  if (loadingData) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+            <p className="text-sm">Loading job details…</p>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
+
+  if (!job) {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center justify-center h-[60vh] gap-4 text-muted-foreground">
+          <div className="text-4xl">💼</div>
+          <h2 className="text-lg font-semibold text-foreground">Job not found</h2>
+          <p className="text-sm">This listing may have been removed or the link is invalid.</p>
+          <button
+            onClick={() => navigate('/jobs')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-all"
+          >
+            <ArrowLeft size={14} strokeWidth={1.75} /> Browse all jobs
+          </button>
+        </div>
+      </Layout>
+    )
+  }
+
+  const relatedJobs = jobs.filter(j => j.id !== job.id && j.category === job.category).slice(0, 3)
   const matchColor = job.match >= 90 ? 'text-emerald-400' : job.match >= 80 ? 'text-primary' : 'text-amber-400'
   const matchBg = job.match >= 90 ? 'from-emerald-500/20' : job.match >= 80 ? 'from-primary/20' : 'from-amber-500/20'
 

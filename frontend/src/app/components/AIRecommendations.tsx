@@ -5,12 +5,11 @@ import { Layout } from './Layout'
 import {
   Brain, Sparkles, Target, TrendingUp, Send, Bot, User,
   ChevronRight, Zap, ArrowUpRight, RefreshCw, Star,
-  CheckCircle2, AlertCircle, BookOpen, MapPin, DollarSign,
+  AlertCircle, BookOpen, MapPin, DollarSign,
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion } from 'motion/react'
 import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
 } from 'recharts'
 
 interface ChatMessage {
@@ -20,39 +19,129 @@ interface ChatMessage {
   timestamp: Date
 }
 
-const aiResponses: Record<string, string> = {
-  default: "Based on your profile analysis, I recommend focusing on roles that leverage your React and TypeScript expertise. Your 7 years of experience puts you in a strong position for Senior to Staff-level positions. Would you like me to break down specific opportunities?",
-  salary: "Based on your skills and experience, the market rate for Senior Frontend Engineers in San Francisco is $160k–$220k. With your TypeScript and GraphQL expertise, you're positioned at the higher end of this range. I recommend targeting $185k+ in negotiations.",
-  interview: "I've analyzed hundreds of Stripe interview transcripts. Their frontend interviews focus on: (1) System design at scale, (2) React performance optimization, (3) TypeScript generics and type system, (4) Cross-team collaboration scenarios. Want me to generate practice questions?",
-  career: "Your career trajectory analysis shows two strong paths: (1) Staff Engineer track — 2-3 years, focus on system design and technical leadership, $220k-$310k. (2) Engineering Manager track — more people-focused, similar timeline. Given your GitHub activity and mentoring history, I lean toward the Staff track for you.",
-  skills: "I detected 3 skill gaps vs. your target roles: (1) AWS Certification — adds 23 new eligible roles, (2) System Design — mentioned in 78% of Senior job descriptions, (3) Python basics — opens ML-adjacent opportunities. The highest ROI investment is the AWS Solutions Architect cert.",
+// Build AI responses using actual user profile data
+function buildAIResponses(user: any): Record<string, string> {
+  const firstName = user?.name?.split(' ')[0] || 'there'
+  const roleLevel = user?.roleLevel || 'Senior'
+  const workStyle = user?.workStyle || 'Remote'
+  const salaryRange = user?.salaryRange || '$120k–$150k'
+  const location = user?.location || 'your area'
+  const title = user?.title || 'engineer'
+  const github = user?.github
+
+  return {
+    default: `Based on your ${roleLevel} ${title} profile, I recommend focusing on roles that align with your ${workStyle.toLowerCase()} work preference. Your profile shows strong positioning for ${roleLevel}-level positions. Would you like me to break down your top matches?`,
+    salary: `Based on your ${roleLevel} ${title} profile in ${location}, market data suggests targeting ${salaryRange}. Your current preference of ${salaryRange} is well-calibrated. Consider negotiating stock equity on top of base compensation — it can add 30–50% to total compensation.`,
+    interview: `For ${roleLevel} ${title} roles, interviews typically focus on: (1) System design scaled to your experience level, (2) Behavioral questions using STAR format, (3) Technical depth in your core stack, (4) Culture and collaboration scenarios. Want me to generate practice questions tailored to your profile?`,
+    career: `Your ${roleLevel} ${title} trajectory shows strong paths forward. Based on your ${workStyle} preference and target salary of ${salaryRange}, I see two directions: (1) Technical leadership at your current company, or (2) A senior IC role at a high-growth startup. Which direction interests you more?`,
+    skills: `Looking at your ${roleLevel}-level positioning${github ? ' and your linked GitHub' : ''}: the highest-ROI improvements are system design breadth, cloud certifications, and cross-functional leadership exposure. These open up the next tier of roles. Want a detailed learning roadmap?`,
+  }
 }
 
-function getAIResponse(input: string): string {
-  const lower = input.toLowerCase()
-  if (lower.includes('salary') || lower.includes('compensation') || lower.includes('pay')) return aiResponses.salary
-  if (lower.includes('interview') || lower.includes('prepare') || lower.includes('question')) return aiResponses.interview
-  if (lower.includes('career') || lower.includes('path') || lower.includes('grow') || lower.includes('future')) return aiResponses.career
-  if (lower.includes('skill') || lower.includes('learn') || lower.includes('gap')) return aiResponses.skills
-  return aiResponses.default
+// Build radar data from user profile
+function buildRadarData(user: any) {
+  const roleScores: Record<string, number> = { Entry: 65, Mid: 76, Senior: 88, Lead: 93, Executive: 96 }
+  const base = roleScores[user?.roleLevel || 'Mid'] || 80
+  return [
+    { subject: 'Skills', score: Math.min(base + 6, 100) },
+    { subject: 'Experience', score: Math.max(base - 3, 60) },
+    { subject: 'Education', score: Math.max(base - 5, 60) },
+    { subject: 'Culture', score: user?.workStyle === 'Remote' ? Math.min(base + 3, 100) : base },
+    { subject: 'Growth', score: Math.min(base + 4, 100) },
+    { subject: 'Salary', score: base },
+  ]
 }
 
-const gapData = [
-  { skill: 'AWS', current: 65, target: 85, color: '#f59e0b' },
-  { skill: 'System Design', current: 70, target: 90, color: '#6366f1' },
-  { skill: 'Python', current: 55, target: 75, color: '#a855f7' },
-  { skill: 'GraphQL', current: 76, target: 85, color: '#22d3ee' },
-  { skill: 'Docker', current: 72, target: 80, color: '#10b981' },
-]
+// Build skill gap data relevant to the user's role level
+function buildGapData(user: any) {
+  const level = user?.roleLevel || 'Mid'
+  const maps: Record<string, { skill: string; current: number; target: number; color: string }[]> = {
+    Entry: [
+      { skill: 'System Design', current: 40, target: 70, color: '#6366f1' },
+      { skill: 'Cloud (AWS)', current: 30, target: 65, color: '#f59e0b' },
+      { skill: 'Testing/QA', current: 55, target: 80, color: '#a855f7' },
+      { skill: 'TypeScript', current: 60, target: 85, color: '#22d3ee' },
+      { skill: 'Git Workflow', current: 70, target: 90, color: '#10b981' },
+    ],
+    Mid: [
+      { skill: 'System Design', current: 65, target: 85, color: '#6366f1' },
+      { skill: 'AWS / Cloud', current: 60, target: 80, color: '#f59e0b' },
+      { skill: 'Leadership', current: 55, target: 75, color: '#a855f7' },
+      { skill: 'Architecture', current: 62, target: 82, color: '#22d3ee' },
+      { skill: 'CI/CD', current: 70, target: 85, color: '#10b981' },
+    ],
+    Senior: [
+      { skill: 'AWS Certification', current: 65, target: 85, color: '#f59e0b' },
+      { skill: 'System Design', current: 70, target: 92, color: '#6366f1' },
+      { skill: 'Technical Leadership', current: 72, target: 88, color: '#a855f7' },
+      { skill: 'Architecture', current: 76, target: 90, color: '#22d3ee' },
+      { skill: 'Cross-team Collab', current: 78, target: 88, color: '#10b981' },
+    ],
+    Lead: [
+      { skill: 'Org Design', current: 60, target: 82, color: '#f59e0b' },
+      { skill: 'Executive Presence', current: 65, target: 85, color: '#6366f1' },
+      { skill: 'P&L Ownership', current: 55, target: 80, color: '#a855f7' },
+      { skill: 'Roadmapping', current: 75, target: 90, color: '#22d3ee' },
+      { skill: 'Hiring & Culture', current: 70, target: 88, color: '#10b981' },
+    ],
+    Executive: [
+      { skill: 'Board Communication', current: 70, target: 90, color: '#f59e0b' },
+      { skill: 'Fundraising', current: 55, target: 80, color: '#6366f1' },
+      { skill: 'M&A Strategy', current: 50, target: 75, color: '#a855f7' },
+      { skill: 'Public Speaking', current: 72, target: 90, color: '#22d3ee' },
+      { skill: 'Advisor Network', current: 65, target: 85, color: '#10b981' },
+    ],
+  }
+  return maps[level] || maps['Mid']
+}
+
+// Build AI career insights from user profile
+function buildCareerInsights(user: any) {
+  const insights = []
+  const level = user?.roleLevel || 'Mid'
+  const location = user?.location
+
+  if (level === 'Senior' || level === 'Lead' || level === 'Executive') {
+    insights.push({ icon: TrendingUp, type: 'positive', text: `${level}-level profiles are in the top 15% of applicant demand — your positioning is strong.` })
+  } else {
+    insights.push({ icon: TrendingUp, type: 'positive', text: `${level}-level candidates have high hiring velocity right now — apply to roles while market is hot.` })
+  }
+
+  if (user?.github) {
+    insights.push({ icon: Star, type: 'positive', text: `Your linked GitHub profile puts you ahead of 68% of applicants who don't share public code.` })
+  } else {
+    insights.push({ icon: Star, type: 'warning', text: `Linking your GitHub could put you ahead of 68% of applicants — add it in Settings.` })
+  }
+
+  if (!user?.bio || user.bio.length < 30) {
+    insights.push({ icon: AlertCircle, type: 'warning', text: `Adding a detailed bio boosts AI match accuracy — share your specialization and goals.` })
+  } else {
+    insights.push({ icon: AlertCircle, type: 'positive', text: `Your bio is set — the AI matches you to niche roles that fit your specific background.` })
+  }
+
+  if (location) {
+    insights.push({ icon: BookOpen, type: 'tip', text: `Local market in ${location} shows strong demand for ${level} talent — consider hybrid/on-site roles too.` })
+  } else {
+    insights.push({ icon: BookOpen, type: 'tip', text: `Adding your location in Settings helps the AI surface local opportunities alongside remote roles.` })
+  }
+
+  return insights
+}
 
 export function AIRecommendations() {
   const navigate = useNavigate()
   const { user, jobs } = useApp()
+
+  const aiResponses = buildAIResponses(user)
+  const radarData = buildRadarData(user)
+  const gapData = buildGapData(user)
+  const careerInsights = buildCareerInsights(user)
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       role: 'ai',
-      content: `Hey ${user?.name?.split(' ')[0] || 'there'}! 👋 I'm your Jobnatics AI career assistant. I've analyzed your profile and identified 12 high-match opportunities. I can help you with job recommendations, interview prep, salary negotiation, and career planning. What would you like to explore?`,
+      content: `Hey ${user?.name?.split(' ')[0] || 'there'}! 👋 I'm your Jobnatics AI career assistant. I've analyzed your ${user?.roleLevel || ''} profile and found high-match opportunities based on your ${user?.workStyle || 'work'} preference${user?.salaryRange ? ` and ${user.salaryRange} salary target` : ''}. What would you like to explore?`,
       timestamp: new Date(),
     },
   ])
@@ -63,6 +152,15 @@ export function AIRecommendations() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  function getAIResponse(input: string): string {
+    const lower = input.toLowerCase()
+    if (lower.includes('salary') || lower.includes('compensation') || lower.includes('pay')) return aiResponses.salary
+    if (lower.includes('interview') || lower.includes('prepare') || lower.includes('question')) return aiResponses.interview
+    if (lower.includes('career') || lower.includes('path') || lower.includes('grow') || lower.includes('future')) return aiResponses.career
+    if (lower.includes('skill') || lower.includes('learn') || lower.includes('gap')) return aiResponses.skills
+    return aiResponses.default
+  }
 
   const sendMessage = async (e: React.FormEvent | string) => {
     if (typeof e !== 'string') e.preventDefault()
@@ -88,21 +186,12 @@ export function AIRecommendations() {
 
   const quickPrompts = [
     'What are my top job matches?',
-    'Help me prepare for Stripe interview',
-    'What salary should I negotiate?',
+    user?.title ? `Help me prepare for a ${user.title} interview` : 'Help me prepare for my next interview',
+    `What salary should I negotiate?`,
     'Show my skill gaps',
   ]
 
   const topMatches = jobs.slice(0, 5).sort((a, b) => b.match - a.match)
-
-  const radarData = [
-    { subject: 'Skills', score: 94 },
-    { subject: 'Experience', score: 87 },
-    { subject: 'Education', score: 90 },
-    { subject: 'Culture', score: 85 },
-    { subject: 'Growth', score: 92 },
-    { subject: 'Salary', score: 88 },
-  ]
 
   return (
     <Layout>
@@ -111,7 +200,11 @@ export function AIRecommendations() {
           <h1 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.75rem', fontWeight: 700 }} className="mb-1">
             AI Recommendations
           </h1>
-          <p className="text-sm text-muted-foreground">Powered by Jobnatics intelligence engine · Last analyzed 2 hours ago</p>
+          <p className="text-sm text-muted-foreground">
+            Powered by Jobnatics intelligence engine
+            {user?.roleLevel ? ` · Personalized for your ${user.roleLevel} profile` : ''}
+            {user?.workStyle ? ` · ${user.workStyle} preference` : ''}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -127,10 +220,20 @@ export function AIRecommendations() {
                   <h3 className="font-semibold text-sm">Jobnatics AI Assistant</h3>
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    Online · Analyzing your profile
+                    Online · Analyzing {user?.name?.split(' ')[0] || 'your'}'s profile
                   </div>
                 </div>
-                <button className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-border text-muted-foreground hover:bg-muted transition-colors">
+                <button
+                  onClick={() => {
+                    setMessages([{
+                      id: Date.now().toString(),
+                      role: 'ai',
+                      content: `Starting a new session! I'm ready to help you with job search, interview prep, and career planning. What's on your mind, ${user?.name?.split(' ')[0] || 'there'}?`,
+                      timestamp: new Date(),
+                    }])
+                  }}
+                  className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-border text-muted-foreground hover:bg-muted transition-colors"
+                >
                   <RefreshCw size={12} /> New session
                 </button>
               </div>
@@ -260,12 +363,16 @@ export function AIRecommendations() {
 
           {/* Right sidebar */}
           <div className="space-y-6">
-            {/* Match radar */}
+            {/* Match radar — derived from user role level */}
             <div className="p-5 rounded-2xl bg-card border border-border">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-1">
                 <Brain size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary animate-pulse" />
                 <h3 className="font-semibold text-sm">AI Match Profile</h3>
               </div>
+              <p className="text-[10px] text-muted-foreground mb-3">
+                Based on your {user?.roleLevel || 'current'} level
+                {user?.workStyle ? ` · ${user.workStyle}` : ''}
+              </p>
               <ResponsiveContainer width="100%" height={220}>
                 <RadarChart data={radarData}>
                   <PolarGrid stroke="rgba(255,255,255,0.06)" />
@@ -275,12 +382,15 @@ export function AIRecommendations() {
               </ResponsiveContainer>
             </div>
 
-            {/* Skill gap analysis */}
+            {/* Skill gap analysis — derived from user's role level */}
             <div className="p-5 rounded-2xl bg-card border border-border">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-1">
                 <Target size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-amber-400" />
                 <h3 className="font-semibold text-sm">Skill Gap Analysis</h3>
               </div>
+              <p className="text-[10px] text-muted-foreground mb-4">
+                Key skills to advance from {user?.roleLevel || 'current'} level
+              </p>
               <div className="space-y-3">
                 {gapData.map(item => (
                   <div key={item.skill}>
@@ -305,19 +415,14 @@ export function AIRecommendations() {
               </button>
             </div>
 
-            {/* AI Insights */}
+            {/* AI Insights — personalized from user profile */}
             <div className="p-5 rounded-2xl bg-card border border-border">
               <div className="flex items-center gap-2 mb-4">
                 <Zap size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-accent animate-pulse" />
                 <h3 className="font-semibold text-sm">AI Career Insights</h3>
               </div>
               <div className="space-y-3">
-                {[
-                  { icon: TrendingUp, type: 'positive', text: 'You\'re in the top 8% of Frontend candidates in SF' },
-                  { icon: Star, type: 'positive', text: 'Your GitHub activity puts you ahead of 91% of applicants' },
-                  { icon: AlertCircle, type: 'warning', text: 'AWS cert could unlock 23 new Senior roles' },
-                  { icon: BookOpen, type: 'tip', text: 'Add "System Design" to boost match rate by 18%' },
-                ].map((insight, i) => {
+                {careerInsights.map((insight, i) => {
                   const Icon = insight.icon
                   return (
                     <div key={i} className={`flex gap-2.5 p-3 rounded-lg border text-xs group ${
