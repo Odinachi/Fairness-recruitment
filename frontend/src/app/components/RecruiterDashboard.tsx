@@ -100,7 +100,7 @@ export function RecruiterDashboard() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => navigate('/jobs')}
+              onClick={() => navigate('/post-job')}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/95 transition-all shadow-sm"
             >
               <Plus size={13} />

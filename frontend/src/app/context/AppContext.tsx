@@ -10,12 +10,30 @@ import { auth, db } from '../firebase'
 import {
   Job,
   Candidate,
-  Conversation,
-  Message,
   Notification
 } from '../data/mockData'
 
 export type UserRole = 'applicant' | 'recruiter'
+
+export interface CompanyProfileData {
+  id: string
+  name: string
+  logo: string
+  tagline: string
+  description: string
+  industry: string
+  size: string
+  founded: string
+  location: string
+  website: string
+  techStack: string[]
+  benefits: string[]
+  culture: string[]
+  perks: { icon: string; label: string }[]
+  rating: number
+  reviews: number
+  postedBy: string
+}
 
 export interface User {
   id: string
@@ -49,8 +67,6 @@ interface AppContextType {
   // Data states
   jobs: Job[]
   candidates: Candidate[]
-  conversations: Conversation[]
-  messages: Record<string, Message[]>
   notifications: Notification[]
   applicantApplications: any[]
   applicationChartData: any[]
@@ -58,11 +74,10 @@ interface AppContextType {
   recruiterJobPostings: any[]
   sourceData: any[]
   monthlyHireData: any[]
+  companies: CompanyProfileData[]
   loadingData: boolean
 
   // Mutators
-  addMessage: (msg: Message) => Promise<void>
-  updateConversationLastMessage: (convId: string, lastMessage: string, lastMessageTime: string) => Promise<void>
   addApplicantApplication: (app: any) => Promise<void>
 }
 
@@ -76,8 +91,6 @@ export const AppContext = createContext<AppContextType>({
 
   jobs: [],
   candidates: [],
-  conversations: [],
-  messages: {},
   notifications: [],
   applicantApplications: [],
   applicationChartData: [],
@@ -85,10 +98,9 @@ export const AppContext = createContext<AppContextType>({
   recruiterJobPostings: [],
   sourceData: [],
   monthlyHireData: [],
+  companies: [],
   loadingData: true,
 
-  addMessage: async () => {},
-  updateConversationLastMessage: async () => {},
   addApplicantApplication: async () => {},
 })
 
@@ -100,8 +112,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // All collections start empty — Firestore is the single source of truth
   const [jobs, setJobs] = useState<Job[]>([])
   const [candidates, setCandidates] = useState<Candidate[]>([])
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [messages, setMessages] = useState<Record<string, Message[]>>({})
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [applicantApplications, setApplicantApplications] = useState<any[]>([])
   const [applicationChartData, setApplicationChartData] = useState<any[]>([])
@@ -109,6 +119,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [recruiterJobPostings, setRecruiterJobPostings] = useState<any[]>([])
   const [sourceData, setSourceData] = useState<any[]>([])
   const [monthlyHireData, setMonthlyHireData] = useState<any[]>([])
+  const [companies, setCompanies] = useState<CompanyProfileData[]>([])
   const [loadingData, setLoadingData] = useState<boolean>(true)
 
   useEffect(() => {
@@ -125,8 +136,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Clear all data on logout
       setJobs([])
       setCandidates([])
-      setConversations([])
-      setMessages({})
       setNotifications([])
       setApplicantApplications([])
       setApplicationChartData([])
@@ -134,6 +143,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setRecruiterJobPostings([])
       setSourceData([])
       setMonthlyHireData([])
+      setCompanies([])
       setLoadingData(false)
       return
     }
@@ -160,30 +170,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       })
       setCandidates(list)
     }, err => console.error('Error listening to candidates:', err))
-
-    const unsubConversations = onSnapshot(collection(db, 'conversations'), (snapshot) => {
-      const list: Conversation[] = []
-      snapshot.forEach(docSnap => {
-        list.push({ ...docSnap.data(), id: docSnap.id } as Conversation)
-      })
-      setConversations(list)
-    }, err => console.error('Error listening to conversations:', err))
-
-    const unsubMessages = onSnapshot(collection(db, 'messages'), (snapshot) => {
-      const map: Record<string, Message[]> = {}
-      snapshot.forEach(docSnap => {
-        const msg = docSnap.data() as Message
-        if (!map[msg.conversationId]) {
-          map[msg.conversationId] = []
-        }
-        map[msg.conversationId].push({ ...msg, id: docSnap.id })
-      })
-      // Sort messages by timestamp
-      Object.keys(map).forEach(convId => {
-        map[convId].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-      })
-      setMessages(map)
-    }, err => console.error('Error listening to messages:', err))
 
     const unsubNotifications = onSnapshot(collection(db, 'notifications'), (snapshot) => {
       const list: Notification[] = []
@@ -241,12 +227,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMonthlyHireData(list)
     }, err => console.error('Error listening to monthlyHireData:', err))
 
+    const unsubCompanies = onSnapshot(collection(db, 'companies'), (snapshot) => {
+      const list: CompanyProfileData[] = []
+      snapshot.forEach(docSnap => {
+        list.push({ ...docSnap.data(), id: docSnap.id } as CompanyProfileData)
+      })
+      setCompanies(list)
+    }, err => console.error('Error listening to companies:', err))
+
     return () => {
       console.log('Cleaning up Firestore listeners...')
       unsubJobs()
       unsubCandidates()
-      unsubConversations()
-      unsubMessages()
       unsubNotifications()
       unsubApplicantApplications()
       unsubApplicationChartData()
@@ -254,6 +246,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       unsubRecruiterJobPostings()
       unsubSourceData()
       unsubMonthlyHireData()
+      unsubCompanies()
     }
   }, [user])
 
@@ -383,21 +376,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const addMessage = async (msg: Message) => {
-    try {
-      await setDoc(doc(db, 'messages', msg.id), msg)
-    } catch (err) {
-      console.error('Error adding message to Firestore:', err)
-    }
-  }
 
-  const updateConversationLastMessage = async (convId: string, lastMessage: string, lastMessageTime: string) => {
-    try {
-      await setDoc(doc(db, 'conversations', convId), { lastMessage, lastMessageTime }, { merge: true })
-    } catch (err) {
-      console.error('Error updating conversation in Firestore:', err)
-    }
-  }
 
   const addApplicantApplication = async (app: any) => {
     try {
@@ -412,10 +391,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider value={{
       user, setUser, darkMode, toggleDarkMode, sidebarOpen, setSidebarOpen,
-      jobs, candidates, conversations, messages, notifications,
+      jobs, candidates, notifications,
       applicantApplications, applicationChartData, recruiterHiringData,
-      recruiterJobPostings, sourceData, monthlyHireData, loadingData,
-      addMessage, updateConversationLastMessage, addApplicantApplication
+      recruiterJobPostings, sourceData, monthlyHireData, companies, loadingData,
+      addApplicantApplication
     }}>
       {children}
     </AppContext.Provider>

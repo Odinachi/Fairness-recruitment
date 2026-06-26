@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext'
 import { Layout } from './Layout'
 import {
   User, Globe, Moon, Sun, Save, CheckCircle2, Sparkles,
-  ChevronRight, Zap, Upload
+  ChevronRight, Zap, Upload, Building2
 } from 'lucide-react'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
@@ -11,8 +11,10 @@ import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 
 export function Settings() {
-  const { user, setUser, darkMode, toggleDarkMode } = useApp()
+  const { user, setUser, darkMode, toggleDarkMode, companies } = useApp()
   const [saved, setSaved] = useState(false)
+
+  const userCompany = companies.find(c => c.postedBy === user?.id)
 
   const [profileForm, setProfileForm] = useState({
     name: user?.name || '',
@@ -26,6 +28,18 @@ export function Settings() {
     github: user?.github || '',
   })
 
+  const [companyForm, setCompanyForm] = useState({
+    name: '',
+    logo: '🏢',
+    tagline: '',
+    description: '',
+    industry: '',
+    founded: '',
+    size: '',
+    techStack: '',
+    culture: '',
+  })
+
   const [aiSettings, setAiSettings] = useState({
     workStyle: user?.workStyle || 'Remote',
     roleLevel: user?.roleLevel || 'Senior',
@@ -33,6 +47,22 @@ export function Settings() {
     relocation: user?.relocation || 'No',
     hiringPriority: user?.hiringPriority || 'Technical Depth',
   })
+
+  useEffect(() => {
+    if (userCompany) {
+      setCompanyForm({
+        name: userCompany.name || '',
+        logo: userCompany.logo || '🏢',
+        tagline: userCompany.tagline || '',
+        description: userCompany.description || '',
+        industry: userCompany.industry || '',
+        founded: userCompany.founded || '',
+        size: userCompany.size || '',
+        techStack: Array.isArray(userCompany.techStack) ? userCompany.techStack.join(', ') : '',
+        culture: Array.isArray(userCompany.culture) ? userCompany.culture.join(', ') : '',
+      })
+    }
+  }, [userCompany])
 
   useEffect(() => {
     if (user) {
@@ -60,21 +90,27 @@ export function Settings() {
   const handleSave = async () => {
     if (!user) return
 
+    // Validate recruiter company if name is present
+    if (user.role === 'recruiter' && !companyForm.name.trim()) {
+      toast.error('Company Name is required.')
+      return
+    }
+
     const updatedProfile = {
       role: user.role,
       avatar: user.avatar,
       title: profileForm.title,
-      company: profileForm.company,
+      company: user.role === 'recruiter' ? companyForm.name.trim() : profileForm.company,
       location: profileForm.location,
       bio: profileForm.bio,
       website: profileForm.website,
       linkedin: profileForm.linkedin,
-      github: user.role === 'applicant' ? profileForm.github : undefined,
+      github: user.role === 'applicant' ? profileForm.github : '',
       workStyle: aiSettings.workStyle,
       roleLevel: aiSettings.roleLevel,
-      salaryRange: user.role === 'applicant' ? aiSettings.salaryRange : undefined,
-      relocation: user.role === 'applicant' ? aiSettings.relocation : undefined,
-      hiringPriority: user.role === 'recruiter' ? aiSettings.hiringPriority : undefined,
+      salaryRange: user.role === 'applicant' ? aiSettings.salaryRange : '',
+      relocation: user.role === 'applicant' ? aiSettings.relocation : '',
+      hiringPriority: user.role === 'recruiter' ? aiSettings.hiringPriority : '',
       profileSetupCompleted: true,
     }
 
@@ -84,6 +120,28 @@ export function Settings() {
         email: user.email,
         ...updatedProfile
       }, { merge: true })
+
+      if (user.role === 'recruiter') {
+        const slug = userCompany?.id || companyForm.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'company'
+        const techStack = companyForm.techStack.split(',').map(s => s.trim()).filter(Boolean)
+        const culture = companyForm.culture.split(',').map(s => s.trim()).filter(Boolean)
+
+        const companyDoc = {
+          name: companyForm.name.trim(),
+          logo: companyForm.logo,
+          tagline: companyForm.tagline.trim(),
+          description: companyForm.description.trim(),
+          industry: companyForm.industry.trim(),
+          size: companyForm.size,
+          founded: companyForm.founded.trim(),
+          location: profileForm.location.trim(),
+          website: profileForm.website.trim(),
+          techStack,
+          culture,
+          postedBy: user.id,
+        }
+        await setDoc(doc(db, 'companies', slug), companyDoc, { merge: true })
+      }
     } catch (err) {
       console.error('Error saving settings to Firestore:', err)
       toast.error('Failed to update settings in database.')
@@ -99,7 +157,7 @@ export function Settings() {
       name: user.name,
       email: user.email,
       title: profileForm.title,
-      company: profileForm.company,
+      company: user.role === 'recruiter' ? companyForm.name.trim() : profileForm.company,
       location: profileForm.location,
       bio: profileForm.bio,
       website: profileForm.website,
@@ -186,6 +244,128 @@ export function Settings() {
               </div>
             </div>
           </div>
+
+          {/* Company Profile (Recruiter only) */}
+          {user?.role === 'recruiter' && (
+            <div className="p-5 rounded-xl bg-card border border-border/30">
+              <div className="flex items-center gap-1.5 mb-4 group cursor-default">
+                <Building2 size={14} strokeWidth={1.75} className="text-primary animate-pulse" />
+                <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Company Profile Settings</h2>
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-[64px_1fr] gap-3 items-start">
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Logo</label>
+                    <input
+                      type="text"
+                      value={companyForm.logo}
+                      onChange={e => setCompanyForm({ ...companyForm, logo: e.target.value })}
+                      maxLength={2}
+                      className="w-full text-center text-xl px-2 py-1.5 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Company Name *</label>
+                    <input
+                      type="text"
+                      value={companyForm.name}
+                      onChange={e => setCompanyForm({ ...companyForm, name: e.target.value })}
+                      placeholder="e.g. Acme Corp"
+                      className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all text-foreground"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Tagline</label>
+                  <input
+                    type="text"
+                    value={companyForm.tagline}
+                    onChange={e => setCompanyForm({ ...companyForm, tagline: e.target.value })}
+                    placeholder="e.g. Building the future of work"
+                    className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all text-foreground"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Company Description *</label>
+                  <textarea
+                    rows={3}
+                    value={companyForm.description}
+                    onChange={e => setCompanyForm({ ...companyForm, description: e.target.value })}
+                    placeholder="What does your company do? What makes it a great place to work?"
+                    className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all resize-none leading-normal text-foreground"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Industry</label>
+                    <input
+                      type="text"
+                      value={companyForm.industry}
+                      onChange={e => setCompanyForm({ ...companyForm, industry: e.target.value })}
+                      placeholder="e.g. Fintech, SaaS"
+                      className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Founded Year</label>
+                    <input
+                      type="text"
+                      value={companyForm.founded}
+                      onChange={e => setCompanyForm({ ...companyForm, founded: e.target.value })}
+                      placeholder="e.g. 2018"
+                      className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all text-foreground"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Company Size</label>
+                  <select
+                    value={companyForm.size}
+                    onChange={e => setCompanyForm({ ...companyForm, size: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all text-foreground"
+                  >
+                    <option value="">Select size</option>
+                    <option value="1–50">1–50 employees</option>
+                    <option value="50–200">50–200 employees</option>
+                    <option value="200–1,000">200–1,000 employees</option>
+                    <option value="1,000–5,000">1,000–5,000 employees</option>
+                    <option value="5,000–10,000">5,000–10,000 employees</option>
+                    <option value="10,000+">10,000+ employees</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">
+                    Tech Stack <span className="text-muted-foreground font-normal">(comma-separated)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={companyForm.techStack}
+                    onChange={e => setCompanyForm({ ...companyForm, techStack: e.target.value })}
+                    placeholder="e.g. React, Node.js, PostgreSQL, AWS"
+                    className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all text-foreground"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">
+                    Culture Values <span className="text-muted-foreground font-normal">(comma-separated)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={companyForm.culture}
+                    onChange={e => setCompanyForm({ ...companyForm, culture: e.target.value })}
+                    placeholder="e.g. Transparency, Innovation, Ownership"
+                    className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all text-foreground"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* AI Profile */}
           <div className="p-5 rounded-xl bg-card border border-border/30">

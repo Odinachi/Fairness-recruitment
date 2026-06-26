@@ -5,13 +5,13 @@ import { ApplicantDashboard } from './components/ApplicantDashboard'
 import { RecruiterDashboard } from './components/RecruiterDashboard'
 import { JobListings } from './components/JobListings'
 import { JobDetails } from './components/JobDetails'
-import { Messaging } from './components/Messaging'
 import { Notifications } from './components/Notifications'
 import { AIRecommendations } from './components/AIRecommendations'
 import { CandidateProfile } from './components/CandidateProfile'
 import { CompanyProfile } from './components/CompanyProfile'
 import { Settings } from './components/Settings'
 import { ProfileSetup } from './components/ProfileSetup'
+import { PostJob } from './components/PostJob'
 
 export const router = createHashRouter([
   { path: '/', Component: LandingPage },
@@ -20,12 +20,12 @@ export const router = createHashRouter([
   { path: '/app/recruiter', Component: RecruiterDashboard },
   { path: '/jobs', Component: JobListings },
   { path: '/jobs/:id', Component: JobDetails },
-  { path: '/messages', Component: Messaging },
   { path: '/notifications', Component: Notifications },
   { path: '/ai', Component: AIRecommendations },
   { path: '/profile/:id', Component: CandidateProfile },
   { path: '/company/:id', Component: CompanyProfile },
   { path: '/settings', Component: Settings },
   { path: '/profile-setup', Component: ProfileSetup },
+  { path: '/post-job', Component: PostJob },
   { path: '*', loader: () => redirect('/') },
 ])

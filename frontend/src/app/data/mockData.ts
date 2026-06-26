@@ -48,28 +48,6 @@ export interface Candidate {
   jobId?: string
 }
 
-export interface Message {
-  id: string
-  conversationId: string
-  senderId: string
-  senderName: string
-  senderAvatar: string
-  content: string
-  timestamp: string
-  read: boolean
-}
-
-export interface Conversation {
-  id: string
-  participantName: string
-  participantTitle: string
-  participantAvatar: string
-  lastMessage: string
-  lastMessageTime: string
-  unread: number
-  online: boolean
-}
-
 export interface Notification {
   id: string
   type: 'match' | 'application' | 'message' | 'interview' | 'offer' | 'system'

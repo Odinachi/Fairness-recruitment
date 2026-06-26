@@ -110,7 +110,7 @@ export function AuthPage() {
           name: form.name,
           email: form.email,
           role,
-          company: role === 'recruiter' ? form.company : undefined,
+          company: role === 'recruiter' ? form.company : '',
           title: role === 'applicant' ? form.title : 'Senior Frontend Engineer',
           avatar: role === 'recruiter'
             ? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face'

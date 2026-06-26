@@ -33,18 +33,34 @@ const recruiterNav: NavItem[] = [
 ]
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { user, setUser, darkMode, toggleDarkMode, sidebarOpen, setSidebarOpen } = useApp()
+  const { user, setUser, darkMode, toggleDarkMode, sidebarOpen, setSidebarOpen, companies, loadingData } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const [searchFocused, setSearchFocused] = useState(false)
 
-  const nav = user?.role === 'recruiter' ? recruiterNav : applicantNav
+  const userCompany = companies.find(c => c.postedBy === user?.id)
+  const companySlug = userCompany?.id || 
+    (user?.company ? user.company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') : 'stripe')
+
+  const dynamicRecruiterNav = recruiterNav.map(item => {
+    if (item.label === 'Company') {
+      return { ...item, path: `/company/${companySlug}` }
+    }
+    return item
+  })
+
+  const nav = user?.role === 'recruiter' ? dynamicRecruiterNav : applicantNav
 
   useEffect(() => {
-    if (user && !user.profileSetupCompleted && location.pathname !== '/profile-setup') {
-      navigate('/profile-setup')
+    if (user && !loadingData) {
+      const needsCompanySetup = user.role === 'recruiter' && !companies.some(c => c.postedBy === user.id)
+      const needsProfileSetup = !user.profileSetupCompleted
+      
+      if ((needsProfileSetup || needsCompanySetup) && location.pathname !== '/profile-setup') {
+        navigate('/profile-setup')
+      }
     }
-  }, [user, location.pathname, navigate])
+  }, [user, companies, loadingData, location.pathname, navigate])
 
   const handleLogout = async () => {
     try {

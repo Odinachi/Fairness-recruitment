@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router'
 import { useApp } from '../context/AppContext'
 import { Layout } from './Layout'
 import {
-  MapPin, Briefcase, GraduationCap, Star, Sparkles, MessageSquare,
+  MapPin, Briefcase, GraduationCap, Star, Sparkles,
   Calendar, ArrowLeft, ExternalLink, Award, TrendingUp, CheckCircle2,
   Brain, Target, Clock, Users, Globe, Github, Linkedin,
 } from 'lucide-react'
@@ -277,12 +277,6 @@ export function CandidateProfile() {
               {/* Recruiter actions */}
               {user?.role === 'recruiter' && (
                 <div className="flex gap-3">
-                  <button
-                    onClick={() => navigate('/messages')}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all group/msg"
-                  >
-                    <MessageSquare size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="transition-transform group-hover/msg:scale-105" /> Send Message
-                  </button>
                   <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors group/cal">
                     <Calendar size={16} strokeWidth={1.75} className="transition-transform group-hover/cal:scale-105" /> Schedule Interview
                   </button>

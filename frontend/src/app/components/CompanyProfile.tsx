@@ -4,7 +4,7 @@ import { Layout } from './Layout'
 import {
   MapPin, Globe, Users, Briefcase, Star, ArrowLeft, Sparkles,
   Building2, ExternalLink, TrendingUp, Award, CheckCircle2,
-  MessageSquare, ChevronRight, Zap, DollarSign, Clock,
+  ChevronRight, Zap, DollarSign, Clock,
   Twitter, Linkedin, Github, Heart,
 } from 'lucide-react'
 import { motion } from 'motion/react'
@@ -12,75 +12,51 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 
-const companies: Record<string, {
-  id: string
-  name: string
-  logo: string
-  tagline: string
-  description: string
-  industry: string
-  size: string
-  founded: string
-  location: string
-  website: string
-  techStack: string[]
-  benefits: string[]
-  culture: string[]
-  rating: number
-  reviews: number
-  growthData: { month: string; headcount: number }[]
-  perks: { icon: string; label: string }[]
-  teamPhotos: string[]
-}> = {
-  stripe: {
-    id: 'stripe',
-    name: 'Stripe',
-    logo: '💳',
-    tagline: 'Financial infrastructure for the internet',
-    description: 'Stripe is a technology company that builds economic infrastructure for the internet. Businesses of every size—from new startups to public companies like Salesforce and Facebook—use our software to accept payments and manage their businesses online.',
-    industry: 'Fintech',
-    size: '5,000–10,000',
-    founded: '2010',
-    location: 'San Francisco, CA',
-    website: 'stripe.com',
-    techStack: ['React', 'TypeScript', 'Ruby', 'Go', 'Kotlin', 'Swift'],
-    benefits: ['$220k+ base salary', 'Top-tier equity', 'Comprehensive health', 'Unlimited PTO', 'Remote-friendly', 'Annual learning budget'],
-    culture: ['Engineering excellence', 'User-first thinking', 'Transparency', 'Diversity & inclusion', 'Continuous learning'],
-    rating: 4.6,
-    reviews: 1240,
-    growthData: [
-      { month: 'Jan', headcount: 4200 },
-      { month: 'Feb', headcount: 4350 },
-      { month: 'Mar', headcount: 4500 },
-      { month: 'Apr', headcount: 4700 },
-      { month: 'May', headcount: 4900 },
-      { month: 'Jun', headcount: 5100 },
-    ],
-    perks: [
-      { icon: '🏥', label: 'Full Health Coverage' },
-      { icon: '🏠', label: 'Home Office Stipend' },
-      { icon: '📚', label: 'Learning Budget' },
-      { icon: '🌎', label: 'Remote-Friendly' },
-      { icon: '💰', label: '401k Matching' },
-      { icon: '🎉', label: 'Annual Retreat' },
-    ],
-    teamPhotos: [
-      'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=300&fit=crop',
-      'https://images.unsplash.com/photo-1556761175-4b46a572b786?w=400&h=300&fit=crop',
-      'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400&h=300&fit=crop',
-    ],
-  },
-}
-
-const defaultCompany = companies.stripe
-
 export function CompanyProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user, jobs } = useApp()
+  const { user, jobs, companies, loadingData } = useApp()
 
-  const company = (id && companies[id]) || defaultCompany
-  const companyJobs = jobs.filter(j => j.company.toLowerCase() === company.name.toLowerCase())
+  // Match by doc ID (slug) or by company name slug
+  const company = companies.find(c =>
+    c.id === id ||
+    c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === id
+  )
+
+  const companyJobs = company
+    ? jobs.filter(j => j.company.toLowerCase() === company.name.toLowerCase())
+    : []
+
+  if (loadingData) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+            <p className="text-sm">Loading company profile…</p>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
+
+  if (!company) {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center justify-center h-[60vh] gap-4 text-muted-foreground">
+          <div className="text-4xl">🏢</div>
+          <h2 className="text-lg font-semibold text-foreground">Company not found</h2>
+          <p className="text-sm max-w-sm text-center">This company page doesn't exist yet. If you're a recruiter, complete your onboarding to create your company profile.</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-all"
+          >
+            <ArrowLeft size={14} strokeWidth={1.75} /> Go back
+          </button>
+        </div>
+      </Layout>
+    )
+  }
 
   return (
     <Layout>
@@ -106,11 +82,13 @@ export function CompanyProfile() {
                   <p className="text-muted-foreground">{company.tagline}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                    <Star size={14} className="text-amber-400 fill-amber-400" />
-                    <span className="text-sm font-semibold text-amber-400">{company.rating}</span>
-                    <span className="text-xs text-muted-foreground">({company.reviews.toLocaleString()} reviews)</span>
-                  </div>
+                  {company.rating > 0 && (
+                    <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                      <Star size={14} className="text-amber-400 fill-amber-400" />
+                      <span className="text-sm font-semibold text-amber-400">{company.rating}</span>
+                      <span className="text-xs text-muted-foreground">({company.reviews?.toLocaleString()} reviews)</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
@@ -129,9 +107,6 @@ export function CompanyProfile() {
                 <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors group/visit">
                   <ExternalLink size={16} strokeWidth={1.75} className="transition-transform group-hover/visit:scale-105" /> Visit Website
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors group/msg">
-                  <MessageSquare size={16} strokeWidth={1.75} className="transition-transform group-hover/msg:scale-105" /> Contact
-                </button>
               </div>
             </div>
           </div>
@@ -146,48 +121,52 @@ export function CompanyProfile() {
               <p className="text-sm text-muted-foreground leading-relaxed">{company.description}</p>
             </div>
 
-            {/* Team photos */}
-            <div className="p-5 rounded-2xl bg-card border border-border">
-              <h2 className="font-semibold mb-4">Life at {company.name}</h2>
-              <div className="grid grid-cols-3 gap-3">
-                {company.teamPhotos.map((photo, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="aspect-video rounded-xl overflow-hidden"
-                  >
-                    <img src={photo} alt={`${company.name} team`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-                  </motion.div>
-                ))}
+            {/* Team photos — only show if photos exist */}
+            {(company as any).teamPhotos?.length > 0 && (
+              <div className="p-5 rounded-2xl bg-card border border-border">
+                <h2 className="font-semibold mb-4">Life at {company.name}</h2>
+                <div className="grid grid-cols-3 gap-3">
+                  {(company as any).teamPhotos.map((photo: string, i: number) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.1 }}
+                      className="aspect-video rounded-xl overflow-hidden"
+                    >
+                      <img src={photo} alt={`${company.name} team`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                    </motion.div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Headcount growth */}
-            <div className="p-5 rounded-2xl bg-card border border-border group/growth">
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp size={16} strokeWidth={1.75} className="text-emerald-400 transition-transform duration-300 group-hover/growth:translate-x-0.5 group-hover/growth:-translate-y-0.5" />
-                <h2 className="font-semibold">Team Growth</h2>
+            {(company as any).growthData?.length > 0 && (
+              <div className="p-5 rounded-2xl bg-card border border-border group/growth">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp size={16} strokeWidth={1.75} className="text-emerald-400 transition-transform duration-300 group-hover/growth:translate-x-0.5 group-hover/growth:-translate-y-0.5" />
+                  <h2 className="font-semibold">Team Growth</h2>
+                </div>
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={(company as any).growthData}>
+                    <defs>
+                      <linearGradient id="growthGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{ background: '#0c1023', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 12, fontSize: 12 }}
+                    />
+                    <Area type="monotone" dataKey="headcount" stroke="#6366f1" fill="url(#growthGrad)" strokeWidth={2} name="Headcount" />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={company.growthData}>
-                  <defs>
-                    <linearGradient id="growthGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{ background: '#0c1023', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 12, fontSize: 12 }}
-                  />
-                  <Area type="monotone" dataKey="headcount" stroke="#6366f1" fill="url(#growthGrad)" strokeWidth={2} name="Headcount" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            )}
 
             {/* Open roles */}
             <div className="p-5 rounded-2xl bg-card border border-border">
@@ -236,62 +215,70 @@ export function CompanyProfile() {
 
           {/* Sidebar */}
           <div className="space-y-5">
-            {/* Culture values */}
-            <div className="p-5 rounded-2xl bg-card border border-border">
-              <h3 className="font-semibold text-sm mb-4 flex items-center gap-2 group/culture">
-                <Zap size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary transition-transform group-hover/culture:scale-110" />
-                Culture & Values
-              </h3>
-              <div className="space-y-2">
-                {company.culture.map(value => (
-                  <div key={value} className="flex items-center gap-2">
-                    <CheckCircle2 size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-emerald-400 flex-shrink-0" />
-                    <span className="text-sm text-muted-foreground">{value}</span>
-                  </div>
-                ))}
+            {/* Culture */}
+            {company.culture?.length > 0 && (
+              <div className="p-5 rounded-2xl bg-card border border-border">
+                <h3 className="font-semibold text-sm mb-4 flex items-center gap-2 group/culture">
+                  <Zap size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary transition-transform group-hover/culture:scale-110" />
+                  Culture & Values
+                </h3>
+                <div className="space-y-2">
+                  {company.culture.map(value => (
+                    <div key={value} className="flex items-center gap-2">
+                      <CheckCircle2 size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-emerald-400 flex-shrink-0" />
+                      <span className="text-sm text-muted-foreground">{value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Benefits */}
-            <div className="p-5 rounded-2xl bg-card border border-border">
-              <h3 className="font-semibold text-sm mb-4 flex items-center gap-2 group/benefits">
-                <Award size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-amber-400 transition-transform group-hover/benefits:scale-110" />
-                Benefits
-              </h3>
-              <div className="space-y-2">
-                {company.benefits.map(benefit => (
-                  <div key={benefit} className="flex items-center gap-2">
-                    <CheckCircle2 size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary flex-shrink-0" />
-                    <span className="text-sm text-muted-foreground">{benefit}</span>
-                  </div>
-                ))}
+            {company.benefits?.length > 0 && (
+              <div className="p-5 rounded-2xl bg-card border border-border">
+                <h3 className="font-semibold text-sm mb-4 flex items-center gap-2 group/benefits">
+                  <Award size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-amber-400 transition-transform group-hover/benefits:scale-110" />
+                  Benefits
+                </h3>
+                <div className="space-y-2">
+                  {company.benefits.map(benefit => (
+                    <div key={benefit} className="flex items-center gap-2">
+                      <CheckCircle2 size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary flex-shrink-0" />
+                      <span className="text-sm text-muted-foreground">{benefit}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Perks */}
-            <div className="p-5 rounded-2xl bg-card border border-border">
-              <h3 className="font-semibold text-sm mb-4">Perks & Offerings</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {company.perks.map(perk => (
-                  <div key={perk.label} className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/40 border border-border">
-                    <span>{perk.icon}</span>
-                    <span className="text-xs font-medium">{perk.label}</span>
-                  </div>
-                ))}
+            {company.perks?.length > 0 && (
+              <div className="p-5 rounded-2xl bg-card border border-border">
+                <h3 className="font-semibold text-sm mb-4">Perks & Offerings</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {company.perks.map(perk => (
+                    <div key={perk.label} className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/40 border border-border">
+                      <span>{perk.icon}</span>
+                      <span className="text-xs font-medium">{perk.label}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Tech stack */}
-            <div className="p-5 rounded-2xl bg-card border border-border">
-              <h3 className="font-semibold text-sm mb-4">Tech Stack</h3>
-              <div className="flex flex-wrap gap-2">
-                {company.techStack.map(tech => (
-                  <span key={tech} className="text-xs px-3 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 font-medium">
-                    {tech}
-                  </span>
-                ))}
+            {company.techStack?.length > 0 && (
+              <div className="p-5 rounded-2xl bg-card border border-border">
+                <h3 className="font-semibold text-sm mb-4">Tech Stack</h3>
+                <div className="flex flex-wrap gap-2">
+                  {company.techStack.map(tech => (
+                    <span key={tech} className="text-xs px-3 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 font-medium">
+                      {tech}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Social */}
             <div className="p-5 rounded-2xl bg-card border border-border">
