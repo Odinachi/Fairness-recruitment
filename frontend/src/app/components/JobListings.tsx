@@ -60,6 +60,9 @@ export function JobListings() {
   const filtered = useMemo(() => {
     return jobs
       .filter(j => {
+        if (user && user.role === 'recruiter') {
+          if (j.postedBy !== user.id) return false
+        }
         if (filterParam === 'saved' && !savedJobs.includes(j.id)) return false
 
         const matchesSearch = !search || j.title.toLowerCase().includes(search.toLowerCase()) || j.company.toLowerCase().includes(search.toLowerCase()) || j.skills.some(s => s.toLowerCase().includes(search.toLowerCase()))
@@ -73,7 +76,7 @@ export function JobListings() {
         if (sortBy === 'salary') return b.salaryMax - a.salaryMax
         return 0
       })
-  }, [search, activeCategory, activeRemote, activeLevel, sortBy, filterParam, savedJobs])
+  }, [jobs, user, search, activeCategory, activeRemote, activeLevel, sortBy, filterParam, savedJobs])
 
   const toggleSave = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -102,6 +105,8 @@ export function JobListings() {
           <h1 className="mb-1" style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.75rem', fontWeight: 700 }}>
             {filterParam === 'saved' ? (
               <span>Your Saved Jobs <span className="text-primary">({filtered.length})</span></span>
+            ) : user?.role === 'recruiter' ? (
+              <span>Your Job Postings <span className="text-primary">({filtered.length})</span></span>
             ) : user ? (
               <span>Your AI-Matched Jobs <span className="text-primary">({filtered.length})</span></span>
             ) : (
@@ -111,6 +116,8 @@ export function JobListings() {
           <p className="text-sm text-muted-foreground">
             {filterParam === 'saved'
               ? 'Keep track of positions you have bookmarked'
+              : user?.role === 'recruiter'
+              ? 'Manage, update, and track your active job listings'
               : user
               ? 'Ranked by AI match score based on your skills, experience, and career goals'
               : 'Find your next opportunity from thousands of vetted companies'
@@ -234,9 +241,9 @@ export function JobListings() {
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm text-muted-foreground">
             Showing <span className="font-medium text-foreground">{filtered.length}</span> jobs
-            {user && ` · Ranked by AI match score`}
+            {user && user.role !== 'recruiter' && ` · Ranked by AI match score`}
           </span>
-          {user && (
+          {user && user.role !== 'recruiter' && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               AI matching active
@@ -278,7 +285,7 @@ export function JobListings() {
                 </div>
               </div>
 
-              {user && (
+              {user && user.role !== 'recruiter' && (
                 <div className="mb-3">
                   <MatchBadge match={job.match} />
                 </div>
@@ -320,28 +327,39 @@ export function JobListings() {
               </div>
 
               <div className="flex items-center gap-2 pt-3 border-t border-border">
-                <button
-                  onClick={e => handleApply(job.id, e)}
-                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all duration-200 group/apply ${
-                    appliedJobs.includes(job.id)
-                      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-primary text-white hover:bg-primary/90 shadow-sm shadow-primary/20 hover:scale-[1.01]'
-                  }`}
-                >
-                  {appliedJobs.includes(job.id) ? 'Applied' : user ? '⚡ AI Apply' : 'Apply Now'}
-                </button>
-                <button
-                  onClick={e => toggleSave(job.id, e)}
-                  className="p-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 flex-shrink-0 group/bookmark"
-                >
-                  <Bookmark size={14} strokeWidth={1.75} fill={savedJobs.includes(job.id) ? 'currentColor' : 'none'} className={`transition-all duration-200 group-hover/bookmark:scale-110 ${savedJobs.includes(job.id) ? 'text-primary fill-primary' : 'text-muted-foreground'}`} />
-                </button>
-                <button
-                  onClick={e => { e.stopPropagation(); navigate(`/jobs/${job.id}`) }}
-                  className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground border border-border hover:border-primary/30 hover:text-primary transition-colors"
-                >
-                  <ArrowUpRight size={15} />
-                </button>
+                {user?.role === 'recruiter' ? (
+                  <button
+                    onClick={e => { e.stopPropagation(); navigate(`/jobs/${job.id}`) }}
+                    className="flex-1 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-primary/90 shadow-sm shadow-primary/20 hover:scale-[1.01] text-center"
+                  >
+                    View Details & Applicants
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={e => handleApply(job.id, e)}
+                      className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all duration-200 group/apply ${
+                        appliedJobs.includes(job.id)
+                          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                          : 'bg-primary text-white hover:bg-primary/90 shadow-sm shadow-primary/20 hover:scale-[1.01]'
+                      }`}
+                    >
+                      {appliedJobs.includes(job.id) ? 'Applied' : user ? '⚡ AI Apply' : 'Apply Now'}
+                    </button>
+                    <button
+                      onClick={e => toggleSave(job.id, e)}
+                      className="p-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 flex-shrink-0 group/bookmark"
+                    >
+                      <Bookmark size={14} strokeWidth={1.75} fill={savedJobs.includes(job.id) ? 'currentColor' : 'none'} className={`transition-all duration-200 group-hover/bookmark:scale-110 ${savedJobs.includes(job.id) ? 'text-primary fill-primary' : 'text-muted-foreground'}`} />
+                    </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); navigate(`/jobs/${job.id}`) }}
+                      className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground border border-border hover:border-primary/30 hover:text-primary transition-colors"
+                    >
+                      <ArrowUpRight size={15} />
+                    </button>
+                  </>
+                )}
               </div>
 
               <div className="text-xs text-muted-foreground mt-2 text-center">
@@ -357,13 +375,27 @@ export function JobListings() {
               <Search size={24} className="text-muted-foreground" />
             </div>
             <h3 className="font-semibold mb-2">No jobs found</h3>
-            <p className="text-sm text-muted-foreground mb-4">Try adjusting your filters or search terms</p>
-            <button
-              onClick={() => { setSearch(''); setActiveCategory('All'); setActiveRemote('All'); setActiveLevel('All') }}
-              className="px-4 py-2 text-sm bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors"
-            >
-              Clear All Filters
-            </button>
+            {user?.role === 'recruiter' && jobs.filter(j => j.postedBy === user.id).length === 0 ? (
+              <>
+                <p className="text-sm text-muted-foreground mb-4">You haven't posted any job openings yet.</p>
+                <button
+                  onClick={() => navigate('/post-job')}
+                  className="px-4 py-2 text-sm bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors"
+                >
+                  Post a New Job
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground mb-4">Try adjusting your filters or search terms</p>
+                <button
+                  onClick={() => { setSearch(''); setActiveCategory('All'); setActiveRemote('All'); setActiveLevel('All') }}
+                  className="px-4 py-2 text-sm bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors"
+                >
+                  Clear All Filters
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

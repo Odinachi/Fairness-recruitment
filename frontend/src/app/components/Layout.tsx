@@ -38,7 +38,10 @@ export function Layout({ children }: { children: ReactNode }) {
   const location = useLocation()
   const [searchFocused, setSearchFocused] = useState(false)
 
-  const userCompany = companies.find(c => c.postedBy === user?.id)
+  const userCompany = companies.find(c => 
+    c.postedBy === user?.id || 
+    (user?.company && (c.id === user.company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || c.name.toLowerCase() === user.company.toLowerCase()))
+  )
   const companySlug = userCompany?.id || 
     (user?.company ? user.company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') : 'stripe')
 
@@ -53,7 +56,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user && !loadingData) {
-      const needsCompanySetup = user.role === 'recruiter' && !companies.some(c => c.postedBy === user.id)
+      const needsCompanySetup = user.role === 'recruiter' && !user.company && !companies.some(c => c.postedBy === user.id)
       const needsProfileSetup = !user.profileSetupCompleted
       
       if ((needsProfileSetup || needsCompanySetup) && location.pathname !== '/profile-setup') {

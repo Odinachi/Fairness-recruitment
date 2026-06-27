@@ -20,7 +20,7 @@ export function CompanyProfile() {
   // Match by doc ID (slug) or by company name slug
   const company = companies.find(c =>
     c.id === id ||
-    c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === id
+    c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') === id
   )
 
   const companyJobs = company
@@ -41,18 +41,33 @@ export function CompanyProfile() {
   }
 
   if (!company) {
+    const isUserRecruiter = user?.role === 'recruiter'
     return (
       <Layout>
         <div className="flex flex-col items-center justify-center h-[60vh] gap-4 text-muted-foreground">
           <div className="text-4xl">🏢</div>
           <h2 className="text-lg font-semibold text-foreground">Company not found</h2>
-          <p className="text-sm max-w-sm text-center">This company page doesn't exist yet. If you're a recruiter, complete your onboarding to create your company profile.</p>
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-all"
-          >
-            <ArrowLeft size={14} strokeWidth={1.75} /> Go back
-          </button>
+          <p className="text-sm max-w-sm text-center">
+            {isUserRecruiter
+              ? "Your company profile page doesn't exist yet or is still loading. You can set up or update your company profile in Settings."
+              : "This company page doesn't exist yet. If you're a recruiter, complete your onboarding to create your company profile."}
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-all"
+            >
+              <ArrowLeft size={14} strokeWidth={1.75} /> Go back
+            </button>
+            {isUserRecruiter && (
+              <button
+                onClick={() => navigate('/settings')}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-all"
+              >
+                Go to Settings
+              </button>
+            )}
+          </div>
         </div>
       </Layout>
     )

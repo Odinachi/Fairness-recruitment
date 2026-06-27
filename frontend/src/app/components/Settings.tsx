@@ -14,7 +14,10 @@ export function Settings() {
   const { user, setUser, darkMode, toggleDarkMode, companies } = useApp()
   const [saved, setSaved] = useState(false)
 
-  const userCompany = companies.find(c => c.postedBy === user?.id)
+  const userCompany = companies.find(c => 
+    c.postedBy === user?.id || 
+    (user?.company && (c.id === user.company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || c.name.toLowerCase() === user.company.toLowerCase()))
+  )
 
   const [profileForm, setProfileForm] = useState({
     name: user?.name || '',

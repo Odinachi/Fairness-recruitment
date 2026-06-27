@@ -53,7 +53,7 @@ export function ProfileSetup() {
     if (!user) {
       navigate('/auth')
     } else if (user.profileSetupCompleted && !loadingData) {
-      const needsCompanySetup = user.role === 'recruiter' && !companies.some(c => c.postedBy === user.id)
+      const needsCompanySetup = user.role === 'recruiter' && !user.company && !companies.some(c => c.postedBy === user.id)
       if (!needsCompanySetup) {
         // If profile is already complete and no company setup is needed, redirect to dashboard
         navigate(user.role === 'recruiter' ? '/app/recruiter' : '/app/applicant')
@@ -186,7 +186,7 @@ export function ProfileSetup() {
       role: user.role,
       avatar: user.avatar,
       title: user.role === 'applicant' ? (user.title || form.roleLevel + ' Engineer') : user.title,
-      company: user.company,
+      company: user.role === 'recruiter' ? form.companyName.trim() : user.company,
       location: form.location,
       bio: form.bio,
       website: form.website,
@@ -226,13 +226,9 @@ export function ProfileSetup() {
 
     toast.success('Onboarding complete! Welcome to Jobnatics AI.')
 
-    // Update global app state
     setUser({
       ...user,
-      location: form.location,
-      bio: form.bio,
-      title: updatedProfile.title,
-      profileSetupCompleted: true,
+      ...updatedProfile,
     })
 
     // Redirect to dashboard
