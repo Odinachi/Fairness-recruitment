@@ -113,6 +113,8 @@ stemmer = PorterStemmer()
 
 df_jobs_pool = None
 df_resumes_pool = None
+resumes_vectorizer = None
+resumes_tfidf_matrix = None
 optimizer_a = None
 optimizer_b = None
 optimizer_c = None
@@ -145,6 +147,7 @@ def preprocess_text(text: str) -> str:
 @app.on_event("startup")
 def load_all():
     global df_jobs_pool, df_resumes_pool, optimizer_a, optimizer_b, optimizer_c
+    global resumes_vectorizer, resumes_tfidf_matrix
 
     data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
 
@@ -182,8 +185,19 @@ def load_all():
     # Load resumes
     resumes_path = os.path.join(data_dir, "resumes_clean.csv")
     if os.path.exists(resumes_path):
-        df_resumes_pool = pd.read_csv(resumes_path)
-        print(f"Loaded {len(df_resumes_pool)} resumes from resumes_clean.csv")
+        # Limit to 5000 resumes for local/free-tier memory efficiency and speed
+        df_resumes_pool = pd.read_csv(resumes_path).head(5000).copy()
+        # Seed deterministic mock demographic groups (0 and 1) for fairness evaluation
+        np.random.seed(42)
+        df_resumes_pool['demographic_group'] = np.random.choice([0, 1], size=len(df_resumes_pool))
+        
+        # Fit TF-IDF on resumes
+        try:
+            resumes_vectorizer = TfidfVectorizer(min_df=2, max_df=0.85, ngram_range=(1, 2))
+            resumes_tfidf_matrix = resumes_vectorizer.fit_transform(df_resumes_pool['Resume_clean'].fillna(''))
+            print(f"Loaded {len(df_resumes_pool)} resumes and precomputed TF-IDF matrix.")
+        except Exception as e:
+            print(f"WARNING: TF-IDF vectorization failed: {e}")
     else:
         print("WARNING: resumes_clean.csv not found.")
         df_resumes_pool = pd.DataFrame()
@@ -245,6 +259,10 @@ class BatchPayload(BaseModel):
     candidates: List[BatchCandidate]
 
 
+class JobPayload(BaseModel):
+    job_description: str
+
+
 # ── Endpoint 1: Health check ───────────────────────────────────────────────────
 
 @app.get("/")
@@ -263,6 +281,7 @@ def health_check():
         "endpoints": {
             "individual_match": "POST /api/match",
             "batch_match":      "POST /api/batch-match",
+            "job_match":        "POST /api/match-job",
             "fairness_metrics": "GET  /api/fairness-metrics"
         }
     }
@@ -500,6 +519,156 @@ def batch_match(payload: BatchPayload):
                     )
                 }
                 for _, row in df_batch.iterrows()
+            ]
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Endpoint 5: Match job description against candidates ──────────────────────
+
+@app.post("/api/match-job")
+def match_job(payload: JobPayload):
+    """
+    Ranks candidates against a provided job description.
+    Applies live demographic parity checks and fairness correction if needed.
+    """
+    if df_resumes_pool is None or df_resumes_pool.empty:
+        raise HTTPException(status_code=500, detail="Resumes pool is not loaded.")
+    if resumes_vectorizer is None or resumes_tfidf_matrix is None:
+        raise HTTPException(status_code=500, detail="Resumes TF-IDF structures are not initialized.")
+
+    try:
+        # Preprocess the job description text
+        clean_job_desc = preprocess_text(payload.job_description)
+        if not clean_job_desc:
+            raise HTTPException(status_code=400, detail="Invalid or empty job description.")
+
+        # Compute TF-IDF vector for the job description
+        job_tfidf = resumes_vectorizer.transform([clean_job_desc])
+        
+        # Calculate cosine similarity with all resumes in the pool
+        scores = cosine_similarity(job_tfidf, resumes_tfidf_matrix).flatten()
+        # Clean potential NaN values from cosine similarity division by zero
+        scores = np.nan_to_num(scores, nan=0.0)
+        
+        # Build results DataFrame
+        df_results = df_resumes_pool.copy()
+        df_results['score'] = scores
+        df_results['base_outcome'] = (df_results['score'] >= BASE_THRESHOLD).astype(int)
+
+        # Evaluate fairness on the top 100 highest scoring candidates to see cohort-level parity
+        df_top_cohort = df_results.sort_values(by='score', ascending=False).head(100).copy()
+
+        # Compute DPD and DIR before correction on the top cohort
+        dpd_before = float(demographic_parity_difference(
+            y_true=df_top_cohort['base_outcome'],
+            y_pred=df_top_cohort['base_outcome'],
+            sensitive_features=df_top_cohort['demographic_group']
+        ))
+        if np.isnan(dpd_before):
+            dpd_before = 0.0
+
+        dir_before = float(demographic_parity_ratio(
+            y_true=df_top_cohort['base_outcome'],
+            y_pred=df_top_cohort['base_outcome'],
+            sensitive_features=df_top_cohort['demographic_group']
+        ))
+        if np.isnan(dir_before):
+            dir_before = 1.0
+
+        violation = dpd_before > 0.10 or dir_before < 0.80
+        correction_applied = False
+        optimizer_used = "none"
+
+        # Apply ThresholdOptimizer if a violation exists
+        unique_groups = df_top_cohort['demographic_group'].nunique()
+        unique_outcomes = df_top_cohort['base_outcome'].nunique()
+
+        if violation and unique_outcomes > 1:
+            if unique_groups == 2 and optimizer_b is not None:
+                chosen = optimizer_b
+                optimizer_used = "optimizer_b (gender imbalanced)"
+            elif unique_groups > 2 and optimizer_c is not None:
+                chosen = optimizer_c
+                optimizer_used = "optimizer_c (profession groups)"
+            elif optimizer_a is not None:
+                chosen = optimizer_a
+                optimizer_used = "optimizer_a (gender balanced, fallback)"
+            else:
+                chosen = None
+
+            if chosen is not None:
+                X = df_top_cohort['score'].values.reshape(-1, 1)
+                sensitive = df_top_cohort['demographic_group'].values
+                try:
+                    corrected = chosen.predict(X, sensitive_features=sensitive)
+                    df_top_cohort['fair_outcome'] = corrected
+                    correction_applied = True
+                except Exception:
+                    df_top_cohort['fair_outcome'] = df_top_cohort['base_outcome']
+            else:
+                df_top_cohort['fair_outcome'] = df_top_cohort['base_outcome']
+        else:
+            df_top_cohort['fair_outcome'] = df_top_cohort['base_outcome']
+
+        # Recalculate metrics after correction
+        dpd_after = float(demographic_parity_difference(
+            y_true=df_top_cohort['fair_outcome'],
+            y_pred=df_top_cohort['fair_outcome'],
+            sensitive_features=df_top_cohort['demographic_group']
+        ))
+        if np.isnan(dpd_after):
+            dpd_after = 0.0
+
+        dir_after = float(demographic_parity_ratio(
+            y_true=df_top_cohort['fair_outcome'],
+            y_pred=df_top_cohort['fair_outcome'],
+            sensitive_features=df_top_cohort['demographic_group']
+        ))
+        if np.isnan(dir_after):
+            dir_after = 1.0
+
+        # Sort the top cohort to return the top 10 recommended candidates
+        top_candidates = df_top_cohort.sort_values(
+            by=['fair_outcome', 'score'], ascending=[False, False]
+        ).head(10)
+
+        return {
+            "cohort_size": len(df_top_cohort),
+            "fairness_correction_applied": correction_applied,
+            "optimizer_used": optimizer_used,
+            "fairness_metrics": {
+                "before_correction": {
+                    "DPD": round(dpd_before, 4),
+                    "DIR": round(dir_before, 4),
+                    "DPD_status": "PASS" if dpd_before <= 0.10 else "FLAG",
+                    "DIR_status": "PASS" if dir_before >= 0.80 else "FLAG"
+                },
+                "after_correction": {
+                    "DPD": round(dpd_after, 4),
+                    "DIR": round(dir_after, 4),
+                    "DPD_status": "PASS" if dpd_after <= 0.10 else "FLAG",
+                    "DIR_status": "PASS" if dir_after >= 0.80 else "FLAG"
+                },
+                "thresholds": {
+                    "DPD_threshold": 0.10,
+                    "DIR_threshold": 0.80
+                }
+            },
+            "candidates": [
+                {
+                    "rank": i + 1,
+                    "category": str(row['Category']) if pd.notna(row['Category']) else "",
+                    "resume_snippet": (str(row['Resume'])[:200].replace("\n", " ").strip() + "...") if pd.notna(row['Resume']) else "",
+                    "demographic_group": int(row['demographic_group']),
+                    "similarity_score": round(float(row['score']), 4),
+                    "shortlisted_base": bool(row['base_outcome']),
+                    "shortlisted_fair": bool(row['fair_outcome']),
+                    "reranked": bool(row['fair_outcome'] != row['base_outcome'])
+                }
+                for i, (_, row) in enumerate(top_candidates.iterrows())
             ]
         }
 
