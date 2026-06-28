@@ -123,8 +123,8 @@ export function ProfileSetup() {
       if (user.role === 'applicant' && form.github && (!isValidUrl(form.github) || !form.github.includes('github.com'))) {
         newErrors.github = 'Please enter a valid GitHub URL (containing github.com).'
       }
-    } else if (step === 3 && user.role === 'recruiter') {
-      // step 3 for recruiters = company details
+    } else if (step === 4 && user.role === 'recruiter') {
+      // step 4 for recruiters = company details
       if (!form.companyName.trim()) newErrors.companyName = 'Company name is required.'
       if (!form.companyDescription.trim() || form.companyDescription.trim().length < 20) {
         newErrors.companyDescription = 'Please write at least 20 characters describing your company.'
@@ -149,6 +149,20 @@ export function ProfileSetup() {
   const totalSteps = user.role === 'recruiter' ? 4 : 3
 
   const handleFinish = async () => {
+    // Validate recruiter company details on the final step
+    if (user.role === 'recruiter') {
+      const newErrors: Record<string, string> = {}
+      if (!form.companyName.trim()) newErrors.companyName = 'Company name is required.'
+      if (!form.companyDescription.trim() || form.companyDescription.trim().length < 20) {
+        newErrors.companyDescription = 'Please write at least 20 characters describing your company.'
+      }
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors)
+        toast.error('Please fix the validation errors before continuing.')
+        return
+      }
+    }
+
     setLoading(true)
     await new Promise(resolve => setTimeout(resolve, 1500))
 

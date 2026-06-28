@@ -116,9 +116,7 @@ export function CompanyProfile() {
                 </a>
               </div>
               <div className="flex gap-3">
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all group/follow">
-                  <Heart size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="transition-transform group-hover/follow:scale-110" /> Follow
-                </button>
+
                 <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors group/visit">
                   <ExternalLink size={16} strokeWidth={1.75} className="transition-transform group-hover/visit:scale-105" /> Visit Website
                 </button>
