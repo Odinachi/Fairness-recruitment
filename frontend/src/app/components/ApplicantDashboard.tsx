@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useApp } from '../context/AppContext'
 import { Layout } from './Layout'
@@ -160,19 +160,28 @@ export function ApplicantDashboard() {
 
   const [savedJobs, setSavedJobs] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('jobnatics_saved_jobs')
+      const saved = localStorage.getItem(user ? `jobnatics_saved_jobs_${user.id}` : 'jobnatics_saved_jobs_guest')
       return saved ? JSON.parse(saved) : []
     } catch {
       return []
     }
   })
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(user ? `jobnatics_saved_jobs_${user.id}` : 'jobnatics_saved_jobs_guest')
+      setSavedJobs(saved ? JSON.parse(saved) : [])
+    } catch {
+      setSavedJobs([])
+    }
+  }, [user])
+
   const topJobs = jobs.slice(0, 5)
 
   const toggleSave = (id: string) => {
     setSavedJobs(prev => {
       const updated = prev.includes(id) ? prev.filter(j => j !== id) : [...prev, id]
-      localStorage.setItem('jobnatics_saved_jobs', JSON.stringify(updated))
+      localStorage.setItem(user ? `jobnatics_saved_jobs_${user.id}` : 'jobnatics_saved_jobs_guest', JSON.stringify(updated))
       return updated
     })
   }

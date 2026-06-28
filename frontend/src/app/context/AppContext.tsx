@@ -184,7 +184,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       snapshot.forEach(docSnap => {
         list.push({ ...docSnap.data(), id: docSnap.id })
       })
-      setApplicantApplications(list)
+      // Only display applications belonging to the logged-in user
+      setApplicantApplications(list.filter(a => a.userId === user?.id))
     }, err => console.error('Error listening to applicantApplications:', err))
 
     const unsubApplicationChartData = onSnapshot(collection(db, 'applicationChartData'), (snapshot) => {

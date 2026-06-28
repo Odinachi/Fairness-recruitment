@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useApp } from '../context/AppContext'
 import { Layout } from './Layout'
@@ -41,7 +41,7 @@ export function JobListings() {
 
   const [savedJobs, setSavedJobs] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('jobnatics_saved_jobs')
+      const saved = localStorage.getItem(user ? `jobnatics_saved_jobs_${user.id}` : 'jobnatics_saved_jobs_guest')
       return saved ? JSON.parse(saved) : []
     } catch {
       return []
@@ -50,12 +50,24 @@ export function JobListings() {
 
   const [appliedJobs, setAppliedJobs] = useState<string[]>(() => {
     try {
-      const applied = localStorage.getItem('jobnatics_applied_jobs')
+      const applied = localStorage.getItem(user ? `jobnatics_applied_jobs_${user.id}` : 'jobnatics_applied_jobs_guest')
       return applied ? JSON.parse(applied) : []
     } catch {
       return []
     }
   })
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(user ? `jobnatics_saved_jobs_${user.id}` : 'jobnatics_saved_jobs_guest')
+      setSavedJobs(saved ? JSON.parse(saved) : [])
+      const applied = localStorage.getItem(user ? `jobnatics_applied_jobs_${user.id}` : 'jobnatics_applied_jobs_guest')
+      setAppliedJobs(applied ? JSON.parse(applied) : [])
+    } catch {
+      setSavedJobs([])
+      setAppliedJobs([])
+    }
+  }, [user])
 
   const filtered = useMemo(() => {
     return jobs
@@ -82,7 +94,7 @@ export function JobListings() {
     e.stopPropagation()
     setSavedJobs(prev => {
       const updated = prev.includes(id) ? prev.filter(j => j !== id) : [...prev, id]
-      localStorage.setItem('jobnatics_saved_jobs', JSON.stringify(updated))
+      localStorage.setItem(user ? `jobnatics_saved_jobs_${user.id}` : 'jobnatics_saved_jobs_guest', JSON.stringify(updated))
       return updated
     })
   }
@@ -92,7 +104,7 @@ export function JobListings() {
     setAppliedJobs(prev => {
       if (prev.includes(id)) return prev
       const updated = [...prev, id]
-      localStorage.setItem('jobnatics_applied_jobs', JSON.stringify(updated))
+      localStorage.setItem(user ? `jobnatics_applied_jobs_${user.id}` : 'jobnatics_applied_jobs_guest', JSON.stringify(updated))
       return updated
     })
   }

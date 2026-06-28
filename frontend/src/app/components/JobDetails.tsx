@@ -7,7 +7,7 @@ import {
   Star, Zap, Globe, MessageSquare, CalendarDays, Award,
   ChevronRight, Brain, Target,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 
 const matchBreakdown = [
@@ -22,18 +22,87 @@ const matchBreakdown = [
 export function JobDetails() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user, jobs, loadingData } = useApp()
+  const { user, jobs, applicantApplications, loadingData, addApplicantApplication } = useApp()
   const [saved, setSaved] = useState(false)
   const [applied, setApplied] = useState(false)
   const [applyLoading, setApplyLoading] = useState(false)
 
   const job = jobs.find(j => j.id === id)
 
+  // Initialize and sync saved state
+  useEffect(() => {
+    if (user && id) {
+      try {
+        const savedList = localStorage.getItem(`jobnatics_saved_jobs_${user.id}`)
+        setSaved(savedList ? JSON.parse(savedList).includes(id) : false)
+      } catch {
+        setSaved(false)
+      }
+    } else {
+      setSaved(false)
+    }
+  }, [user, id])
+
+  // Sync applied state with Firestore applications
+  useEffect(() => {
+    if (user && job && applicantApplications) {
+      const hasApplied = applicantApplications.some(
+        a => a.jobId === job.id && a.userId === user.id
+      )
+      setApplied(hasApplied)
+    } else {
+      setApplied(false)
+    }
+  }, [user, job, applicantApplications])
+
+  const handleToggleSave = () => {
+    if (!user) {
+      navigate('/auth')
+      return
+    }
+    const storageKey = `jobnatics_saved_jobs_${user.id}`
+    try {
+      const savedListStr = localStorage.getItem(storageKey)
+      let savedList: string[] = savedListStr ? JSON.parse(savedListStr) : []
+      if (savedList.includes(id!)) {
+        savedList = savedList.filter(item => item !== id)
+        setSaved(false)
+      } else {
+        savedList.push(id!)
+        setSaved(true)
+      }
+      localStorage.setItem(storageKey, JSON.stringify(savedList))
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   const handleApply = async () => {
+    if (!user || !job) {
+      navigate('/auth')
+      return
+    }
     setApplyLoading(true)
-    await new Promise(r => setTimeout(r, 1500))
-    setApplied(true)
-    setApplyLoading(false)
+    const appDoc = {
+      id: `${job.id}_${user.id}`,
+      userId: user.id,
+      jobId: job.id,
+      job: job.title,
+      company: job.company,
+      logo: job.companyLogo || '💼',
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      match: job.match || 75,
+      stage: 'Applied',
+      status: 'applied'
+    }
+    try {
+      await addApplicantApplication(appDoc)
+      setApplied(true)
+    } catch (err) {
+      console.error('Error applying:', err)
+    } finally {
+      setApplyLoading(false)
+    }
   }
 
   if (loadingData) {
@@ -105,7 +174,7 @@ export function JobDetails() {
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
                   <button
-                    onClick={() => setSaved(!saved)}
+                    onClick={handleToggleSave}
                     className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all group/bookmark ${
                       saved ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/30 hover:bg-muted'
                     }`}

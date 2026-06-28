@@ -45,20 +45,71 @@ const stageLabels: Record<string, string> = {
 
 export function RecruiterDashboard() {
   const {
-    user, candidates, recruiterHiringData, recruiterJobPostings,
+    user, jobs, candidates, recruiterHiringData, recruiterJobPostings,
     sourceData, monthlyHireData
   } = useApp()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
 
-  const activeTab = (tabParam === 'candidates' || tabParam === 'analytics') ? tabParam : 'overview'
+  const activeTab = (tabParam === 'candidates' || tabParam === 'analytics' || tabParam === 'match') ? tabParam : 'overview'
 
-  const setActiveTab = (newTab: 'overview' | 'candidates' | 'analytics') => {
+  const setActiveTab = (newTab: 'overview' | 'candidates' | 'analytics' | 'match') => {
     if (newTab === 'overview') {
       setSearchParams({})
     } else {
       setSearchParams({ tab: newTab })
+    }
+  }
+
+  const [selectedJobId, setSelectedJobId] = useState<string>('')
+  const [customJobDescription, setCustomJobDescription] = useState<string>('')
+  const [matchingResults, setMatchingResults] = useState<any | null>(null)
+  const [matchingLoading, setMatchingLoading] = useState<boolean>(false)
+  const [matchingError, setMatchingError] = useState<string | null>(null)
+
+  // Auto-populate customJobDescription when selectedJobId changes
+  useEffect(() => {
+    if (selectedJobId) {
+      const selected = jobs.find(j => j.id === selectedJobId)
+      if (selected) {
+        setCustomJobDescription(
+          `Job Title: ${selected.title}\nCompany: ${selected.company}\n\nDescription:\n${selected.description}\n\nRequirements:\n${selected.requirements?.join('\n') || ''}`
+        )
+      }
+    } else {
+      setCustomJobDescription('')
+    }
+  }, [selectedJobId, jobs])
+
+  const handleMatchCandidates = async () => {
+    if (!customJobDescription.trim()) return
+
+    setMatchingLoading(true)
+    setMatchingError(null)
+    setMatchingResults(null)
+
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/match-job', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          job_description: customJobDescription,
+        }),
+      })
+
+      if (!res.ok) {
+        throw new Error(`Server returned status ${res.status}`)
+      }
+
+      const data = await res.json()
+      setMatchingResults(data)
+    } catch (err: any) {
+      setMatchingError(err.message || 'An error occurred during matching.')
+    } finally {
+      setMatchingLoading(false)
     }
   }
 
@@ -146,14 +197,14 @@ export function RecruiterDashboard() {
 
         {/* Tab navigation */}
         <div className="flex gap-6 mb-8 border-b border-border/30 pb-px">
-          {(['overview', 'candidates', 'analytics'] as const).map(tab => (
+          {(['overview', 'candidates', 'analytics', 'match'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`pb-3 text-xs font-bold uppercase tracking-wider transition-all relative ${activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
-              {tab}
+              {tab === 'match' ? 'AI Candidate Matcher' : tab}
               {activeTab === tab && (
                 <motion.div
                   layoutId="activeTabUnderline"
@@ -505,6 +556,276 @@ export function RecruiterDashboard() {
               </ResponsiveContainer>
             </div>
 
+          </div>
+        )}
+
+        {activeTab === 'match' && (
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              
+              {/* Left Column: Job Selector & Description Input */}
+              <div className="lg:col-span-1 space-y-6">
+                <div className="p-5 rounded-xl bg-card border border-border/30 flex flex-col space-y-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Briefcase size={16} className="text-primary" />
+                    <h3 className="text-sm font-bold text-foreground">Select Job Posting</h3>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-2">
+                      Choose Active Role
+                    </label>
+                    <select
+                      value={selectedJobId}
+                      onChange={(e) => setSelectedJobId(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs font-semibold text-foreground focus:outline-none focus:border-primary transition-colors"
+                    >
+                      <option value="" className="bg-card text-muted-foreground">-- Custom Search / Paste Description --</option>
+                      {jobs.map((job) => (
+                        <option key={job.id} value={job.id} className="bg-card text-foreground">
+                          {job.title} ({job.company})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col flex-1">
+                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-2">
+                      Job Description & Requirements
+                    </label>
+                    <textarea
+                      value={customJobDescription}
+                      onChange={(e) => setCustomJobDescription(e.target.value)}
+                      placeholder="Paste details of the role here to find relevant, fair-aware candidates..."
+                      rows={12}
+                      className="w-full flex-1 rounded-lg border border-border bg-muted/20 p-3 text-xs text-foreground focus:outline-none focus:border-primary transition-all resize-none placeholder-muted-foreground/60 leading-relaxed"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleMatchCandidates}
+                    disabled={matchingLoading || !customJobDescription.trim()}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-white text-xs font-bold transition-all shadow-md active:scale-[0.98]"
+                  >
+                    {matchingLoading ? (
+                      <>
+                        <RefreshCw size={13} className="animate-spin" />
+                        Analyzing Cohort...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={13} />
+                        Find Fair-Aware Matches
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Column: Fairness Dashboard & Matches */}
+              <div className="lg:col-span-2 space-y-8">
+                
+                {matchingLoading && (
+                  <div className="flex flex-col items-center justify-center p-12 rounded-xl bg-card border border-border/30 h-96 text-center space-y-4">
+                    <div className="w-10 h-10 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+                    <p className="text-xs text-muted-foreground font-semibold">Running TF-IDF similarity mapping and fairness ThresholdOptimizer...</p>
+                  </div>
+                )}
+
+                {matchingError && (
+                  <div className="p-5 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 flex items-start gap-3">
+                    <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="text-xs font-bold uppercase mb-1">Server Error</h4>
+                      <p className="text-xs leading-relaxed">{matchingError}</p>
+                    </div>
+                  </div>
+                )}
+
+                {!matchingResults && !matchingLoading && !matchingError && (
+                  <div className="flex flex-col items-center justify-center p-12 rounded-xl bg-card border border-border/30 h-96 text-center text-muted-foreground space-y-3">
+                    <Brain size={40} className="stroke-[1.25] text-muted-foreground/40" />
+                    <div>
+                      <h4 className="text-xs font-bold uppercase text-foreground mb-1">Interactive AI Candidate Matcher</h4>
+                      <p className="text-xs max-w-sm mt-1 leading-relaxed">Select or paste a job description on the left to scan your candidates pool and evaluate Demographic Parity.</p>
+                    </div>
+                  </div>
+                )}
+
+                {matchingResults && !matchingLoading && (
+                  <div className="space-y-6">
+                    
+                    {/* Cohort Fairness Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      
+                      {/* DPD Card */}
+                      <div className="p-5 rounded-xl bg-card border border-border/30 relative overflow-hidden group">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground">Demographic Parity Difference (DPD)</span>
+                          <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${
+                            matchingResults.fairness_metrics.after_correction.DPD <= 0.10
+                              ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
+                              : 'bg-red-500/5 text-red-400 border-red-500/10'
+                          }`}>
+                            {matchingResults.fairness_metrics.after_correction.DPD_status}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-baseline gap-4 mt-2">
+                          <div>
+                            <div className="text-[10px] text-muted-foreground">Before</div>
+                            <div className="text-lg font-semibold text-muted-foreground/70" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                              {(matchingResults.fairness_metrics.before_correction.DPD * 100).toFixed(1)}%
+                            </div>
+                          </div>
+                          <ChevronRight size={14} className="text-muted-foreground/30 mb-0.5" />
+                          <div>
+                            <div className="text-[10px] text-primary">After (Fair-Aware)</div>
+                            <div className="text-2xl font-bold text-foreground" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                              {(matchingResults.fairness_metrics.after_correction.DPD * 100).toFixed(1)}%
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
+                          Measures the difference in selection rates across demographic groups. Target: <code className="bg-muted px-1 py-0.5 rounded text-foreground">&lt; 10%</code>.
+                        </p>
+                      </div>
+
+                      {/* DIR Card */}
+                      <div className="p-5 rounded-xl bg-card border border-border/30 relative overflow-hidden group">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground">Demographic Impact Ratio (DIR)</span>
+                          <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${
+                            matchingResults.fairness_metrics.after_correction.DIR >= 0.80
+                              ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
+                              : 'bg-red-500/5 text-red-400 border-red-500/10'
+                          }`}>
+                            {matchingResults.fairness_metrics.after_correction.DIR_status}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-baseline gap-4 mt-2">
+                          <div>
+                            <div className="text-[10px] text-muted-foreground">Before</div>
+                            <div className="text-lg font-semibold text-muted-foreground/70" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                              {matchingResults.fairness_metrics.before_correction.DIR.toFixed(2)}
+                            </div>
+                          </div>
+                          <ChevronRight size={14} className="text-muted-foreground/30 mb-0.5" />
+                          <div>
+                            <div className="text-[10px] text-primary">After (Fair-Aware)</div>
+                            <div className="text-2xl font-bold text-foreground" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                              {matchingResults.fairness_metrics.after_correction.DIR.toFixed(2)}
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
+                          The selection rate ratio of the underprivileged group to the privileged group. Target: <code className="bg-muted px-1 py-0.5 rounded text-foreground">&gt; 0.80</code> (80% rule).
+                        </p>
+                      </div>
+
+                    </div>
+
+                    {/* Optimizer Applied Notice */}
+                    {matchingResults.fairness_correction_applied && (
+                      <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 text-primary flex items-center gap-3">
+                        <Zap size={14} className="flex-shrink-0 animate-pulse text-primary" />
+                        <span className="text-xs font-semibold">
+                          Fairness optimization applied! Reranked candidates using model: <span className="underline">{matchingResults.optimizer_used}</span>.
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Candidates Matches Table */}
+                    <div className="rounded-xl bg-card border border-border/30 overflow-hidden">
+                      <div className="p-4 border-b border-border/30 bg-muted/10">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Top Candidates Matched to Role</h3>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                          <thead>
+                            <tr className="border-b border-border/30">
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-12">Rank</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-36">Category</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Resume Snippet</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-20">Group</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-28">Fit Score</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-24">Base Match</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-24">Fair Match</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {matchingResults.candidates.map((cand: any) => (
+                              <tr
+                                key={cand.rank}
+                                className={`border-b border-border/20 hover:bg-muted/10 transition-colors ${
+                                  cand.reranked ? 'bg-primary/5 hover:bg-primary/10' : ''
+                                }`}
+                              >
+                                <td className="px-5 py-4 text-xs font-bold text-foreground">
+                                  {cand.rank}
+                                </td>
+                                <td className="px-5 py-4 text-xs font-semibold text-foreground">
+                                  {cand.category}
+                                </td>
+                                <td className="px-5 py-4 text-xs text-muted-foreground max-w-xs truncate">
+                                  {cand.resume_snippet}
+                                </td>
+                                <td className="px-5 py-4 text-xs text-muted-foreground">
+                                  <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-semibold text-foreground">
+                                    G-{cand.demographic_group}
+                                  </span>
+                                </td>
+                                <td className="px-5 py-4 text-xs">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-foreground" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                                      {Math.round(cand.similarity_score * 100)}%
+                                    </span>
+                                    <div className="w-12 h-1.5 rounded-full bg-muted/40 overflow-hidden flex-shrink-0">
+                                      <div
+                                        className="h-full bg-primary"
+                                        style={{ width: `${cand.similarity_score * 100}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-5 py-4">
+                                  <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${
+                                    cand.shortlisted_base
+                                      ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
+                                      : 'bg-muted/30 text-muted-foreground border-border/30'
+                                  }`}>
+                                    {cand.shortlisted_base ? 'Select' : 'Skip'}
+                                  </span>
+                                </td>
+                                <td className="px-5 py-4">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${
+                                      cand.shortlisted_fair
+                                        ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
+                                        : 'bg-muted/30 text-muted-foreground border-border/30'
+                                    }`}>
+                                      {cand.shortlisted_fair ? 'Select' : 'Skip'}
+                                    </span>
+                                    {cand.reranked && (
+                                      <Zap size={11} className="text-primary animate-pulse flex-shrink-0" />
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+
+              </div>
+            </div>
           </div>
         )}
       </div>
