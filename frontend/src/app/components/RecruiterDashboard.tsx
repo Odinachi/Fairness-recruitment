@@ -46,6 +46,11 @@ const stageLabels: Record<string, string> = {
   rejected: 'Rejected',
 }
 
+function buildUserResumeText(u: { title?: string; roleLevel?: string; workStyle?: string; bio?: string; location?: string; github?: string }) {
+  const parts = [u.title, u.roleLevel, u.workStyle, u.bio, u.location, u.github].filter(Boolean)
+  return parts.join('\n') || 'No resume details provided.'
+}
+
 export function RecruiterDashboard() {
   const {
     user, jobs, candidates, recruiterHiringData, recruiterJobPostings,
@@ -95,7 +100,7 @@ export function RecruiterDashboard() {
           const prof = allUsers.find(u => u.id === app.userId)
           return {
             applicant_id: app.userId,
-            resume_text: prof?.bio || "No resume details provided.",
+            resume_text: buildUserResumeText(prof || {}),
             demographic_group: 0
           }
         })
@@ -169,18 +174,29 @@ export function RecruiterDashboard() {
   const handleMatchCandidates = async () => {
     if (!customJobDescription.trim()) return
 
+    const applicantUsers = allUsers.filter(u => u.role === 'applicant')
+    if (applicantUsers.length === 0) {
+      setMatchingError('No applicants in your user pool yet. Users must sign up as applicants to appear here.')
+      return
+    }
+
     setMatchingLoading(true)
     setMatchingError(null)
     setMatchingResults(null)
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/match-job', {
+      const res = await fetch('http://127.0.0.1:8000/api/match-applicants', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           job_description: customJobDescription,
+          applicants: applicantUsers.map(u => ({
+            applicant_id: u.id,
+            resume_text: buildUserResumeText(u),
+            demographic_group: 0,
+          })),
         }),
       })
 
@@ -189,7 +205,29 @@ export function RecruiterDashboard() {
       }
 
       const data = await res.json()
-      setMatchingResults(data)
+      const ranked = data.matches
+        .map((m: { applicant_id: string; score: number; base_outcome: boolean }) => {
+          const prof = applicantUsers.find(u => u.id === m.applicant_id)
+          const bio = prof?.bio || ''
+          return {
+            userId: m.applicant_id,
+            name: prof?.name || 'Unknown',
+            avatar: prof?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
+            title: prof?.title || 'Applicant',
+            location: prof?.location || '',
+            bioSnippet: bio.length > 200 ? `${bio.slice(0, 200).trim()}...` : bio || 'No bio provided.',
+            similarity_score: m.score / 100,
+            shortlisted_base: m.base_outcome,
+          }
+        })
+        .sort((a: { similarity_score: number }, b: { similarity_score: number }) => b.similarity_score - a.similarity_score)
+        .slice(0, 10)
+        .map((c: object, i: number) => ({ ...c, rank: i + 1 }))
+
+      setMatchingResults({
+        cohort_size: applicantUsers.length,
+        candidates: ranked,
+      })
     } catch (err: any) {
       setMatchingError(err.message || 'An error occurred during matching.')
     } finally {
@@ -835,96 +873,19 @@ export function RecruiterDashboard() {
                     <Brain size={40} className="stroke-[1.25] text-muted-foreground/40" />
                     <div>
                       <h4 className="text-xs font-bold uppercase text-foreground mb-1">Interactive AI Candidate Matcher</h4>
-                      <p className="text-xs max-w-sm mt-1 leading-relaxed">Select or paste a job description on the left to scan your candidates pool and evaluate Demographic Parity.</p>
+                      <p className="text-xs max-w-sm mt-1 leading-relaxed">Select or paste a job description on the left to rank applicants from your user pool by AI fit score.</p>
                     </div>
                   </div>
                 )}
 
                 {matchingResults && !matchingLoading && (
                   <div className="space-y-6">
-                    
-                    {/* Cohort Fairness Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      
-                      {/* DPD Card */}
-                      <div className="p-5 rounded-xl bg-card border border-border/30 relative overflow-hidden group">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-[10px] uppercase font-bold text-muted-foreground">Demographic Parity Difference (DPD)</span>
-                          <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${
-                            matchingResults.fairness_metrics.after_correction.DPD <= 0.10
-                              ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
-                              : 'bg-red-500/5 text-red-400 border-red-500/10'
-                          }`}>
-                            {matchingResults.fairness_metrics.after_correction.DPD_status}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-baseline gap-4 mt-2">
-                          <div>
-                            <div className="text-[10px] text-muted-foreground">Before</div>
-                            <div className="text-lg font-semibold text-muted-foreground/70" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                              {(matchingResults.fairness_metrics.before_correction.DPD * 100).toFixed(1)}%
-                            </div>
-                          </div>
-                          <ChevronRight size={14} className="text-muted-foreground/30 mb-0.5" />
-                          <div>
-                            <div className="text-[10px] text-primary">After (Fair-Aware)</div>
-                            <div className="text-2xl font-bold text-foreground" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                              {(matchingResults.fairness_metrics.after_correction.DPD * 100).toFixed(1)}%
-                            </div>
-                          </div>
-                        </div>
-
-                        <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
-                          Measures the difference in selection rates across demographic groups. Target: <code className="bg-muted px-1 py-0.5 rounded text-foreground">&lt; 10%</code>.
-                        </p>
-                      </div>
-
-                      {/* DIR Card */}
-                      <div className="p-5 rounded-xl bg-card border border-border/30 relative overflow-hidden group">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-[10px] uppercase font-bold text-muted-foreground">Demographic Impact Ratio (DIR)</span>
-                          <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${
-                            matchingResults.fairness_metrics.after_correction.DIR >= 0.80
-                              ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
-                              : 'bg-red-500/5 text-red-400 border-red-500/10'
-                          }`}>
-                            {matchingResults.fairness_metrics.after_correction.DIR_status}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-baseline gap-4 mt-2">
-                          <div>
-                            <div className="text-[10px] text-muted-foreground">Before</div>
-                            <div className="text-lg font-semibold text-muted-foreground/70" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                              {matchingResults.fairness_metrics.before_correction.DIR.toFixed(2)}
-                            </div>
-                          </div>
-                          <ChevronRight size={14} className="text-muted-foreground/30 mb-0.5" />
-                          <div>
-                            <div className="text-[10px] text-primary">After (Fair-Aware)</div>
-                            <div className="text-2xl font-bold text-foreground" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                              {matchingResults.fairness_metrics.after_correction.DIR.toFixed(2)}
-                            </div>
-                          </div>
-                        </div>
-
-                        <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
-                          The selection rate ratio of the underprivileged group to the privileged group. Target: <code className="bg-muted px-1 py-0.5 rounded text-foreground">&gt; 0.80</code> (80% rule).
-                        </p>
-                      </div>
-
+                    <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 text-primary flex items-center gap-3">
+                      <Users size={14} className="flex-shrink-0" />
+                      <span className="text-xs font-semibold">
+                        Ranked {matchingResults.candidates.length} top matches from {matchingResults.cohort_size} applicants in your user pool. Click a candidate to view their profile.
+                      </span>
                     </div>
-
-                    {/* Optimizer Applied Notice */}
-                    {matchingResults.fairness_correction_applied && (
-                      <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 text-primary flex items-center gap-3">
-                        <Zap size={14} className="flex-shrink-0 animate-pulse text-primary" />
-                        <span className="text-xs font-semibold">
-                          Fairness optimization applied! Reranked candidates using model: <span className="underline">{matchingResults.optimizer_used}</span>.
-                        </span>
-                      </div>
-                    )}
 
                     {/* Candidates Matches Table */}
                     <div className="rounded-xl bg-card border border-border/30 overflow-hidden">
@@ -936,48 +897,45 @@ export function RecruiterDashboard() {
                           <thead>
                             <tr className="border-b border-border/30">
                               <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-12">Rank</th>
-                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-36">Category</th>
-                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Resume Snippet</th>
-                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-20">Group</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-56">Candidate</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Bio</th>
                               <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-28">Fit Score</th>
-                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-24">Base Match</th>
-                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-24">Fair Match</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-24">Recommended</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-10"></th>
                             </tr>
                           </thead>
                           <tbody>
                             {matchingResults.candidates.map((cand: any) => (
                               <tr
-                                key={cand.rank}
-                                className={`border-b border-border/20 hover:bg-muted/10 transition-colors ${
-                                  cand.reranked ? 'bg-primary/5 hover:bg-primary/10' : ''
-                                }`}
+                                key={cand.userId}
+                                onClick={() => navigate(`/profile/${cand.userId}`)}
+                                className="border-b border-border/20 hover:bg-muted/10 transition-colors cursor-pointer group"
                               >
                                 <td className="px-5 py-4 text-xs font-bold text-foreground">
                                   {cand.rank}
                                 </td>
-                                <td className="px-5 py-4 text-xs font-semibold text-foreground">
-                                  {cand.category}
-                                </td>
-                                <td className="px-5 py-4 text-xs text-muted-foreground max-w-xs truncate">
-                                  {cand.resume_snippet}
-                                </td>
-                                <td className="px-5 py-4 text-xs text-muted-foreground">
-                                  <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-semibold text-foreground">
-                                    G-{cand.demographic_group}
-                                  </span>
-                                </td>
-                                <td className="px-5 py-4 text-xs">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-foreground" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                                      {Math.round(cand.similarity_score * 100)}%
-                                    </span>
-                                    <div className="w-12 h-1.5 rounded-full bg-muted/40 overflow-hidden flex-shrink-0">
-                                      <div
-                                        className="h-full bg-primary"
-                                        style={{ width: `${cand.similarity_score * 100}%` }}
-                                      />
+                                <td className="px-5 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <img
+                                      src={cand.avatar}
+                                      alt={cand.name}
+                                      className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/10 flex-shrink-0"
+                                    />
+                                    <div className="min-w-0">
+                                      <div className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                                        {cand.name}
+                                      </div>
+                                      <div className="text-[10px] text-muted-foreground truncate mt-0.5">
+                                        {cand.title}{cand.location ? ` · ${cand.location}` : ''}
+                                      </div>
                                     </div>
                                   </div>
+                                </td>
+                                <td className="px-5 py-4 text-xs text-muted-foreground max-w-xs truncate">
+                                  {cand.bioSnippet}
+                                </td>
+                                <td className="px-5 py-4 text-xs">
+                                  <MatchBadge score={Math.round(cand.similarity_score * 100)} />
                                 </td>
                                 <td className="px-5 py-4">
                                   <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${
@@ -989,18 +947,7 @@ export function RecruiterDashboard() {
                                   </span>
                                 </td>
                                 <td className="px-5 py-4">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${
-                                      cand.shortlisted_fair
-                                        ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
-                                        : 'bg-muted/30 text-muted-foreground border-border/30'
-                                    }`}>
-                                      {cand.shortlisted_fair ? 'Select' : 'Skip'}
-                                    </span>
-                                    {cand.reranked && (
-                                      <Zap size={11} className="text-primary animate-pulse flex-shrink-0" />
-                                    )}
-                                  </div>
+                                  <ArrowUpRight size={14} className="text-muted-foreground group-hover:text-primary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                                 </td>
                               </tr>
                             ))}

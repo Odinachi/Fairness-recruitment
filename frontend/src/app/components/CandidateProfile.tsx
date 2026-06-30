@@ -30,7 +30,7 @@ const stageLabels: Record<string, string> = {
 export function CandidateProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user, candidates, jobs, applicantApplications, loadingData } = useApp()
+  const { user, candidates, jobs, applicantApplications, loadingData, allUsers } = useApp()
   const [activeTab, setActiveTab] = useState<'overview' | 'experience' | 'ai'>('overview')
   const [stageOverride, setStageOverride] = useState<string | null>(null)
 
@@ -110,9 +110,56 @@ export function CandidateProfile() {
       salaryRange: user.salaryRange,
     }
   } else {
-    // Recruiter viewing a candidate from Firestore `candidates` collection
     const candidate = candidates.find(c => c.id === id)
-    if (!candidate) {
+    const profileUser = allUsers.find(u => u.id === id)
+
+    if (candidate) {
+      profile = {
+        name: candidate.name,
+        title: candidate.title,
+        location: candidate.location,
+        avatar: candidate.avatar,
+        bio: candidate.bio,
+        skills: candidate.skills,
+        experience: candidate.experience,
+        education: candidate.education,
+        status: candidate.status,
+        aiScore: candidate.aiScore,
+        stage: candidate.stage,
+        appliedDate: candidate.appliedDate,
+        achievements: candidate.achievements,
+        jobId: candidate.jobId,
+      }
+    } else if (profileUser) {
+      const userSkills = profileUser.title
+        ? [profileUser.title.split(' ')[0], ...(profileUser.roleLevel ? [profileUser.roleLevel] : []), ...(profileUser.workStyle ? [profileUser.workStyle] : [])]
+        : []
+      const userApplication = applicantApplications.find(a => a.userId === profileUser.id)
+
+      profile = {
+        name: profileUser.name,
+        title: profileUser.title || 'Professional',
+        location: profileUser.location || '',
+        avatar: profileUser.avatar,
+        bio: profileUser.bio || '',
+        skills: userSkills.filter(Boolean),
+        experience: 0,
+        education: '',
+        status: 'Available',
+        aiScore: 0,
+        stage: userApplication?.status || 'applied',
+        appliedDate: userApplication?.date
+          ? new Date(userApplication.date).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0],
+        achievements: [],
+        website: profileUser.website,
+        linkedin: profileUser.linkedin,
+        github: profileUser.github,
+        workStyle: profileUser.workStyle,
+        roleLevel: profileUser.roleLevel,
+        salaryRange: profileUser.salaryRange,
+      }
+    } else {
       return (
         <Layout>
           <div className="flex flex-col items-center justify-center h-[60vh] gap-4 text-muted-foreground">
@@ -128,22 +175,6 @@ export function CandidateProfile() {
           </div>
         </Layout>
       )
-    }
-    profile = {
-      name: candidate.name,
-      title: candidate.title,
-      location: candidate.location,
-      avatar: candidate.avatar,
-      bio: candidate.bio,
-      skills: candidate.skills,
-      experience: candidate.experience,
-      education: candidate.education,
-      status: candidate.status,
-      aiScore: candidate.aiScore,
-      stage: candidate.stage,
-      appliedDate: candidate.appliedDate,
-      achievements: candidate.achievements,
-      jobId: candidate.jobId,
     }
   }
 
