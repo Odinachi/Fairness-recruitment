@@ -58,6 +58,12 @@ export function JobListings() {
   })
 
   useEffect(() => {
+    if (user?.role === 'recruiter' && sortBy === 'match') {
+      setSortBy('date')
+    }
+  }, [user?.role, sortBy])
+
+  useEffect(() => {
     try {
       const saved = localStorage.getItem(user ? `jobnatics_saved_jobs_${user.id}` : 'jobnatics_saved_jobs_guest')
       setSavedJobs(saved ? JSON.parse(saved) : [])
@@ -101,6 +107,7 @@ export function JobListings() {
 
   const handleApply = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
+    if (user?.role === 'recruiter') return
     setAppliedJobs(prev => {
       if (prev.includes(id)) return prev
       const updated = [...prev, id]
@@ -168,7 +175,7 @@ export function JobListings() {
             onChange={e => setSortBy(e.target.value as 'match' | 'date' | 'salary')}
             className="px-4 py-3 rounded-xl bg-card border border-border text-sm focus:outline-none focus:border-primary transition-all cursor-pointer"
           >
-            <option value="match">Sort: Best Match</option>
+            {user?.role !== 'recruiter' && <option value="match">Sort: Best Match</option>}
             <option value="salary">Sort: Highest Salary</option>
             <option value="date">Sort: Most Recent</option>
           </select>

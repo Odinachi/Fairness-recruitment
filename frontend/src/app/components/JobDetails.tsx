@@ -82,6 +82,8 @@ export function JobDetails() {
       navigate('/auth')
       return
     }
+    if (user.role === 'recruiter') return
+
     setApplyLoading(true)
     const appDoc = {
       id: `${job.id}_${user.id}`,
@@ -281,7 +283,7 @@ export function JobDetails() {
                         <div className="text-sm font-medium group-hover:text-primary transition-colors">{rj.title}</div>
                         <div className="text-xs text-muted-foreground">{rj.company} · {rj.salary}</div>
                       </div>
-                      {user && (
+                      {user && user.role !== 'recruiter' && (
                         <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                           <Sparkles size={9} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="animate-pulse" /> {rj.match}%
                         </span>
@@ -298,7 +300,7 @@ export function JobDetails() {
           <div className="space-y-5">
             {/* Apply card */}
             <div className="sticky top-24 space-y-4">
-              {user && (
+              {user && user.role !== 'recruiter' && (
                 <div className={`p-5 rounded-2xl bg-gradient-to-br ${matchBg} to-card border border-border`}>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold flex items-center gap-2">
@@ -344,7 +346,23 @@ export function JobDetails() {
               )}
 
               <div className="p-5 rounded-2xl bg-card border border-border">
-                {applied ? (
+                {user?.role === 'recruiter' ? (
+                  <div className="space-y-3">
+                    {job.postedBy === user.id ? (
+                      <button
+                        onClick={() => navigate('/app/recruiter')}
+                        className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 bg-primary text-white hover:bg-primary/90"
+                      >
+                        <Users size={16} strokeWidth={1.75} />
+                        Manage Applicants
+                      </button>
+                    ) : (
+                      <p className="text-xs text-muted-foreground text-center py-2">
+                        Recruiters can view job details but cannot apply to roles.
+                      </p>
+                    )}
+                  </div>
+                ) : applied ? (
                   <div className="text-center py-4">
                     <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 flex items-center justify-center">
                       <CheckCircle2 size={24} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-emerald-400 animate-bounce" />

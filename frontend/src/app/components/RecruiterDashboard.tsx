@@ -78,9 +78,8 @@ export function RecruiterDashboard() {
 
   const [selectedManageJob, setSelectedManageJob] = useState<any | null>(null)
   const [applicantScores, setApplicantScores] = useState<Record<string, { score: number, base_outcome: boolean }>>({})
-  const [loadingScores, setLoadingScores] = useState<boolean>(false)
 
-  // Fetch match scores for job applicants using our AI model
+  // Fetch match scores for job postings overview (Top Match column)
   useEffect(() => {
     if (!selectedManageJob) {
       setApplicantScores({})
@@ -94,7 +93,6 @@ export function RecruiterDashboard() {
     }
 
     const fetchApplicantScores = async () => {
-      setLoadingScores(true)
       try {
         const payloadApplicants = jobApplicants.map(app => {
           const prof = allUsers.find(u => u.id === app.userId)
@@ -129,8 +127,6 @@ export function RecruiterDashboard() {
         }
       } catch (err) {
         console.error('Error fetching applicant match scores:', err)
-      } finally {
-        setLoadingScores(false)
       }
     }
 
@@ -408,7 +404,6 @@ export function RecruiterDashboard() {
                       <div className="space-y-4">
                         {jobApplicants.map((app) => {
                           const prof = allUsers.find(u => u.id === app.userId)
-                          const scoreInfo = applicantScores[app.userId]
                           const name = prof?.name || 'Applicant'
                           const title = prof?.title || 'Software Engineer'
                           const location = prof?.location || 'Remote'
@@ -427,18 +422,6 @@ export function RecruiterDashboard() {
                               </div>
 
                               <div className="flex flex-wrap items-center gap-4">
-                                {/* AI Match Score */}
-                                <div className="text-left md:text-right">
-                                  <div className="text-[9px] uppercase font-bold text-muted-foreground mb-1">AI Match Score</div>
-                                  {loadingScores ? (
-                                    <div className="w-4 h-4 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
-                                  ) : scoreInfo ? (
-                                    <MatchBadge score={Math.round(scoreInfo.score)} />
-                                  ) : (
-                                    <MatchBadge score={app.match || 75} />
-                                  )}
-                                </div>
-
                                 {/* Status Selector */}
                                 <div>
                                   <div className="text-[9px] uppercase font-bold text-muted-foreground mb-1">Status</div>

@@ -192,6 +192,9 @@ export function CandidateProfile() {
     { label: 'Communication', score: Math.max(base - 3, 60) },
     { label: 'Growth Potential', score: Math.min(base + 1, 100) },
   ]
+  const profileTabs = user?.role === 'recruiter'
+    ? (['overview', 'experience'] as const)
+    : (['overview', 'experience', 'ai'] as const)
 
   return (
     <Layout>
@@ -230,7 +233,7 @@ export function CandidateProfile() {
                       {profile.roleLevel}
                     </span>
                   )}
-                  {!isOwnProfile && profile.aiScore > 0 && (
+                  {!isOwnProfile && user?.role !== 'recruiter' && profile.aiScore > 0 && (
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold border ${
                       profile.aiScore >= 90 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                       profile.aiScore >= 80 ? 'bg-primary/10 text-primary border-primary/20' :
@@ -362,7 +365,7 @@ export function CandidateProfile() {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 p-1 bg-muted rounded-xl w-fit">
-          {(['overview', 'experience', 'ai'] as const).map(tab => (
+          {profileTabs.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -467,8 +470,8 @@ export function CandidateProfile() {
                     profile.roleLevel && { label: 'Level', value: profile.roleLevel, icon: Star },
                     profile.workStyle && { label: 'Work Style', value: profile.workStyle, icon: Users },
                     profile.salaryRange && { label: 'Salary Target', value: profile.salaryRange, icon: Briefcase },
-                    !isOwnProfile && profile.experience > 0 && { label: 'Experience', value: `${profile.experience} yrs`, icon: Briefcase },
-                    !isOwnProfile && profile.aiScore > 0 && { label: 'AI Score', value: `${profile.aiScore}/100`, icon: Sparkles },
+                    !isOwnProfile && user?.role !== 'recruiter' && profile.experience > 0 && { label: 'Experience', value: `${profile.experience} yrs`, icon: Briefcase },
+                    !isOwnProfile && user?.role !== 'recruiter' && profile.aiScore > 0 && { label: 'AI Score', value: `${profile.aiScore}/100`, icon: Sparkles },
                     !isOwnProfile && { label: 'Applied', value: new Date(profile.appliedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), icon: Clock },
                     !isOwnProfile && { label: 'Status', value: profile.status, icon: Users },
                     isOwnProfile && { label: 'Applications', value: String(applicantApplications.length), icon: Briefcase },
@@ -577,7 +580,7 @@ export function CandidateProfile() {
         )}
 
         {/* AI Analysis tab */}
-        {activeTab === 'ai' && (
+        {activeTab === 'ai' && user?.role !== 'recruiter' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="p-5 rounded-2xl bg-card border border-border">
               <div className="flex items-center gap-2 mb-4">

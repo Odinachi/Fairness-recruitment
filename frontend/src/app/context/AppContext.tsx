@@ -397,6 +397,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
 
   const addApplicantApplication = async (app: any) => {
+    if (user?.role === 'recruiter') {
+      return
+    }
     try {
       await setDoc(doc(db, 'applicantApplications', app.id), app)
     } catch (err) {
