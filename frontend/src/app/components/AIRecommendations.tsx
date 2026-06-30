@@ -210,109 +210,8 @@ export function AIRecommendations() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Left: AI Chat */}
           <div className="xl:col-span-2 space-y-6">
-            {/* AI Chatbot */}
-            <div className="flex flex-col rounded-2xl bg-card border border-border overflow-hidden" style={{ height: '500px' }}>
-              <div className="flex items-center gap-3 p-4 border-b border-border bg-gradient-to-r from-primary/10 to-accent/5">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
-                  <Bot size={18} className="text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm">Jobnatics AI Assistant</h3>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    Online · Analyzing {user?.name?.split(' ')[0] || 'your'}'s profile
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setMessages([{
-                      id: Date.now().toString(),
-                      role: 'ai',
-                      content: `Starting a new session! I'm ready to help you with job search, interview prep, and career planning. What's on your mind, ${user?.name?.split(' ')[0] || 'there'}?`,
-                      timestamp: new Date(),
-                    }])
-                  }}
-                  className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-border text-muted-foreground hover:bg-muted transition-colors"
-                >
-                  <RefreshCw size={12} /> New session
-                </button>
-              </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map(msg => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                  >
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      msg.role === 'ai'
-                        ? 'bg-gradient-to-br from-primary to-accent shadow-md shadow-primary/30'
-                        : 'bg-muted border border-border'
-                    }`}>
-                      {msg.role === 'ai' ? <Bot size={14} strokeWidth={1.75} className="text-white" /> : <User size={14} strokeWidth={1.75} className="text-muted-foreground" />}
-                    </div>
-                    <div className={`max-w-sm px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                      msg.role === 'user'
-                        ? 'bg-primary text-white rounded-br-md'
-                        : 'bg-muted border border-border rounded-bl-md'
-                    }`}>
-                      {msg.content}
-                    </div>
-                  </motion.div>
-                ))}
-                {isTyping && (
-                  <div className="flex gap-3">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0">
-                      <Bot size={14} strokeWidth={1.75} className="text-white animate-pulse" />
-                    </div>
-                    <div className="px-4 py-3 bg-muted border border-border rounded-2xl rounded-bl-md">
-                      <div className="flex gap-1">
-                        {[0, 1, 2].map(i => (
-                          <div
-                            key={i}
-                            className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce"
-                            style={{ animationDelay: `${i * 0.15}s` }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
 
-              {/* Quick prompts */}
-              <div className="px-4 py-2 flex gap-2 overflow-x-auto border-t border-border bg-muted/20">
-                {quickPrompts.map(p => (
-                  <button
-                    key={p}
-                    onClick={() => sendMessage(p)}
-                    className="flex-shrink-0 px-3 py-1.5 text-xs rounded-lg bg-card border border-border hover:border-primary/30 hover:bg-primary/5 transition-all"
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-
-              <form onSubmit={sendMessage} className="flex gap-3 p-4 border-t border-border">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  placeholder="Ask me anything about your career..."
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-muted border border-border focus:outline-none focus:border-primary text-sm placeholder:text-muted-foreground"
-                />
-                <button
-                  type="submit"
-                  disabled={!input.trim() || isTyping}
-                  className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary/90 disabled:opacity-40 shadow-sm shadow-primary/20 transition-all group/send"
-                >
-                  <Send size={16} strokeWidth={1.75} className="transition-transform duration-300 group-hover/send:translate-x-0.5 group-hover/send:-translate-y-0.5" />
-                </button>
-              </form>
-            </div>
 
             {/* Top matches */}
             <div className="p-5 rounded-2xl bg-card border border-border">
@@ -346,11 +245,10 @@ export function AIRecommendations() {
                       </div>
                     </div>
                     <div>
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${
-                        job.match >= 90 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${job.match >= 90 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                         job.match >= 80 ? 'bg-primary/10 text-primary border-primary/20' :
-                        'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                      }`}>
+                          'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        }`}>
                         <Sparkles size={9} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="animate-pulse" /> {job.match}%
                       </span>
                     </div>
@@ -425,15 +323,13 @@ export function AIRecommendations() {
                 {careerInsights.map((insight, i) => {
                   const Icon = insight.icon
                   return (
-                    <div key={i} className={`flex gap-2.5 p-3 rounded-lg border text-xs group ${
-                      insight.type === 'positive' ? 'bg-emerald-500/5 border-emerald-500/15' :
+                    <div key={i} className={`flex gap-2.5 p-3 rounded-lg border text-xs group ${insight.type === 'positive' ? 'bg-emerald-500/5 border-emerald-500/15' :
                       insight.type === 'warning' ? 'bg-amber-500/5 border-amber-500/15' :
-                      'bg-primary/5 border-primary/15'
-                    }`}>
-                      <Icon size={13} strokeWidth={1.75} fill={insight.type === 'positive' || insight.type === 'tip' ? 'currentColor' : 'none'} fillOpacity={0.15} className={`flex-shrink-0 mt-0.5 transition-transform duration-200 group-hover:scale-110 ${
-                        insight.type === 'positive' ? 'text-emerald-400' :
+                        'bg-primary/5 border-primary/15'
+                      }`}>
+                      <Icon size={13} strokeWidth={1.75} fill={insight.type === 'positive' || insight.type === 'tip' ? 'currentColor' : 'none'} fillOpacity={0.15} className={`flex-shrink-0 mt-0.5 transition-transform duration-200 group-hover:scale-110 ${insight.type === 'positive' ? 'text-emerald-400' :
                         insight.type === 'warning' ? 'text-amber-400' : 'text-primary'
-                      }`} />
+                        }`} />
                       <span className="text-foreground/80 leading-relaxed transition-colors group-hover:text-foreground">{insight.text}</span>
                     </div>
                   )
