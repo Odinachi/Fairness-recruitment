@@ -76,6 +76,7 @@ interface AppContextType {
   monthlyHireData: any[]
   companies: CompanyProfileData[]
   loadingData: boolean
+  allUsers: any[]
 
   // Mutators
   addApplicantApplication: (app: any) => Promise<void>
@@ -100,6 +101,7 @@ export const AppContext = createContext<AppContextType>({
   monthlyHireData: [],
   companies: [],
   loadingData: true,
+  allUsers: [],
 
   addApplicantApplication: async () => {},
 })
@@ -121,6 +123,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [monthlyHireData, setMonthlyHireData] = useState<any[]>([])
   const [companies, setCompanies] = useState<CompanyProfileData[]>([])
   const [loadingData, setLoadingData] = useState<boolean>(true)
+  const [allUsers, setAllUsers] = useState<any[]>([])
 
   useEffect(() => {
     if (darkMode) {
@@ -132,7 +135,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Listen to Firestore real-time updates when user is authenticated
   useEffect(() => {
-    if (!user) {
+    if (!user?.id) {
       // Clear all data on logout
       setJobs([])
       setCandidates([])
@@ -184,9 +187,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       snapshot.forEach(docSnap => {
         list.push({ ...docSnap.data(), id: docSnap.id })
       })
-      // Only display applications belonging to the logged-in user
-      setApplicantApplications(list.filter(a => a.userId === user?.id))
+      // If recruiter, show all applications (so they can manage applicants for their roles)
+      // Otherwise, only show the applicant's own applications
+      if (user?.role === 'recruiter') {
+        setApplicantApplications(list)
+      } else {
+        setApplicantApplications(list.filter(a => a.userId === user?.id))
+      }
     }, err => console.error('Error listening to applicantApplications:', err))
+
+    const unsubAllUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+      const list: any[] = []
+      snapshot.forEach(docSnap => {
+        list.push({ ...docSnap.data(), id: docSnap.id })
+      })
+      setAllUsers(list)
+    }, err => console.error('Error listening to users collection:', err))
 
     const unsubApplicationChartData = onSnapshot(collection(db, 'applicationChartData'), (snapshot) => {
       const list: any[] = []
@@ -248,8 +264,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       unsubSourceData()
       unsubMonthlyHireData()
       unsubCompanies()
+      unsubAllUsers()
     }
-  }, [user])
+  }, [user?.id])
 
   // Firebase auth state listener
   useEffect(() => {
@@ -395,6 +412,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       jobs, candidates, notifications,
       applicantApplications, applicationChartData, recruiterHiringData,
       recruiterJobPostings, sourceData, monthlyHireData, companies, loadingData,
+      allUsers,
       addApplicantApplication
     }}>
       {children}

@@ -674,3 +674,61 @@ def match_job(payload: JobPayload):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Endpoint 6: Match specific applicants against a job description ────────────
+
+class ApplicantMatchItem(BaseModel):
+    applicant_id: str
+    resume_text: str
+    demographic_group: int = 0
+
+class ApplicantMatchPayload(BaseModel):
+    job_description: str
+    applicants: List[ApplicantMatchItem]
+
+@app.post("/api/match-applicants")
+def match_applicants(payload: ApplicantMatchPayload):
+    if resumes_vectorizer is None:
+        raise HTTPException(status_code=500, detail="Resumes TF-IDF structures are not initialized.")
+
+    try:
+        clean_job_desc = preprocess_text(payload.job_description)
+        if not clean_job_desc:
+            raise HTTPException(status_code=400, detail="Invalid or empty job description.")
+
+        # Compute TF-IDF vector for the job description
+        job_tfidf = resumes_vectorizer.transform([clean_job_desc])
+        
+        matches = []
+        for app_item in payload.applicants:
+            clean_resume = preprocess_text(app_item.resume_text)
+            if not clean_resume:
+                matches.append({
+                    "applicant_id": app_item.applicant_id,
+                    "score": 0.0,
+                    "base_outcome": False
+                })
+                continue
+            
+            # Compute TF-IDF vector for the resume
+            app_tfidf = resumes_vectorizer.transform([clean_resume])
+            score = float(cosine_similarity(job_tfidf, app_tfidf)[0][0])
+            score = np.nan_to_num(score, nan=0.0)
+            
+            # Convert to percentage
+            match_percentage = round(score * 100, 1)
+            base_outcome = bool(score >= BASE_THRESHOLD)
+            
+            matches.append({
+                "applicant_id": app_item.applicant_id,
+                "score": match_percentage,
+                "base_outcome": base_outcome
+            })
+
+        return {
+            "matches": matches
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

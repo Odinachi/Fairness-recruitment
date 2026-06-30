@@ -5,13 +5,16 @@ import { Layout } from './Layout'
 import {
   Sparkles, Users, Briefcase, Clock, BarChart3,
   ChevronRight, ArrowUpRight, Brain, Plus, Filter,
-  Calendar, MessageSquare, AlertCircle, Zap, RefreshCw, Eye, TrendingUp, Star
+  Calendar, MessageSquare, AlertCircle, Zap, RefreshCw, Eye, TrendingUp, Star,
+  ArrowLeft, MapPin, DollarSign
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, Legend
 } from 'recharts'
 import { motion } from 'motion/react'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 
 function MatchBadge({ score }: { score: number }) {
   const color = score >= 90 ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
@@ -46,7 +49,7 @@ const stageLabels: Record<string, string> = {
 export function RecruiterDashboard() {
   const {
     user, jobs, candidates, recruiterHiringData, recruiterJobPostings,
-    sourceData, monthlyHireData
+    sourceData, monthlyHireData, allUsers, applicantApplications
   } = useApp()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -67,6 +70,87 @@ export function RecruiterDashboard() {
   const [matchingResults, setMatchingResults] = useState<any | null>(null)
   const [matchingLoading, setMatchingLoading] = useState<boolean>(false)
   const [matchingError, setMatchingError] = useState<string | null>(null)
+
+  const [selectedManageJob, setSelectedManageJob] = useState<any | null>(null)
+  const [applicantScores, setApplicantScores] = useState<Record<string, { score: number, base_outcome: boolean }>>({})
+  const [loadingScores, setLoadingScores] = useState<boolean>(false)
+
+  // Fetch match scores for job applicants using our AI model
+  useEffect(() => {
+    if (!selectedManageJob) {
+      setApplicantScores({})
+      return
+    }
+
+    const jobApplicants = applicantApplications.filter(a => a.jobId === selectedManageJob.id)
+    if (jobApplicants.length === 0) {
+      setApplicantScores({})
+      return
+    }
+
+    const fetchApplicantScores = async () => {
+      setLoadingScores(true)
+      try {
+        const payloadApplicants = jobApplicants.map(app => {
+          const prof = allUsers.find(u => u.id === app.userId)
+          return {
+            applicant_id: app.userId,
+            resume_text: prof?.bio || "No resume details provided.",
+            demographic_group: 0
+          }
+        })
+
+        const res = await fetch('http://127.0.0.1:8000/api/match-applicants', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            job_description: `${selectedManageJob.title}\n\n${selectedManageJob.description}\n\n${(selectedManageJob.requirements || []).join('\n')}`,
+            applicants: payloadApplicants
+          })
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          const scoresMap: Record<string, { score: number, base_outcome: boolean }> = {}
+          data.matches.forEach((m: any) => {
+            scoresMap[m.applicant_id] = {
+              score: m.score,
+              base_outcome: m.base_outcome
+            }
+          })
+          setApplicantScores(scoresMap)
+        }
+      } catch (err) {
+        console.error('Error fetching applicant match scores:', err)
+      } finally {
+        setLoadingScores(false)
+      }
+    }
+
+    fetchApplicantScores()
+  }, [selectedManageJob, applicantApplications, allUsers])
+
+  const handleUpdateStatus = async (appId: string, newStatus: string) => {
+    const stageMap: Record<string, string> = {
+      applied: 'Applied',
+      screening: 'Screening',
+      interview: 'Interview',
+      offer: 'Offer Sent',
+      hired: 'Hired',
+      rejected: 'Rejected'
+    }
+    try {
+      const appRef = doc(db, 'applicantApplications', appId)
+      await setDoc(appRef, {
+        status: newStatus,
+        stage: stageMap[newStatus] || 'Applied'
+      }, { merge: true })
+    } catch (err) {
+      console.error('Error updating application status:', err)
+    }
+  }
 
   // Auto-populate customJobDescription when selectedJobId changes
   useEffect(() => {
@@ -195,8 +279,179 @@ export function RecruiterDashboard() {
           })}
         </div>
 
-        {/* Tab navigation */}
-        <div className="flex gap-6 mb-8 border-b border-border/30 pb-px">
+        {selectedManageJob ? (
+          <div className="space-y-6">
+            {/* Header / Back */}
+            <div className="flex items-center justify-between pb-4 border-b border-border/30">
+              <button
+                onClick={() => setSelectedManageJob(null)}
+                className="flex items-center gap-1 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors group"
+              >
+                <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
+                Back to Dashboard
+              </button>
+              <span className="text-[10px] px-2.5 py-1 rounded-full border uppercase font-bold bg-emerald-500/5 text-emerald-400 border-emerald-500/10">
+                Active Posting
+              </span>
+            </div>
+
+            {/* Job Header Card */}
+            <div className="p-6 rounded-xl bg-card border border-border/30 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <h2 className="text-xl font-bold text-foreground mb-1.5" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                  {selectedManageJob.title}
+                </h2>
+                <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1"><MapPin size={12} /> {selectedManageJob.location || 'Remote'}</span>
+                  <span className="flex items-center gap-1"><DollarSign size={12} /> {selectedManageJob.salary || '$80k - $120k'}</span>
+                  <span className="flex items-center gap-1"><Briefcase size={12} /> {selectedManageJob.type || 'Full-time'} · {selectedManageJob.level || 'Mid-Level'}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedJobId(selectedManageJob.id)
+                  setActiveTab('match')
+                  setSelectedManageJob(null)
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 text-xs font-semibold transition-all"
+              >
+                <Sparkles size={13} />
+                Run AI Matcher Cohort
+              </button>
+            </div>
+
+            {/* Grid layout: Description & Applicants */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              
+              {/* Left Column: Job Description */}
+              <div className="lg:col-span-1 space-y-6">
+                <div className="p-5 rounded-xl bg-card border border-border/30">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+                    <Briefcase size={13} className="text-primary" />
+                    Role Description
+                  </h3>
+                  <div className="text-xs text-muted-foreground space-y-3 leading-relaxed max-h-[450px] overflow-y-auto pr-1">
+                    <p className="whitespace-pre-line">{selectedManageJob.description}</p>
+                    {selectedManageJob.requirements && selectedManageJob.requirements.length > 0 && (
+                      <div>
+                        <h4 className="font-bold text-foreground mt-4 mb-2">Requirements:</h4>
+                        <ul className="list-disc pl-4 space-y-1">
+                          {selectedManageJob.requirements.map((req: string, idx: number) => (
+                            <li key={idx}>{req}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Applicants List */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="p-5 rounded-xl bg-card border border-border/30">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-1.5">
+                    <Users size={14} className="text-accent" />
+                    Job Applicants ({applicantApplications.filter(a => a.jobId === selectedManageJob.id).length})
+                  </h3>
+
+                  {/* Applicants Table/List */}
+                  {(() => {
+                    const jobApplicants = applicantApplications.filter(a => a.jobId === selectedManageJob.id)
+                    if (jobApplicants.length === 0) {
+                      return (
+                        <div className="p-12 text-center text-muted-foreground">
+                          <Users size={32} className="mx-auto mb-3 stroke-[1.25] text-muted-foreground/30" />
+                          <p className="text-xs">No candidates have applied to this posting yet.</p>
+                        </div>
+                      )
+                    }
+
+                    return (
+                      <div className="space-y-4">
+                        {jobApplicants.map((app) => {
+                          const prof = allUsers.find(u => u.id === app.userId)
+                          const scoreInfo = applicantScores[app.userId]
+                          const name = prof?.name || 'Applicant'
+                          const title = prof?.title || 'Software Engineer'
+                          const location = prof?.location || 'Remote'
+                          const avatar = prof?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face'
+                          const email = prof?.email || ''
+
+                          return (
+                            <div key={app.id} className="p-4 rounded-lg bg-muted/10 border border-border/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                              <div className="flex items-start gap-3">
+                                <img src={avatar} alt={name} className="w-10 h-10 rounded-lg object-cover ring-2 ring-primary/10 flex-shrink-0" />
+                                <div>
+                                  <h4 className="text-sm font-semibold text-foreground">{name}</h4>
+                                  <p className="text-xs text-muted-foreground mt-0.5">{title} · {location}</p>
+                                  {email && <p className="text-[10px] text-muted-foreground/60 mt-0.5">{email}</p>}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-4">
+                                {/* AI Match Score */}
+                                <div className="text-left md:text-right">
+                                  <div className="text-[9px] uppercase font-bold text-muted-foreground mb-1">AI Match Score</div>
+                                  {loadingScores ? (
+                                    <div className="w-4 h-4 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+                                  ) : scoreInfo ? (
+                                    <MatchBadge score={Math.round(scoreInfo.score)} />
+                                  ) : (
+                                    <MatchBadge score={app.match || 75} />
+                                  )}
+                                </div>
+
+                                {/* Status Selector */}
+                                <div>
+                                  <div className="text-[9px] uppercase font-bold text-muted-foreground mb-1">Status</div>
+                                  <select
+                                    value={app.status || 'applied'}
+                                    onChange={(e) => handleUpdateStatus(app.id, e.target.value)}
+                                    className="rounded border border-border bg-card px-2 py-1 text-xs text-foreground focus:outline-none focus:border-primary transition-colors font-semibold"
+                                  >
+                                    <option value="applied">Applied</option>
+                                    <option value="screening">Screening</option>
+                                    <option value="interview">Interview</option>
+                                    <option value="offer">Offer Sent</option>
+                                    <option value="hired">Hired</option>
+                                    <option value="rejected">Rejected</option>
+                                  </select>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex items-center gap-1.5 md:ml-2">
+                                  <button
+                                    onClick={() => navigate('/messages')}
+                                    className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                    title="Message Applicant"
+                                  >
+                                    <MessageSquare size={13} />
+                                  </button>
+                                  <button
+                                    onClick={() => navigate(`/profile/${app.userId}`)}
+                                    className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                    title="View Profile"
+                                  >
+                                    <Eye size={13} />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })()}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        ) : (
+          <>
+            {/* Tab navigation */}
+            <div className="flex gap-6 mb-8 border-b border-border/30 pb-px">
           {(['overview', 'candidates', 'analytics', 'match'] as const).map(tab => (
             <button
               key={tab}
@@ -260,43 +515,75 @@ export function RecruiterDashboard() {
                   </button>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b border-border/30">
-                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Role</th>
-                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Applicants</th>
-                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">New Today</th>
-                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Top Match</th>
-                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Views</th>
-                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</th>
-                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recruiterJobPostings.map((job, i) => (
-                        <tr key={job.id} className={`border-b border-border/20 hover:bg-muted/10 transition-colors ${i === recruiterJobPostings.length - 1 ? 'border-b-0' : ''}`}>
-                          <td className="px-5 py-3.5 text-xs font-semibold text-foreground">{job.title}</td>
-                          <td className="px-5 py-3.5 text-xs">{job.applicants}</td>
-                          <td className="px-5 py-3.5">
-                            <span className="text-xs text-emerald-400 font-semibold">+{job.newToday}</span>
-                          </td>
-                          <td className="px-5 py-3.5"><MatchBadge score={job.match} /></td>
-                          <td className="px-5 py-3.5 text-xs text-muted-foreground">{job.views.toLocaleString()}</td>
-                          <td className="px-5 py-3.5">
-                            <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${job.status === 'Active'
-                                ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
-                                : 'bg-muted/30 text-muted-foreground border-border/30'
-                              }`}>
-                              {job.status}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3.5 text-right">
-                            <button className="text-xs text-primary hover:underline font-semibold">Manage</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  {(() => {
+                    const myJobs = jobs.filter(j => j.postedBy === user?.id)
+                    if (myJobs.length === 0) {
+                      return (
+                        <div className="p-8 text-center text-muted-foreground">
+                          <Briefcase size={32} className="mx-auto mb-3 stroke-[1.25] text-muted-foreground/30" />
+                          <p className="text-xs">You haven't posted any jobs yet.</p>
+                          <button
+                            onClick={() => navigate('/post-job')}
+                            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/95 transition-all shadow-sm"
+                          >
+                            <Plus size={12} /> Post your first job
+                          </button>
+                        </div>
+                      )
+                    }
+
+                    return (
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="border-b border-border/30">
+                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Role</th>
+                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Applicants</th>
+                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">New Today</th>
+                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Top Match</th>
+                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Views</th>
+                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</th>
+                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {myJobs.map((job, i) => {
+                            const jobApplicants = applicantApplications.filter(a => a.jobId === job.id)
+                            const topScore = jobApplicants.length > 0
+                              ? Math.max(...jobApplicants.map(a => applicantScores[a.userId]?.score || a.match || 75))
+                              : 0
+                            return (
+                              <tr key={job.id} className={`border-b border-border/20 hover:bg-muted/10 transition-colors ${i === myJobs.length - 1 ? 'border-b-0' : ''}`}>
+                                <td className="px-5 py-3.5 text-xs font-semibold text-foreground">{job.title}</td>
+                                <td className="px-5 py-3.5 text-xs">{jobApplicants.length}</td>
+                                <td className="px-5 py-3.5">
+                                  <span className="text-xs text-emerald-400 font-semibold">
+                                    +{jobApplicants.filter(a => a.status === 'applied').length}
+                                  </span>
+                                </td>
+                                <td className="px-5 py-3.5">
+                                  {topScore > 0 ? <MatchBadge score={Math.round(topScore)} /> : <span className="text-xs text-muted-foreground">—</span>}
+                                </td>
+                                <td className="px-5 py-3.5 text-xs text-muted-foreground">{(job.views || 0).toLocaleString()}</td>
+                                <td className="px-5 py-3.5">
+                                  <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold bg-emerald-500/5 text-emerald-400 border-emerald-500/10`}>
+                                    Active
+                                  </span>
+                                </td>
+                                <td className="px-5 py-3.5 text-right">
+                                  <button
+                                    onClick={() => setSelectedManageJob(job)}
+                                    className="text-xs text-primary hover:underline font-semibold"
+                                  >
+                                    Manage
+                                  </button>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    )
+                  })()}
                 </div>
               </div>
 
@@ -403,106 +690,7 @@ export function RecruiterDashboard() {
           </div>
         )}
 
-        {activeTab === 'candidates' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">AI-Ranked Candidates</h2>
-              <div className="flex items-center gap-2">
-                <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-muted transition-colors font-semibold text-foreground bg-card">
-                  <Filter size={12} /> Filter
-                </button>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-muted transition-colors font-semibold text-foreground bg-card">
-                  <RefreshCw size={12} /> Refresh
-                </button>
-              </div>
-            </div>
-
-            {/* Pipeline stages grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 border-b border-border/30 pb-6 mb-6">
-              {[
-                { stage: 'Applied', count: 142 },
-                { stage: 'AI Screened', count: 58 },
-                { stage: 'HR Review', count: 24 },
-                { stage: 'Interview', count: 8 },
-                { stage: 'Offer', count: 4 },
-                { stage: 'Hired', count: 2 },
-              ].map((s) => (
-                <div key={s.stage} className="text-left py-2 px-1">
-                  <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">{s.stage}</div>
-                  <div className="font-bold text-foreground tracking-tight" style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.5rem' }}>{s.count}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Candidates grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {candidates.map((candidate, i) => (
-                <motion.div
-                  key={candidate.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="p-5 rounded-xl bg-card border border-border/30 hover:border-primary/20 transition-all cursor-pointer group"
-                  onClick={() => navigate(`/profile/${candidate.id}`)}
-                >
-                  <div className="flex items-start gap-4">
-                    <img src={candidate.avatar} alt={candidate.name} className="w-10 h-10 rounded-lg object-cover ring-2 ring-primary/10 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <div>
-                          <h3 className="font-semibold text-sm group-hover:text-primary transition-colors text-foreground">{candidate.name}</h3>
-                          <p className="text-xs text-muted-foreground mt-0.5">{candidate.title} · {candidate.location}</p>
-                        </div>
-                        <MatchBadge score={candidate.aiScore} />
-                      </div>
-
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className={`text-[10px] px-2 py-0.5 rounded border uppercase font-bold ${stageColors[candidate.stage]}`}>
-                          {stageLabels[candidate.stage]}
-                        </span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded border uppercase font-bold ${candidate.status === 'Available' ? 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10' :
-                            candidate.status === 'Open to offers' ? 'text-accent bg-accent/5 border-accent/10' :
-                              'text-muted-foreground bg-muted/20 border-border/30'
-                          }`}>
-                          {candidate.status}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1 mb-4">
-                        {candidate.skills.slice(0, 4).map(skill => (
-                          <span key={skill} className="text-[10px] px-2 py-0.5 rounded-md bg-muted/30 text-muted-foreground border border-border/30">
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-
-                      <div className="flex items-center gap-2 pt-2 border-t border-border/20">
-                        <button
-                          onClick={e => { e.stopPropagation(); navigate(`/messages`) }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-primary/5 text-primary hover:bg-primary/10 border border-primary/10 transition-colors font-semibold"
-                        >
-                          <MessageSquare size={12} /> Message
-                        </button>
-                        <button
-                          onClick={e => { e.stopPropagation(); navigate(`/profile/${candidate.id}`) }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-border bg-card hover:bg-muted text-foreground transition-colors font-semibold"
-                        >
-                          <Eye size={12} /> View Profile
-                        </button>
-                        <button
-                          onClick={e => e.stopPropagation()}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-border bg-card hover:bg-muted text-foreground transition-colors font-semibold ml-auto"
-                        >
-                          <Calendar size={12} /> Schedule
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        )}
+       
 
         {activeTab === 'analytics' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -827,6 +1015,8 @@ export function RecruiterDashboard() {
               </div>
             </div>
           </div>
+        )}
+          </>
         )}
       </div>
     </Layout>

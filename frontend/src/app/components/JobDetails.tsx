@@ -175,9 +175,8 @@ export function JobDetails() {
                 <div className="flex gap-2 flex-shrink-0">
                   <button
                     onClick={handleToggleSave}
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all group/bookmark ${
-                      saved ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/30 hover:bg-muted'
-                    }`}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all group/bookmark ${saved ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/30 hover:bg-muted'
+                      }`}
                   >
                     <Bookmark size={16} strokeWidth={1.75} fill={saved ? 'currentColor' : 'none'} className={`transition-all duration-200 group-hover/bookmark:scale-110 ${saved ? 'fill-primary' : ''}`} />
                   </button>
@@ -194,11 +193,10 @@ export function JobDetails() {
                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted text-xs font-medium">
                   <Star size={13} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} /> {job.level}
                 </span>
-                <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium ${
-                  job.remote === 'remote' ? 'bg-emerald-500/10 text-emerald-400' :
-                  job.remote === 'hybrid' ? 'bg-accent/10 text-accent' :
-                  'bg-muted text-muted-foreground'
-                }`}>
+                <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium ${job.remote === 'remote' ? 'bg-emerald-500/10 text-emerald-400' :
+                    job.remote === 'hybrid' ? 'bg-accent/10 text-accent' :
+                      'bg-muted text-muted-foreground'
+                  }`}>
                   <Globe size={13} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} /> {job.remote.charAt(0).toUpperCase() + job.remote.slice(1)}
                 </span>
                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted text-xs font-medium">
@@ -318,11 +316,10 @@ export function JobDetails() {
                         initial={{ width: 0 }}
                         animate={{ width: `${job.match}%` }}
                         transition={{ duration: 1, ease: 'easeOut' }}
-                        className={`h-full rounded-full ${
-                          job.match >= 90 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' :
-                          job.match >= 80 ? 'bg-gradient-to-r from-primary to-violet-500' :
-                          'bg-gradient-to-r from-amber-500 to-amber-400'
-                        }`}
+                        className={`h-full rounded-full ${job.match >= 90 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' :
+                            job.match >= 80 ? 'bg-gradient-to-r from-primary to-violet-500' :
+                              'bg-gradient-to-r from-amber-500 to-amber-400'
+                          }`}
                       />
                     </div>
                   </div>
@@ -380,21 +377,7 @@ export function JobDetails() {
                 )}
               </div>
 
-              {/* Interview prep */}
-              {user && (
-                <div className="p-5 rounded-2xl bg-card border border-border">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Target size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-accent animate-pulse" />
-                    <h3 className="font-semibold text-sm">AI Interview Prep</h3>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Practice with our AI coach trained on {job.company}'s real interview questions and culture.
-                  </p>
-                  <button className="w-full py-2.5 rounded-xl text-sm font-medium bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors">
-                    Start Practice Session
-                  </button>
-                </div>
-              )}
+
 
               {/* Deadline */}
               <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
