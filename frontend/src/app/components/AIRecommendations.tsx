@@ -128,6 +128,12 @@ function buildCareerInsights(user: any) {
   return insights
 }
 
+function buildUserResumeText(u: any) {
+  if (!u) return 'No resume details provided.'
+  const parts = [u.title, u.roleLevel, u.workStyle, u.bio, u.location, u.github].filter(Boolean)
+  return parts.join('\n') || 'No resume details provided.'
+}
+
 export function AIRecommendations() {
   const navigate = useNavigate()
   const { user, jobs } = useApp()
@@ -191,7 +197,61 @@ export function AIRecommendations() {
     'Show my skill gaps',
   ]
 
-  const topMatches = jobs.slice(0, 5).sort((a, b) => b.match - a.match)
+  const [matchedJobs, setMatchedJobs] = useState<any[] | null>(null)
+  const [matchingLoading, setMatchingLoading] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+
+    const fetchMatches = async () => {
+      setMatchingLoading(true)
+      try {
+        const resumeText = buildUserResumeText(user)
+        const res = await fetch('http://127.0.0.1:8000/api/match', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            resume_text: resumeText,
+            demographic_group: 0,
+          }),
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          setMatchedJobs(data.recommendations || [])
+        }
+      } catch (err) {
+        console.error('Error fetching matched jobs in AI Recommendations:', err)
+      } finally {
+        setMatchingLoading(false)
+      }
+    }
+
+    fetchMatches()
+  }, [user])
+
+  const topMatches = matchedJobs
+    ? matchedJobs.map((rec, i) => {
+        const fullJob = jobs.find(
+          j => j.title.toLowerCase().trim() === rec.job_title.toLowerCase().trim() &&
+               j.company.toLowerCase().trim() === rec.company.toLowerCase().trim()
+        )
+        return {
+          id: fullJob?.id || `fallback-${i}`,
+          title: rec.job_title,
+          company: rec.company,
+          location: fullJob?.location || 'Remote',
+          salary: fullJob?.salary || '$80K – $120K',
+          posted: fullJob?.posted || 'Just now',
+          remote: fullJob?.remote || 'remote',
+          skills: fullJob?.skills || ['Engineering'],
+          match: Math.round(rec.similarity_score * 100),
+          recommended: rec.recommended
+        }
+      }).slice(0, 5)
+    : jobs.slice(0, 5).map(j => ({ ...j, match: j.match || 85, recommended: true })).sort((a, b) => b.match - a.match)
 
   return (
     <Layout>
@@ -225,36 +285,52 @@ export function AIRecommendations() {
                 </button>
               </div>
               <div className="space-y-3">
-                {topMatches.map((job, i) => (
-                  <motion.div
-                    key={job.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.08 }}
-                    className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/40 transition-colors cursor-pointer group"
-                    onClick={() => navigate(`/jobs/${job.id}`)}
-                  >
-                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-base">
-                      {['💳', '🛍️', '🤖', '₿', '✈️'][i]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium group-hover:text-primary transition-colors truncate">{job.title}</div>
-                      <div className="text-xs text-muted-foreground flex items-center gap-2">
-                        {job.company}
-                        <span className="flex items-center gap-1"><DollarSign size={10} /> {job.salary.split(' – ')[0]}+</span>
+                {matchingLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-card border border-border/30 animate-pulse h-16">
+                      <div className="w-8 h-8 rounded-lg bg-muted/50 flex-shrink-0" />
+                      <div className="flex-1 space-y-1">
+                        <div className="h-3 bg-muted/50 rounded w-1/3" />
+                        <div className="h-2 bg-muted/50 rounded w-1/4" />
                       </div>
                     </div>
-                    <div>
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${job.match >= 90 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                        job.match >= 80 ? 'bg-primary/10 text-primary border-primary/20' :
-                          'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                        }`}>
-                        <Sparkles size={9} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="animate-pulse" /> {job.match}%
-                      </span>
-                    </div>
-                    <ArrowUpRight size={14} strokeWidth={1.75} className="text-muted-foreground group-hover:text-primary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                  </motion.div>
-                ))}
+                  ))
+                ) : topMatches.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-muted-foreground">
+                    No matching jobs found.
+                  </div>
+                ) : (
+                  topMatches.map((job, i) => (
+                    <motion.div
+                      key={job.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.08 }}
+                      className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/40 transition-colors cursor-pointer group"
+                      onClick={() => navigate(`/jobs/${job.id}`)}
+                    >
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-base">
+                        {['💳', '🛍️', '🤖', '₿', '✈️'][i] || '💼'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium group-hover:text-primary transition-colors truncate">{job.title}</div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-2">
+                          {job.company}
+                          <span className="flex items-center gap-1"><DollarSign size={10} /> {job.salary.split(' – ')[0]}+</span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${job.match >= 90 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                          job.match >= 80 ? 'bg-primary/10 text-primary border-primary/20' :
+                            'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                          }`}>
+                          <Sparkles size={9} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="animate-pulse" /> {job.match}%
+                        </span>
+                      </div>
+                      <ArrowUpRight size={14} strokeWidth={1.75} className="text-muted-foreground group-hover:text-primary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </motion.div>
+                  ))
+                )}
               </div>
             </div>
           </div>

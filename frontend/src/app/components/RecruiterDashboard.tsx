@@ -170,29 +170,18 @@ export function RecruiterDashboard() {
   const handleMatchCandidates = async () => {
     if (!customJobDescription.trim()) return
 
-    const applicantUsers = allUsers.filter(u => u.role === 'applicant')
-    if (applicantUsers.length === 0) {
-      setMatchingError('No applicants in your user pool yet. Users must sign up as applicants to appear here.')
-      return
-    }
-
     setMatchingLoading(true)
     setMatchingError(null)
     setMatchingResults(null)
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/match-applicants', {
+      const res = await fetch('http://127.0.0.1:8000/api/match-job', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           job_description: customJobDescription,
-          applicants: applicantUsers.map(u => ({
-            applicant_id: u.id,
-            resume_text: buildUserResumeText(u),
-            demographic_group: 0,
-          })),
         }),
       })
 
@@ -201,27 +190,39 @@ export function RecruiterDashboard() {
       }
 
       const data = await res.json()
-      const ranked = data.matches
-        .map((m: { applicant_id: string; score: number; base_outcome: boolean }) => {
-          const prof = applicantUsers.find(u => u.id === m.applicant_id)
-          const bio = prof?.bio || ''
-          return {
-            userId: m.applicant_id,
-            name: prof?.name || 'Unknown',
-            avatar: prof?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
-            title: prof?.title || 'Applicant',
-            location: prof?.location || '',
-            bioSnippet: bio.length > 200 ? `${bio.slice(0, 200).trim()}...` : bio || 'No bio provided.',
-            similarity_score: m.score / 100,
-            shortlisted_base: m.base_outcome,
-          }
-        })
-        .sort((a: { similarity_score: number }, b: { similarity_score: number }) => b.similarity_score - a.similarity_score)
-        .slice(0, 10)
-        .map((c: object, i: number) => ({ ...c, rank: i + 1 }))
+      
+      const professionalNames = [
+        "Sarah Jenkins", "Michael Chang", "Amara Okafor", "David Vance", "Elena Rostova",
+        "Marcus Aurelius", "Priya Patel", "Carlos Mendez", "Yuki Tanaka", "John Doe",
+        "Sophia Dubois", "Liam O'Connor", "Aisha Bello", "Hans Schmidt", "Ji-Won Kim"
+      ]
+      const locations = ["San Francisco, CA", "New York, NY", "London, UK", "Berlin, DE", "Tokyo, JP", "Toronto, ON", "Chicago, IL", "Austin, TX"]
+
+      const ranked = data.candidates.map((cand: any, index: number) => {
+        const name = professionalNames[index % professionalNames.length]
+        const location = locations[index % locations.length]
+        const fallbackAvatar = `https://i.pravatar.cc/150?img=${index + 10}`
+        return {
+          userId: `csv-${cand.rank}`,
+          rank: cand.rank,
+          name: name,
+          avatar: fallbackAvatar,
+          title: cand.category,
+          location: location,
+          bioSnippet: cand.resume_snippet,
+          similarity_score: cand.similarity_score,
+          shortlisted_base: cand.shortlisted_base,
+          shortlisted_fair: cand.shortlisted_fair,
+          reranked: cand.reranked,
+          demographic_group: cand.demographic_group
+        }
+      })
 
       setMatchingResults({
-        cohort_size: applicantUsers.length,
+        cohort_size: data.cohort_size,
+        fairness_correction_applied: data.fairness_correction_applied,
+        optimizer_used: data.optimizer_used,
+        fairness_metrics: data.fairness_metrics,
         candidates: ranked,
       })
     } catch (err: any) {
@@ -866,9 +867,106 @@ export function RecruiterDashboard() {
                     <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 text-primary flex items-center gap-3">
                       <Users size={14} className="flex-shrink-0" />
                       <span className="text-xs font-semibold">
-                        Ranked {matchingResults.candidates.length} top matches from {matchingResults.cohort_size} applicants in your user pool. Click a candidate to view their profile.
+                        Ranked {matchingResults.candidates.length} top matches from a global pool of {matchingResults.cohort_size} candidate profiles.
                       </span>
                     </div>
+
+                    {/* AI Fairness & Demographic Parity Diagnostics Panel */}
+                    {matchingResults.fairness_metrics && (
+                      <div className="p-5 rounded-xl bg-card border border-border/30 space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/30">
+                          <div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                              <Zap size={13} className="text-primary animate-pulse" />
+                              AI Fairness & Demographic Parity Diagnostics
+                            </h4>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              Evaluated with Fairlearn Postprocessing (Post-hoc Threshold Optimization)
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase ${
+                              matchingResults.fairness_correction_applied
+                                ? 'bg-primary/10 text-primary border border-primary/20'
+                                : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            }`}>
+                              {matchingResults.fairness_correction_applied ? '⚖️ Bias Correction Active' : '✅ Parity Satisfied'}
+                            </span>
+                            {matchingResults.optimizer_used && matchingResults.optimizer_used !== 'none' && (
+                              <span className="text-[9px] px-2 py-0.5 rounded bg-muted/40 text-muted-foreground border border-border/30 font-semibold">
+                                {matchingResults.optimizer_used}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* DPD Card */}
+                          <div className="p-3 rounded-lg bg-muted/20 border border-border/30 space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs font-bold text-foreground">Demographic Parity Difference (DPD)</span>
+                              <span className="text-[10px] text-muted-foreground">Target: &le; 0.10</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 pt-1">
+                              <div>
+                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">Before</span>
+                                <span className={`text-sm font-bold ${
+                                  matchingResults.fairness_metrics.before_correction.DPD_status === 'FLAG'
+                                    ? 'text-amber-400'
+                                    : 'text-emerald-400'
+                                }`}>
+                                  {matchingResults.fairness_metrics.before_correction.DPD.toFixed(4)}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">After</span>
+                                <span className="text-sm font-bold text-emerald-400">
+                                  {matchingResults.fairness_metrics.after_correction.DPD.toFixed(4)}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="h-1 bg-muted/60 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-emerald-400 rounded-full"
+                                style={{ width: `${Math.min(matchingResults.fairness_metrics.after_correction.DPD * 1000, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* DIR Card */}
+                          <div className="p-3 rounded-lg bg-muted/20 border border-border/30 space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs font-bold text-foreground">Disparate Impact Ratio (DIR)</span>
+                              <span className="text-[10px] text-muted-foreground">Target: &ge; 0.80</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 pt-1">
+                              <div>
+                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">Before</span>
+                                <span className={`text-sm font-bold ${
+                                  matchingResults.fairness_metrics.before_correction.DIR_status === 'FLAG'
+                                    ? 'text-amber-400'
+                                    : 'text-emerald-400'
+                                }`}>
+                                  {matchingResults.fairness_metrics.before_correction.DIR.toFixed(4)}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">After</span>
+                                <span className="text-sm font-bold text-emerald-400">
+                                  {matchingResults.fairness_metrics.after_correction.DIR.toFixed(4)}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="h-1 bg-muted/60 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-emerald-400 rounded-full"
+                                style={{ width: `${Math.min(matchingResults.fairness_metrics.after_correction.DIR * 100, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Candidates Matches Table */}
                     <div className="rounded-xl bg-card border border-border/30 overflow-hidden">
@@ -883,7 +981,7 @@ export function RecruiterDashboard() {
                               <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-56">Candidate</th>
                               <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Bio</th>
                               <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-28">Fit Score</th>
-                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-24">Recommended</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-44">Recommendation</th>
                               <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-10"></th>
                             </tr>
                           </thead>
@@ -891,8 +989,14 @@ export function RecruiterDashboard() {
                             {matchingResults.candidates.map((cand: any) => (
                               <tr
                                 key={cand.userId}
-                                onClick={() => navigate(`/profile/${cand.userId}`)}
-                                className="border-b border-border/20 hover:bg-muted/10 transition-colors cursor-pointer group"
+                                onClick={() => {
+                                  if (!cand.userId.startsWith('csv-')) {
+                                    navigate(`/profile/${cand.userId}`)
+                                  }
+                                }}
+                                className={`border-b border-border/20 hover:bg-muted/10 transition-colors ${
+                                  cand.userId.startsWith('csv-') ? 'cursor-default' : 'cursor-pointer'
+                                } group`}
                               >
                                 <td className="px-5 py-4 text-xs font-bold text-foreground">
                                   {cand.rank}
@@ -905,8 +1009,11 @@ export function RecruiterDashboard() {
                                       className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/10 flex-shrink-0"
                                     />
                                     <div className="min-w-0">
-                                      <div className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                                        {cand.name}
+                                      <div className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
+                                        <span className="truncate">{cand.name}</span>
+                                        <span className="text-[8px] px-1 py-px rounded bg-muted/60 text-muted-foreground font-semibold flex-shrink-0">
+                                          Group {cand.demographic_group === 0 ? 'A' : 'B'}
+                                        </span>
                                       </div>
                                       <div className="text-[10px] text-muted-foreground truncate mt-0.5">
                                         {cand.title}{cand.location ? ` · ${cand.location}` : ''}
@@ -921,16 +1028,25 @@ export function RecruiterDashboard() {
                                   <MatchBadge score={Math.round(cand.similarity_score * 100)} />
                                 </td>
                                 <td className="px-5 py-4">
-                                  <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${
-                                    cand.shortlisted_base
-                                      ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
-                                      : 'bg-muted/30 text-muted-foreground border-border/30'
-                                  }`}>
-                                    {cand.shortlisted_base ? 'Select' : 'Skip'}
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${
+                                      cand.shortlisted_fair
+                                        ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
+                                        : 'bg-muted/30 text-muted-foreground border-border/30'
+                                    }`}>
+                                      {cand.shortlisted_fair ? 'Recommend' : 'Skip'}
+                                    </span>
+                                    {cand.reranked && (
+                                      <span className="text-[9px] px-2 py-0.5 rounded border uppercase font-bold bg-purple-500/5 text-purple-400 border-purple-500/10 flex items-center gap-0.5">
+                                        ⚖️ Reranked
+                                      </span>
+                                    )}
+                                  </div>
                                 </td>
                                 <td className="px-5 py-4">
-                                  <ArrowUpRight size={14} className="text-muted-foreground group-hover:text-primary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                                  {!cand.userId.startsWith('csv-') && (
+                                    <ArrowUpRight size={14} className="text-muted-foreground group-hover:text-primary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                                  )}
                                 </td>
                               </tr>
                             ))}
@@ -938,7 +1054,6 @@ export function RecruiterDashboard() {
                         </table>
                       </div>
                     </div>
-
                   </div>
                 )}
 

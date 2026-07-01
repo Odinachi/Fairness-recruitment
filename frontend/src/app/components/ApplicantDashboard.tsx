@@ -142,6 +142,12 @@ function buildCareerPaths(user: any) {
   return paths[level] || paths['Mid']
 }
 
+function buildUserResumeText(u: any) {
+  if (!u) return 'No resume details provided.'
+  const parts = [u.title, u.roleLevel, u.workStyle, u.bio, u.location, u.github].filter(Boolean)
+  return parts.join('\n') || 'No resume details provided.'
+}
+
 export function ApplicantDashboard() {
   const { user, jobs, applicantApplications, applicationChartData } = useApp()
   const navigate = useNavigate()
@@ -176,7 +182,66 @@ export function ApplicantDashboard() {
     }
   }, [user])
 
-  const topJobs = jobs.slice(0, 5)
+  const [matchedJobs, setMatchedJobs] = useState<any[] | null>(null)
+  const [matchingLoading, setMatchingLoading] = useState(false)
+  const [matchingError, setMatchingError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!user) return
+
+    const fetchMatches = async () => {
+      setMatchingLoading(true)
+      setMatchingError(null)
+      try {
+        const resumeText = buildUserResumeText(user)
+        const res = await fetch('http://127.0.0.1:8000/api/match', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            resume_text: resumeText,
+            demographic_group: 0,
+          }),
+        })
+
+        if (!res.ok) {
+          throw new Error(`Server returned status ${res.status}`)
+        }
+
+        const data = await res.json()
+        setMatchedJobs(data.recommendations || [])
+      } catch (err: any) {
+        console.error('Error fetching matched jobs:', err)
+        setMatchingError(err.message || 'Failed to fetch AI matches.')
+      } finally {
+        setMatchingLoading(false)
+      }
+    }
+
+    fetchMatches()
+  }, [user])
+
+  const topJobs = matchedJobs
+    ? matchedJobs.map((rec, i) => {
+        const fullJob = jobs.find(
+          j => j.title.toLowerCase().trim() === rec.job_title.toLowerCase().trim() &&
+               j.company.toLowerCase().trim() === rec.company.toLowerCase().trim()
+        )
+        return {
+          id: fullJob?.id || `fallback-${i}`,
+          title: rec.job_title,
+          company: rec.company,
+          location: fullJob?.location || 'Remote',
+          salary: fullJob?.salary || '$80K – $120K',
+          posted: fullJob?.posted || 'Just now',
+          remote: fullJob?.remote || 'remote',
+          skills: fullJob?.skills || ['Engineering'],
+          match: Math.round(rec.similarity_score * 100),
+          recommended: rec.recommended
+        }
+      }).slice(0, 5)
+    : jobs.slice(0, 5).map(j => ({ ...j, match: j.match || 85, recommended: true }))
 
   const toggleSave = (id: string) => {
     setSavedJobs(prev => {
@@ -346,74 +411,91 @@ export function ApplicantDashboard() {
               </div>
 
               <div className="space-y-3">
-                {topJobs.map((job, i) => (
-                  <motion.div
-                    key={job.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="group p-4 rounded-xl bg-card border border-border/30 hover:border-primary/20 transition-all cursor-pointer"
-                    onClick={() => navigate(`/jobs/${job.id}`)}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-lg bg-muted/40 border border-border/30 flex items-center justify-center flex-shrink-0 text-sm">
-                        {['💳', '🤖', '🎨', '₿', '✈️'][i] || '💼'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-1.5">
-                          <div>
-                            <h3 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors">
-                              {job.title}
-                            </h3>
-                            <p className="text-xs text-muted-foreground mt-0.5">{job.company}</p>
-                          </div>
-                          <MatchBadge match={job.match} />
-                        </div>
-                        <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <MapPin size={11} /> {job.location}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <DollarSign size={11} /> {job.salary.split(' – ')[0]}+
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock size={11} /> {job.posted}
-                          </span>
-                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border uppercase ${
-                            job.remote === 'remote' ? 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10' :
-                            job.remote === 'hybrid' ? 'text-accent bg-accent/5 border-accent/10' :
-                            'text-muted-foreground bg-muted/20 border-border/30'
-                          }`}>
-                            {job.remote}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-1 mt-3">
-                          {job.skills.slice(0, 4).map(skill => (
-                            <span key={skill} className="text-[10px] px-2 py-0.5 rounded-md bg-muted/30 text-muted-foreground border border-border/30">
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-2 flex-shrink-0">
-                        <button
-                          onClick={e => { e.stopPropagation(); toggleSave(job.id) }}
-                          className={`w-7 h-7 rounded-md flex items-center justify-center border border-border/30 hover:bg-muted/40 transition-colors ${
-                            savedJobs.includes(job.id) ? 'text-primary border-primary/20 bg-primary/5' : 'text-muted-foreground'
-                          }`}
-                        >
-                          <Bookmark size={13} className={savedJobs.includes(job.id) ? 'fill-primary' : ''} />
-                        </button>
-                        <button
-                          onClick={e => { e.stopPropagation(); navigate(`/jobs/${job.id}`) }}
-                          className="w-7 h-7 rounded-md bg-primary/5 border border-primary/10 text-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
-                        >
-                          <ArrowUpRight size={13} />
-                        </button>
+                {matchingLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="p-4 rounded-xl bg-card border border-border/30 animate-pulse flex items-start gap-4 h-28">
+                      <div className="w-10 h-10 rounded-lg bg-muted/50 flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-muted/50 rounded w-1/3" />
+                        <div className="h-3 bg-muted/50 rounded w-1/4" />
+                        <div className="h-3 bg-muted/50 rounded w-1/2" />
                       </div>
                     </div>
-                  </motion.div>
-                ))}
+                  ))
+                ) : topJobs.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-muted-foreground border border-dashed border-border/30 rounded-xl">
+                    No matching jobs found. Try completing your profile!
+                  </div>
+                ) : (
+                  topJobs.map((job, i) => (
+                    <motion.div
+                      key={job.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="group p-4 rounded-xl bg-card border border-border/30 hover:border-primary/20 transition-all cursor-pointer"
+                      onClick={() => navigate(`/jobs/${job.id}`)}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-muted/40 border border-border/30 flex items-center justify-center flex-shrink-0 text-sm">
+                          {['💳', '🤖', '🎨', '₿', '✈️'][i] || '💼'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1.5">
+                            <div>
+                              <h3 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors">
+                                {job.title}
+                              </h3>
+                              <p className="text-xs text-muted-foreground mt-0.5">{job.company}</p>
+                            </div>
+                            <MatchBadge match={job.match} />
+                          </div>
+                          <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <MapPin size={11} /> {job.location}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <DollarSign size={11} /> {job.salary.split(' – ')[0]}+
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock size={11} /> {job.posted}
+                            </span>
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border uppercase ${
+                              job.remote === 'remote' ? 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10' :
+                              job.remote === 'hybrid' ? 'text-accent bg-accent/5 border-accent/10' :
+                              'text-muted-foreground bg-muted/20 border-border/30'
+                            }`}>
+                              {job.remote}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-3">
+                            {job.skills.slice(0, 4).map(skill => (
+                              <span key={skill} className="text-[10px] px-2 py-0.5 rounded-md bg-muted/30 text-muted-foreground border border-border/30">
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2 flex-shrink-0">
+                          <button
+                            onClick={e => { e.stopPropagation(); toggleSave(job.id) }}
+                            className={`w-7 h-7 rounded-md flex items-center justify-center border border-border/30 hover:bg-muted/40 transition-colors ${
+                              savedJobs.includes(job.id) ? 'text-primary border-primary/20 bg-primary/5' : 'text-muted-foreground'
+                            }`}
+                          >
+                            <Bookmark size={13} className={savedJobs.includes(job.id) ? 'fill-primary' : ''} />
+                          </button>
+                          <button
+                            onClick={e => { e.stopPropagation(); navigate(`/jobs/${job.id}`) }}
+                            className="w-7 h-7 rounded-md bg-primary/5 border border-primary/10 text-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
+                          >
+                            <ArrowUpRight size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
               </div>
             </div>
 
