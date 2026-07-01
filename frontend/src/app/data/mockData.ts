@@ -60,3 +60,26 @@ export interface Notification {
   avatar?: string
   actionLabel?: string
 }
+
+export function calculateJobMatchScore(userSkills: string[] | undefined, jobSkills: string[] | undefined, jobId: string): number {
+  if (!userSkills || userSkills.length === 0) {
+    let hash = 0
+    for (let i = 0; i < jobId.length; i++) {
+      hash = jobId.charCodeAt(i) + ((hash << 5) - hash)
+    }
+    return 70 + Math.abs(hash % 16)
+  }
+
+  const jSkills = jobSkills || []
+  if (jSkills.length === 0) return 75
+
+  const matches = jSkills.filter(s =>
+    userSkills.some(us => us.toLowerCase().trim() === s.toLowerCase().trim())
+  ).length
+
+  const baseScore = 60
+  const overlapRatio = matches / jSkills.length
+  const calculated = Math.round(baseScore + overlapRatio * 35)
+
+  return calculated
+}

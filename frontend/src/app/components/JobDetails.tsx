@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
-
+import { calculateJobMatchScore } from '../data/mockData'
 const matchBreakdown = [
   { label: 'Skills Match', score: 96, detail: '9/10 required skills matched' },
   { label: 'Experience Level', score: 92, detail: 'Your 7 years aligns with Senior req.' },
@@ -27,7 +27,13 @@ export function JobDetails() {
   const [applied, setApplied] = useState(false)
   const [applyLoading, setApplyLoading] = useState(false)
 
-  const job = jobs.find(j => j.id === id)
+  const rawJob = jobs.find(j => j.id === id)
+  const job = rawJob ? {
+    ...rawJob,
+    match: user && user.role !== 'recruiter'
+      ? calculateJobMatchScore(user.skills, rawJob.skills, rawJob.id)
+      : 75
+  } : undefined
 
   // Initialize and sync saved state
   useEffect(() => {
@@ -93,7 +99,7 @@ export function JobDetails() {
       company: job.company,
       logo: job.companyLogo || '💼',
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      match: job.match || 75,
+      match: job.match,
       stage: 'Applied',
       status: 'applied'
     }

@@ -392,13 +392,7 @@ export function ApplicantDashboard() {
             </p>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => navigate('/ai')}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/95 transition-all shadow-sm"
-            >
-              <Sparkles size={13} />
-              View AI Matches
-            </button>
+
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingResume}
@@ -628,60 +622,7 @@ export function ApplicantDashboard() {
                 </div>
               </div>
 
-              {/* AI Insights — derived from user profile */}
-              <div className="p-5 rounded-xl bg-card border border-border/30">
-                <div className="flex items-center gap-1.5 mb-4">
-                  <Brain size={14} className="text-primary" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">AI Career Insights</h3>
-                </div>
-                <div className="space-y-3">
-                  {aiInsights.map((insight, i) => {
-                    const Icon = insight.icon
-                    const borderCls = insight.type === 'positive' ? 'border-emerald-500/10 bg-emerald-500/5 text-emerald-400' :
-                      insight.type === 'warning' ? 'border-amber-500/10 bg-amber-500/5 text-amber-400' :
-                      'border-primary/10 bg-primary/5 text-primary'
-                    return (
-                      <div key={i} className="flex gap-2.5 items-start group">
-                        <div className={`p-1.5 rounded border ${borderCls} flex-shrink-0 mt-0.5 transition-transform duration-200 group-hover:scale-105`}>
-                          <Icon size={12} strokeWidth={1.75} fill={insight.type === 'positive' || insight.type === 'tip' ? 'currentColor' : 'none'} fillOpacity={0.15} />
-                        </div>
-                        <p className="text-xs text-muted-foreground leading-normal transition-colors group-hover:text-foreground">{insight.text}</p>
-                      </div>
-                    )
-                  })}
-                </div>
-                <button
-                  onClick={() => navigate('/ai')}
-                  className="w-full mt-4 py-2 text-xs text-primary font-semibold border border-primary/20 rounded-lg hover:bg-primary/5 transition-colors"
-                >
-                  View full AI analysis →
-                </button>
-              </div>
 
-              {/* Quick actions */}
-              <div className="p-5 rounded-xl bg-card border border-border/30">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Quick Actions</h3>
-                <div className="space-y-1.5">
-                  {[
-                    { label: 'Generate AI Cover Letter', icon: FileText },
-                    { label: 'Launch Mock Interview', icon: Play },
-                    { label: 'Deep Skill Analysis', icon: BarChart3 },
-                    { label: 'Check Salary Benchmarks', icon: DollarSign },
-                  ].map(action => {
-                    const Icon = action.icon
-                    return (
-                      <button
-                        key={action.label}
-                        className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-border/30 bg-muted/20 hover:bg-muted/40 transition-colors text-left text-xs font-semibold text-foreground group"
-                      >
-                        <Icon size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.12} className="text-muted-foreground group-hover:text-primary transition-all duration-300 group-hover:scale-110" />
-                        <span className="flex-1">{action.label}</span>
-                        <ChevronRight size={12} strokeWidth={1.75} className="text-muted-foreground group-hover:text-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
 
             </div>
           </div>
@@ -851,42 +792,7 @@ export function ApplicantDashboard() {
               </div>
             </div>
 
-            {/* Career path suggestions — derived from user's role level */}
-            <div className="p-5 rounded-xl bg-card border border-border/30 lg:col-span-2 group">
-              <div className="flex items-center gap-1.5 mb-1">
-                <TrendingUp size={14} strokeWidth={1.75} className="text-emerald-400 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">AI Career Path Analysis</h3>
-              </div>
-              <p className="text-[10px] text-muted-foreground mb-4">
-                Paths projected from your current {user?.roleLevel || 'Mid'} level
-                {user?.salaryRange ? ` · Target salary: ${user.salaryRange}` : ''}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {careerPaths.map((path) => (
-                  <div key={path.path} className="p-4 rounded-xl border border-border/30 bg-muted/10 hover:border-primary/20 transition-all">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="font-semibold text-xs text-foreground">{path.path}</h4>
-                        <p className="text-[10px] text-muted-foreground">{path.timeline}</p>
-                      </div>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
-                        path.probability >= 70 ? 'bg-emerald-500/5 text-emerald-400' :
-                        path.probability >= 55 ? 'bg-primary/5 text-primary' :
-                        'bg-amber-500/5 text-amber-400'
-                      }`}>
-                        {path.probability}%
-                      </span>
-                    </div>
-                    <div className="text-xs text-emerald-400 font-semibold mb-3">{path.salary}</div>
-                    <div className="flex flex-wrap gap-1">
-                      {path.skills.map((s: string) => (
-                        <span key={s} className="text-[9px] px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground border border-border/20">{s}</span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+
 
           </div>
         )}

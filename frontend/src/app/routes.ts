@@ -6,7 +6,7 @@ import { RecruiterDashboard } from './components/RecruiterDashboard'
 import { JobListings } from './components/JobListings'
 import { JobDetails } from './components/JobDetails'
 import { Notifications } from './components/Notifications'
-import { AIRecommendations } from './components/AIRecommendations'
+
 import { CandidateProfile } from './components/CandidateProfile'
 import { CompanyProfile } from './components/CompanyProfile'
 import { Settings } from './components/Settings'
@@ -21,7 +21,6 @@ export const router = createHashRouter([
   { path: '/jobs', Component: JobListings },
   { path: '/jobs/:id', Component: JobDetails },
   { path: '/notifications', Component: Notifications },
-  { path: '/ai', Component: AIRecommendations },
   { path: '/profile/:id', Component: CandidateProfile },
   { path: '/company/:id', Component: CompanyProfile },
   { path: '/settings', Component: Settings },

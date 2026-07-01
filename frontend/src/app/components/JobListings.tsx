@@ -9,7 +9,7 @@ import {
   Star, Zap, Globe, Building2,
 } from 'lucide-react'
 import { motion } from 'motion/react'
-
+import { calculateJobMatchScore } from '../data/mockData'
 const categories = ['All', 'Engineering', 'Design', 'Product', 'AI/ML', 'Data Science', 'DevOps', 'Security', 'Research', 'Mobile']
 const remoteOptions = ['All', 'Remote', 'Hybrid', 'On-site']
 const levelOptions = ['All', 'Entry', 'Mid', 'Senior', 'Lead', 'Executive']
@@ -76,8 +76,16 @@ export function JobListings() {
     }
   }, [user])
 
+  const jobsWithMatches = useMemo(() => {
+    if (!user || user.role === 'recruiter') return jobs
+    return jobs.map(j => ({
+      ...j,
+      match: calculateJobMatchScore(user.skills, j.skills, j.id)
+    }))
+  }, [jobs, user])
+
   const filtered = useMemo(() => {
-    return jobs
+    return jobsWithMatches
       .filter(j => {
         if (user && user.role === 'recruiter') {
           if (j.postedBy !== user.id) return false
@@ -95,7 +103,7 @@ export function JobListings() {
         if (sortBy === 'salary') return b.salaryMax - a.salaryMax
         return 0
       })
-  }, [jobs, user, search, activeCategory, activeRemote, activeLevel, sortBy, filterParam, savedJobs])
+  }, [jobsWithMatches, user, search, activeCategory, activeRemote, activeLevel, sortBy, filterParam, savedJobs])
 
   const toggleSave = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -114,7 +122,7 @@ export function JobListings() {
     }
     if (user.role === 'recruiter') return
 
-    const job = jobs.find(j => j.id === id)
+    const job = jobsWithMatches.find(j => j.id === id)
     if (!job) return
 
     const appDoc = {
@@ -125,7 +133,7 @@ export function JobListings() {
       company: job.company,
       logo: job.companyLogo || '💼',
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      match: job.match || 75,
+      match: job.match,
       stage: 'Applied',
       status: 'applied'
     }

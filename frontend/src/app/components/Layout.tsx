@@ -36,11 +36,11 @@ export function Layout({ children }: { children: ReactNode }) {
   const location = useLocation()
   const [searchFocused, setSearchFocused] = useState(false)
 
-  const userCompany = companies.find(c => 
-    c.postedBy === user?.id || 
+  const userCompany = companies.find(c =>
+    c.postedBy === user?.id ||
     (user?.company && (c.id === user.company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || c.name.toLowerCase() === user.company.toLowerCase()))
   )
-  const companySlug = userCompany?.id || 
+  const companySlug = userCompany?.id ||
     (user?.company ? user.company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') : 'stripe')
 
   const dynamicRecruiterNav = recruiterNav.map(item => {
@@ -56,7 +56,7 @@ export function Layout({ children }: { children: ReactNode }) {
     if (user && !loadingData) {
       const needsCompanySetup = user.role === 'recruiter' && !user.company && !companies.some(c => c.postedBy === user.id)
       const needsProfileSetup = !user.profileSetupCompleted
-      
+
       if ((needsProfileSetup || needsCompanySetup) && location.pathname !== '/profile-setup') {
         navigate('/profile-setup')
       }
@@ -112,9 +112,9 @@ export function Layout({ children }: { children: ReactNode }) {
               const active = (() => {
                 const itemPathWithoutSearch = item.path.split('?')[0];
                 const itemSearch = item.path.split('?')[1] || '';
-                
+
                 if (location.pathname !== itemPathWithoutSearch) return false;
-                
+
                 if (itemSearch) {
                   const params = new URLSearchParams(location.search);
                   const itemParams = new URLSearchParams(itemSearch);
@@ -140,12 +140,12 @@ export function Layout({ children }: { children: ReactNode }) {
                       : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground border border-transparent'
                     }`}
                 >
-                  <Icon 
-                    size={18} 
+                  <Icon
+                    size={18}
                     strokeWidth={active ? 2 : 1.75}
                     fill={active ? "currentColor" : "none"}
                     fillOpacity={0.15}
-                    className={`flex-shrink-0 transition-all duration-200 group-hover:scale-110 group-active:scale-95 ${active ? 'text-primary' : 'text-sidebar-foreground/60 group-hover:text-sidebar-foreground'}`} 
+                    className={`flex-shrink-0 transition-all duration-200 group-hover:scale-110 group-active:scale-95 ${active ? 'text-primary' : 'text-sidebar-foreground/60 group-hover:text-sidebar-foreground'}`}
                   />
                   {sidebarOpen && (
                     <>
@@ -209,27 +209,7 @@ export function Layout({ children }: { children: ReactNode }) {
             )}
           </button>
 
-          <div className={`flex-1 max-w-md relative transition-all duration-200 ${searchFocused ? 'max-w-xl' : ''} group`}>
-            <Search size={16} strokeWidth={1.75} className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-200 ${searchFocused ? 'text-primary scale-105' : 'text-muted-foreground group-hover:text-foreground'}`} />
-            <input
-              type="text"
-              placeholder="Search jobs, candidates, companies..."
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg bg-muted border border-border focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-muted-foreground transition-all"
-            />
-            {searchFocused && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-2xl p-2 z-50">
-                <p className="text-xs text-muted-foreground px-2 py-1">Recent searches</p>
-                {['Senior React Engineer', 'Remote Frontend', 'Stripe careers'].map(s => (
-                  <div key={s} className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-muted cursor-pointer transition-colors">
-                    <Search size={14} className="text-muted-foreground" />
-                    <span className="text-sm">{s}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+
 
           <div className="flex items-center gap-2 ml-auto">
             <button
