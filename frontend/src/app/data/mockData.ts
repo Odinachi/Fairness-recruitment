@@ -27,6 +27,8 @@ export interface Job {
   urgent: boolean
   companySize: string
   industry: string
+  postedBy?: string
+  views?: number
 }
 
 export interface Candidate {
