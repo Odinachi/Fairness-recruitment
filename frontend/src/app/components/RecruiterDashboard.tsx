@@ -193,7 +193,7 @@ export function RecruiterDashboard() {
       }
 
       const data = await res.json()
-      
+
       const professionalNames = [
         "Sarah Jenkins", "Michael Chang", "Amara Okafor", "David Vance", "Elena Rostova",
         "Marcus Aurelius", "Priya Patel", "Carlos Mendez", "Yuki Tanaka", "John Doe",
@@ -205,10 +205,10 @@ export function RecruiterDashboard() {
         const name = professionalNames[index % professionalNames.length]
         const location = locations[index % locations.length]
         const fallbackAvatar = `https://i.pravatar.cc/150?img=${index + 10}`
-        
+
         // Find matching real user in Firestore by name (case-insensitive)
         const realUser = allUsers.find(u => u.name && u.name.toLowerCase().trim() === name.toLowerCase().trim())
-        
+
         return {
           userId: realUser?.id || `csv-${cand.rank}`,
           rank: cand.rank,
@@ -251,8 +251,8 @@ export function RecruiterDashboard() {
     highRiskCandidates.length >= 2
       ? { icon: Star, text: `${highRiskCandidates[0].name} & ${highRiskCandidates[1].name} are at offer/interview stage — act fast to prevent competing offers`, type: 'warning' }
       : highRiskCandidates.length === 1
-      ? { icon: Star, text: `${highRiskCandidates[0].name} is at ${highRiskCandidates[0].stage} stage with a ${highRiskCandidates[0].aiScore}% match — consider fast-tracking`, type: 'warning' }
-      : { icon: Star, text: `No high-priority candidates at risk yet — your pipeline looks stable`, type: 'positive' },
+        ? { icon: Star, text: `${highRiskCandidates[0].name} is at ${highRiskCandidates[0].stage} stage with a ${highRiskCandidates[0].aiScore}% match — consider fast-tracking`, type: 'warning' }
+        : { icon: Star, text: `No high-priority candidates at risk yet — your pipeline looks stable`, type: 'positive' },
     { icon: Brain, text: `${unreviewedCandidates.length} candidate${unreviewedCandidates.length !== 1 ? 's' : ''} in your pipeline haven't been reviewed yet`, type: 'tip' },
     openJobs.length > 0
       ? { icon: AlertCircle, text: `${openJobs.length} active job${openJobs.length !== 1 ? 's' : ''} open — keep refreshing listings to attract top talent`, type: 'tip' }
@@ -366,7 +366,7 @@ export function RecruiterDashboard() {
 
             {/* Grid layout: Description & Applicants */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              
+
               {/* Left Column: Job Description */}
               <div className="lg:col-span-1 space-y-6">
                 <div className="p-5 rounded-xl bg-card border border-border/30">
@@ -483,607 +483,508 @@ export function RecruiterDashboard() {
           <>
             {/* Tab navigation */}
             <div className="flex gap-6 mb-8 border-b border-border/30 pb-px">
-          {(['overview', 'candidates', 'analytics', 'match'] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`pb-3 text-xs font-bold uppercase tracking-wider transition-all relative ${activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                }`}
-            >
-              {tab === 'match' ? 'AI Candidate Matcher' : tab}
-              {activeTab === tab && (
-                <motion.div
-                  layoutId="activeTabUnderline"
-                  className="absolute bottom-0 inset-x-0 h-0.5 bg-primary"
-                />
-              )}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-
-            {/* Left column 2/3 */}
-            <div className="xl:col-span-2 space-y-6">
-
-              {/* Hiring funnel */}
-              <div className="p-5 rounded-xl bg-card border border-border/30">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hiring Funnel</h3>
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <span>All roles</span>
-                    <ChevronRight size={10} />
-                  </div>
-                </div>
-                <ResponsiveContainer width="100%" height={180}>
-                  <BarChart data={recruiterHiringData} layout="vertical" barSize={14}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" horizontal={false} />
-                    <XAxis type="number" tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                    <YAxis dataKey="stage" type="category" tick={{ fontSize: 10, fill: '#8b92b8' }} axisLine={false} tickLine={false} width={80} />
-                    <Tooltip
-                      contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }}
-                      cursor={{ fill: 'rgba(255,255,255,0.02)' }}
+              {(['overview', 'candidates', 'analytics', 'match'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`pb-3 text-xs font-bold uppercase tracking-wider transition-all relative ${activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                  {tab === 'match' ? 'AI Candidate Matcher' : tab}
+                  {activeTab === tab && (
+                    <motion.div
+                      layoutId="activeTabUnderline"
+                      className="absolute bottom-0 inset-x-0 h-0.5 bg-primary"
                     />
-                    <Bar dataKey="count" radius={[0, 4, 4, 0]} name="Candidates">
-                      {recruiterHiringData.map((entry, i) => (
-                        <Cell key={i} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Job postings */}
-              <div className="rounded-xl bg-card border border-border/30 overflow-hidden">
-                <div className="flex items-center justify-between p-4 border-b border-border/30 bg-muted/10">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Job Postings</h3>
-                  <button
-                    onClick={() => navigate('/jobs')}
-                    className="text-xs text-primary hover:underline flex items-center gap-1 font-semibold"
-                  >
-                    Manage all <ChevronRight size={12} />
-                  </button>
-                </div>
-                <div className="overflow-x-auto">
-                  {(() => {
-                    const myJobs = jobs.filter(j => j.postedBy === user?.id)
-                    if (myJobs.length === 0) {
-                      return (
-                        <div className="p-8 text-center text-muted-foreground">
-                          <Briefcase size={32} className="mx-auto mb-3 stroke-[1.25] text-muted-foreground/30" />
-                          <p className="text-xs">You haven't posted any jobs yet.</p>
-                          <button
-                            onClick={() => navigate('/post-job')}
-                            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/95 transition-all shadow-sm"
-                          >
-                            <Plus size={12} /> Post your first job
-                          </button>
-                        </div>
-                      )
-                    }
-
-                    return (
-                      <table className="w-full text-left">
-                        <thead>
-                          <tr className="border-b border-border/30">
-                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Role</th>
-                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Applicants</th>
-                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">New Today</th>
-                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Top Match</th>
-                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Views</th>
-                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</th>
-                            <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {myJobs.map((job, i) => {
-                            const jobApplicants = applicantApplications.filter(a => a.jobId === job.id)
-                            const topScore = jobApplicants.length > 0
-                              ? Math.max(...jobApplicants.map(a => applicantScores[a.userId]?.score || a.match || 75))
-                              : 0
-                            return (
-                              <tr key={job.id} className={`border-b border-border/20 hover:bg-muted/10 transition-colors ${i === myJobs.length - 1 ? 'border-b-0' : ''}`}>
-                                <td className="px-5 py-3.5 text-xs font-semibold text-foreground">{job.title}</td>
-                                <td className="px-5 py-3.5 text-xs">{jobApplicants.length}</td>
-                                <td className="px-5 py-3.5">
-                                  <span className="text-xs text-emerald-400 font-semibold">
-                                    +{jobApplicants.filter(a => a.status === 'applied').length}
-                                  </span>
-                                </td>
-                                <td className="px-5 py-3.5">
-                                  {topScore > 0 ? <MatchBadge score={Math.round(topScore)} /> : <span className="text-xs text-muted-foreground">—</span>}
-                                </td>
-                                <td className="px-5 py-3.5 text-xs text-muted-foreground">{(job.views || 0).toLocaleString()}</td>
-                                <td className="px-5 py-3.5">
-                                  <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold bg-emerald-500/5 text-emerald-400 border-emerald-500/10`}>
-                                    Active
-                                  </span>
-                                </td>
-                                <td className="px-5 py-3.5 text-right">
-                                  <button
-                                    onClick={() => setSelectedManageJob(job)}
-                                    className="text-xs text-primary hover:underline font-semibold"
-                                  >
-                                    Manage
-                                  </button>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    )
-                  })()}
-                </div>
-              </div>
-
-              {/* Monthly hires chart */}
-              <div className="p-5 rounded-xl bg-card border border-border/30">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hires vs Target</h3>
-                  <span className="text-[10px] text-muted-foreground">2026</span>
-                </div>
-                <ResponsiveContainer width="100%" height={180}>
-                  <AreaChart data={monthlyHireData}>
-                    <defs>
-                      <linearGradient id="hireGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15} />
-                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                    <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
-                    <Area type="monotone" dataKey="hires" stroke="#6366f1" fill="url(#hireGrad)" strokeWidth={1.5} name="Actual" />
-                    <Line type="monotone" dataKey="target" stroke="#22d3ee" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="Target" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+                  )}
+                </button>
+              ))}
             </div>
 
-            {/* Right sidebar 1/3 */}
-            <div className="space-y-6">
+            {activeTab === 'overview' && (
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
 
-              {/* AI top candidates */}
-              <div className="p-5 rounded-xl bg-card border border-border/30">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Brain size={14} className="text-primary" />
-                    AI Top Candidates
-                  </h3>
-                  <button onClick={() => setActiveTab('candidates')} className="text-xs text-primary font-semibold hover:underline">
-                    See all
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  {candidates.slice(0, 4).map((candidate, i) => (
-                    <div
-                      key={candidate.id}
-                      className="flex items-center gap-3 p-2.5 rounded-lg border border-border/30 bg-muted/10 hover:border-primary/20 transition-all cursor-pointer group"
-                      onClick={() => navigate(`/profile/${candidate.id}`)}
-                    >
-                      <div className="relative flex-shrink-0">
-                        <img src={candidate.avatar} alt={candidate.name} className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/10" />
-                        <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-card border border-border/30 flex items-center justify-center text-[8px] font-bold text-primary">
-                          {i + 1}
-                        </div>
+                {/* Left column 2/3 */}
+                <div className="xl:col-span-2 space-y-6">
+
+                  {/* Hiring funnel */}
+                  <div className="p-5 rounded-xl bg-card border border-border/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hiring Funnel</h3>
+                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <span>All roles</span>
+                        <ChevronRight size={10} />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-semibold truncate group-hover:text-primary transition-colors text-foreground">{candidate.name}</div>
-                        <div className="text-[10px] text-muted-foreground truncate mt-0.5">{candidate.title}</div>
-                      </div>
-                      <MatchBadge score={candidate.aiScore} />
                     </div>
-                  ))}
+                    <ResponsiveContainer width="100%" height={180}>
+                      <BarChart data={recruiterHiringData} layout="vertical" barSize={14}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" horizontal={false} />
+                        <XAxis type="number" tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
+                        <YAxis dataKey="stage" type="category" tick={{ fontSize: 10, fill: '#8b92b8' }} axisLine={false} tickLine={false} width={80} />
+                        <Tooltip
+                          contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }}
+                          cursor={{ fill: 'rgba(255,255,255,0.02)' }}
+                        />
+                        <Bar dataKey="count" radius={[0, 4, 4, 0]} name="Candidates">
+                          {recruiterHiringData.map((entry, i) => (
+                            <Cell key={i} fill={entry.color} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Job postings */}
+                  <div className="rounded-xl bg-card border border-border/30 overflow-hidden">
+                    <div className="flex items-center justify-between p-4 border-b border-border/30 bg-muted/10">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Job Postings</h3>
+                      <button
+                        onClick={() => navigate('/jobs')}
+                        className="text-xs text-primary hover:underline flex items-center gap-1 font-semibold"
+                      >
+                        Manage all <ChevronRight size={12} />
+                      </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                      {(() => {
+                        const myJobs = jobs.filter(j => j.postedBy === user?.id)
+                        if (myJobs.length === 0) {
+                          return (
+                            <div className="p-8 text-center text-muted-foreground">
+                              <Briefcase size={32} className="mx-auto mb-3 stroke-[1.25] text-muted-foreground/30" />
+                              <p className="text-xs">You haven't posted any jobs yet.</p>
+                              <button
+                                onClick={() => navigate('/post-job')}
+                                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/95 transition-all shadow-sm"
+                              >
+                                <Plus size={12} /> Post your first job
+                              </button>
+                            </div>
+                          )
+                        }
+
+                        return (
+                          <table className="w-full text-left">
+                            <thead>
+                              <tr className="border-b border-border/30">
+                                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Role</th>
+                                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Applicants</th>
+                                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">New Today</th>
+                                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Top Match</th>
+                                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Views</th>
+                                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Status</th>
+                                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {myJobs.map((job, i) => {
+                                const jobApplicants = applicantApplications.filter(a => a.jobId === job.id)
+                                const topScore = jobApplicants.length > 0
+                                  ? Math.max(...jobApplicants.map(a => applicantScores[a.userId]?.score || a.match || 75))
+                                  : 0
+                                return (
+                                  <tr key={job.id} className={`border-b border-border/20 hover:bg-muted/10 transition-colors ${i === myJobs.length - 1 ? 'border-b-0' : ''}`}>
+                                    <td className="px-5 py-3.5 text-xs font-semibold text-foreground">{job.title}</td>
+                                    <td className="px-5 py-3.5 text-xs">{jobApplicants.length}</td>
+                                    <td className="px-5 py-3.5">
+                                      <span className="text-xs text-emerald-400 font-semibold">
+                                        +{jobApplicants.filter(a => a.status === 'applied').length}
+                                      </span>
+                                    </td>
+                                    <td className="px-5 py-3.5">
+                                      {topScore > 0 ? <MatchBadge score={Math.round(topScore)} /> : <span className="text-xs text-muted-foreground">—</span>}
+                                    </td>
+                                    <td className="px-5 py-3.5 text-xs text-muted-foreground">{(job.views || 0).toLocaleString()}</td>
+                                    <td className="px-5 py-3.5">
+                                      <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold bg-emerald-500/5 text-emerald-400 border-emerald-500/10`}>
+                                        Active
+                                      </span>
+                                    </td>
+                                    <td className="px-5 py-3.5 text-right">
+                                      <button
+                                        onClick={() => setSelectedManageJob(job)}
+                                        className="text-xs text-primary hover:underline font-semibold"
+                                      >
+                                        Manage
+                                      </button>
+                                    </td>
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
+                        )
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Monthly hires chart */}
+                  <div className="p-5 rounded-xl bg-card border border-border/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hires vs Target</h3>
+                      <span className="text-[10px] text-muted-foreground">2026</span>
+                    </div>
+                    <ResponsiveContainer width="100%" height={180}>
+                      <AreaChart data={monthlyHireData}>
+                        <defs>
+                          <linearGradient id="hireGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15} />
+                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                        <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
+                        <Area type="monotone" dataKey="hires" stroke="#6366f1" fill="url(#hireGrad)" strokeWidth={1.5} name="Actual" />
+                        <Line type="monotone" dataKey="target" stroke="#22d3ee" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="Target" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Right sidebar 1/3 */}
+                <div className="space-y-6">
+
+                  {/* AI top candidates */}
+                  <div className="p-5 rounded-xl bg-card border border-border/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <Brain size={14} className="text-primary" />
+                        AI Top Candidates
+                      </h3>
+                      <button onClick={() => setActiveTab('candidates')} className="text-xs text-primary font-semibold hover:underline">
+                        See all
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      {candidates.slice(0, 4).map((candidate, i) => (
+                        <div
+                          key={candidate.id}
+                          className="flex items-center gap-3 p-2.5 rounded-lg border border-border/30 bg-muted/10 hover:border-primary/20 transition-all cursor-pointer group"
+                          onClick={() => navigate(`/profile/${candidate.id}`)}
+                        >
+                          <div className="relative flex-shrink-0">
+                            <img src={candidate.avatar} alt={candidate.name} className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/10" />
+                            <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-card border border-border/30 flex items-center justify-center text-[8px] font-bold text-primary">
+                              {i + 1}
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-semibold truncate group-hover:text-primary transition-colors text-foreground">{candidate.name}</div>
+                            <div className="text-[10px] text-muted-foreground truncate mt-0.5">{candidate.title}</div>
+                          </div>
+                          <MatchBadge score={candidate.aiScore} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Application sources */}
+                  <div className="p-5 rounded-xl bg-card border border-border/30">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Application Sources</h3>
+                    <div className="flex justify-center mb-4">
+                      <ResponsiveContainer width="100%" height={150}>
+                        <PieChart>
+                          <Pie
+                            data={sourceData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={45}
+                            outerRadius={60}
+                            paddingAngle={3}
+                            dataKey="value"
+                          >
+                            {sourceData.map((entry, i) => (
+                              <Cell key={i} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="space-y-1.5">
+                      {sourceData.map(source => (
+                        <div key={source.name} className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: source.color }} />
+                            <span className="text-muted-foreground">{source.name}</span>
+                          </div>
+                          <span className="font-semibold text-foreground" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{source.value}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+
                 </div>
               </div>
+            )}
 
-              {/* Application sources */}
-              <div className="p-5 rounded-xl bg-card border border-border/30">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Application Sources</h3>
-                <div className="flex justify-center mb-4">
-                  <ResponsiveContainer width="100%" height={150}>
-                    <PieChart>
-                      <Pie
-                        data={sourceData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={45}
-                        outerRadius={60}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        {sourceData.map((entry, i) => (
+
+
+            {activeTab === 'analytics' && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                <div className="p-5 rounded-xl bg-card border border-border/30">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-1.5">
+                    <BarChart3 size={14} className="text-primary" />
+                    Hiring Funnel Breakdown
+                  </h3>
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={recruiterHiringData} barSize={16}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                      <XAxis dataKey="stage" tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
+                      <Bar dataKey="count" radius={[4, 4, 0, 0]} name="Candidates">
+                        {recruiterHiringData.map((entry, i) => (
                           <Cell key={i} fill={entry.color} />
                         ))}
-                      </Pie>
-                      <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
-                    </PieChart>
+                      </Bar>
+                    </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="space-y-1.5">
-                  {sourceData.map(source => (
-                    <div key={source.name} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: source.color }} />
-                        <span className="text-muted-foreground">{source.name}</span>
+
+                <div className="p-5 rounded-xl bg-card border border-border/30">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Application Source Distribution</h3>
+                  <div className="flex justify-center">
+                    <ResponsiveContainer width="100%" height={240}>
+                      <PieChart>
+                        <Pie data={sourceData} cx="50%" cy="50%" outerRadius={80} paddingAngle={3} dataKey="value" label={({ name, value }) => `${name} ${value}%`} labelLine={false} style={{ fontSize: 9, fill: '#8b92b8' }}>
+                          {sourceData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                        </Pie>
+                        <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-xl bg-card border border-border/30 lg:col-span-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Monthly Hires vs Target</h3>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <LineChart data={monthlyHireData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                      <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
+                      <Legend wrapperStyle={{ fontSize: 10, paddingTop: 10 }} />
+                      <Line type="monotone" dataKey="hires" stroke="#6366f1" strokeWidth={1.5} dot={{ fill: '#6366f1', r: 3 }} name="Actual Hires" />
+                      <Line type="monotone" dataKey="target" stroke="#22d3ee" strokeWidth={1.5} strokeDasharray="5 5" dot={false} name="Target" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+              </div>
+            )}
+
+            {activeTab === 'match' && (
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                  {/* Left Column: Job Selector & Description Input */}
+                  <div className="lg:col-span-1 space-y-6">
+                    <div className="p-5 rounded-xl bg-card border border-border/30 flex flex-col space-y-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Briefcase size={16} className="text-primary" />
+                        <h3 className="text-sm font-bold text-foreground">Select Job Posting</h3>
                       </div>
-                      <span className="font-semibold text-foreground" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{source.value}%</span>
+
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-2">
+                          Choose Active Role
+                        </label>
+                        <select
+                          value={selectedJobId}
+                          onChange={(e) => setSelectedJobId(e.target.value)}
+                          className="w-full rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs font-semibold text-foreground focus:outline-none focus:border-primary transition-colors"
+                        >
+                          <option value="" className="bg-card text-muted-foreground">-- Custom Search / Paste Description --</option>
+                          {jobs.map((job) => (
+                            <option key={job.id} value={job.id} className="bg-card text-foreground">
+                              {job.title} ({job.company})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex flex-col flex-1">
+                        <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-2">
+                          Job Description & Requirements
+                        </label>
+                        <textarea
+                          value={customJobDescription}
+                          onChange={(e) => setCustomJobDescription(e.target.value)}
+                          placeholder="Paste details of the role here to find relevant, fair-aware candidates..."
+                          rows={12}
+                          className="w-full flex-1 rounded-lg border border-border bg-muted/20 p-3 text-xs text-foreground focus:outline-none focus:border-primary transition-all resize-none placeholder-muted-foreground/60 leading-relaxed"
+                        />
+                      </div>
+
+                      <button
+                        onClick={handleMatchCandidates}
+                        disabled={matchingLoading || !customJobDescription.trim()}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-white text-xs font-bold transition-all shadow-md active:scale-[0.98]"
+                      >
+                        {matchingLoading ? (
+                          <>
+                            <RefreshCw size={13} className="animate-spin" />
+                            Analyzing Cohort...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={13} />
+                            Find Fair-Aware Matches
+                          </>
+                        )}
+                      </button>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-
-            </div>
-          </div>
-        )}
-
-       
-
-        {activeTab === 'analytics' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-            <div className="p-5 rounded-xl bg-card border border-border/30">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-1.5">
-                <BarChart3 size={14} className="text-primary" />
-                Hiring Funnel Breakdown
-              </h3>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={recruiterHiringData} barSize={16}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                  <XAxis dataKey="stage" tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
-                  <Bar dataKey="count" radius={[4, 4, 0, 0]} name="Candidates">
-                    {recruiterHiringData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="p-5 rounded-xl bg-card border border-border/30">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Application Source Distribution</h3>
-              <div className="flex justify-center">
-                <ResponsiveContainer width="100%" height={240}>
-                  <PieChart>
-                    <Pie data={sourceData} cx="50%" cy="50%" outerRadius={80} paddingAngle={3} dataKey="value" label={({ name, value }) => `${name} ${value}%`} labelLine={false} style={{ fontSize: 9, fill: '#8b92b8' }}>
-                      {sourceData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                    </Pie>
-                    <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="p-5 rounded-xl bg-card border border-border/30 lg:col-span-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Monthly Hires vs Target</h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={monthlyHireData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                  <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
-                  <Legend wrapperStyle={{ fontSize: 10, paddingTop: 10 }} />
-                  <Line type="monotone" dataKey="hires" stroke="#6366f1" strokeWidth={1.5} dot={{ fill: '#6366f1', r: 3 }} name="Actual Hires" />
-                  <Line type="monotone" dataKey="target" stroke="#22d3ee" strokeWidth={1.5} strokeDasharray="5 5" dot={false} name="Target" />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-
-          </div>
-        )}
-
-        {activeTab === 'match' && (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              
-              {/* Left Column: Job Selector & Description Input */}
-              <div className="lg:col-span-1 space-y-6">
-                <div className="p-5 rounded-xl bg-card border border-border/30 flex flex-col space-y-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Briefcase size={16} className="text-primary" />
-                    <h3 className="text-sm font-bold text-foreground">Select Job Posting</h3>
                   </div>
 
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-2">
-                      Choose Active Role
-                    </label>
-                    <select
-                      value={selectedJobId}
-                      onChange={(e) => setSelectedJobId(e.target.value)}
-                      className="w-full rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs font-semibold text-foreground focus:outline-none focus:border-primary transition-colors"
-                    >
-                      <option value="" className="bg-card text-muted-foreground">-- Custom Search / Paste Description --</option>
-                      {jobs.map((job) => (
-                        <option key={job.id} value={job.id} className="bg-card text-foreground">
-                          {job.title} ({job.company})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* Right Column: Fairness Dashboard & Matches */}
+                  <div className="lg:col-span-2 space-y-8">
 
-                  <div className="flex flex-col flex-1">
-                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-2">
-                      Job Description & Requirements
-                    </label>
-                    <textarea
-                      value={customJobDescription}
-                      onChange={(e) => setCustomJobDescription(e.target.value)}
-                      placeholder="Paste details of the role here to find relevant, fair-aware candidates..."
-                      rows={12}
-                      className="w-full flex-1 rounded-lg border border-border bg-muted/20 p-3 text-xs text-foreground focus:outline-none focus:border-primary transition-all resize-none placeholder-muted-foreground/60 leading-relaxed"
-                    />
-                  </div>
-
-                  <button
-                    onClick={handleMatchCandidates}
-                    disabled={matchingLoading || !customJobDescription.trim()}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-white text-xs font-bold transition-all shadow-md active:scale-[0.98]"
-                  >
-                    {matchingLoading ? (
-                      <>
-                        <RefreshCw size={13} className="animate-spin" />
-                        Analyzing Cohort...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles size={13} />
-                        Find Fair-Aware Matches
-                      </>
+                    {matchingLoading && (
+                      <div className="flex flex-col items-center justify-center p-12 rounded-xl bg-card border border-border/30 h-96 text-center space-y-4">
+                        <div className="w-10 h-10 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+                        <p className="text-xs text-muted-foreground font-semibold">Running TF-IDF similarity mapping and fairness ThresholdOptimizer...</p>
+                      </div>
                     )}
-                  </button>
-                </div>
-              </div>
 
-              {/* Right Column: Fairness Dashboard & Matches */}
-              <div className="lg:col-span-2 space-y-8">
-                
-                {matchingLoading && (
-                  <div className="flex flex-col items-center justify-center p-12 rounded-xl bg-card border border-border/30 h-96 text-center space-y-4">
-                    <div className="w-10 h-10 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
-                    <p className="text-xs text-muted-foreground font-semibold">Running TF-IDF similarity mapping and fairness ThresholdOptimizer...</p>
-                  </div>
-                )}
-
-                {matchingError && (
-                  <div className="p-5 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 flex items-start gap-3">
-                    <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
-                    <div>
-                      <h4 className="text-xs font-bold uppercase mb-1">Server Error</h4>
-                      <p className="text-xs leading-relaxed">{matchingError}</p>
-                    </div>
-                  </div>
-                )}
-
-                {!matchingResults && !matchingLoading && !matchingError && (
-                  <div className="flex flex-col items-center justify-center p-12 rounded-xl bg-card border border-border/30 h-96 text-center text-muted-foreground space-y-3">
-                    <Brain size={40} className="stroke-[1.25] text-muted-foreground/40" />
-                    <div>
-                      <h4 className="text-xs font-bold uppercase text-foreground mb-1">Interactive AI Candidate Matcher</h4>
-                      <p className="text-xs max-w-sm mt-1 leading-relaxed">Select or paste a job description on the left to rank applicants from your user pool by AI fit score.</p>
-                    </div>
-                  </div>
-                )}
-
-                {matchingResults && !matchingLoading && (
-                  <div className="space-y-6">
-                    <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 text-primary flex items-center gap-3">
-                      <Users size={14} className="flex-shrink-0" />
-                      <span className="text-xs font-semibold">
-                        Ranked {matchingResults.candidates.length} top matches from a global pool of {matchingResults.cohort_size} candidate profiles.
-                      </span>
-                    </div>
-
-                    {/* AI Fairness & Demographic Parity Diagnostics Panel */}
-                    {matchingResults.fairness_metrics && (
-                      <div className="p-5 rounded-xl bg-card border border-border/30 space-y-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/30">
-                          <div>
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                              <Zap size={13} className="text-primary animate-pulse" />
-                              AI Fairness & Demographic Parity Diagnostics
-                            </h4>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">
-                              Evaluated with Fairlearn Postprocessing (Post-hoc Threshold Optimization)
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase ${
-                              matchingResults.fairness_correction_applied
-                                ? 'bg-primary/10 text-primary border border-primary/20'
-                                : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            }`}>
-                              {matchingResults.fairness_correction_applied ? '⚖️ Bias Correction Active' : '✅ Parity Satisfied'}
-                            </span>
-                            {matchingResults.optimizer_used && matchingResults.optimizer_used !== 'none' && (
-                              <span className="text-[9px] px-2 py-0.5 rounded bg-muted/40 text-muted-foreground border border-border/30 font-semibold">
-                                {matchingResults.optimizer_used}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {/* DPD Card */}
-                          <div className="p-3 rounded-lg bg-muted/20 border border-border/30 space-y-2">
-                            <div className="flex justify-between items-center">
-                              <span className="text-xs font-bold text-foreground">Demographic Parity Difference (DPD)</span>
-                              <span className="text-[10px] text-muted-foreground">Target: &le; 0.10</span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4 pt-1">
-                              <div>
-                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">Before</span>
-                                <span className={`text-sm font-bold ${
-                                  matchingResults.fairness_metrics.before_correction.DPD_status === 'FLAG'
-                                    ? 'text-amber-400'
-                                    : 'text-emerald-400'
-                                }`}>
-                                  {matchingResults.fairness_metrics.before_correction.DPD.toFixed(4)}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">After</span>
-                                <span className="text-sm font-bold text-emerald-400">
-                                  {matchingResults.fairness_metrics.after_correction.DPD.toFixed(4)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="h-1 bg-muted/60 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-emerald-400 rounded-full"
-                                style={{ width: `${Math.min(matchingResults.fairness_metrics.after_correction.DPD * 1000, 100)}%` }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* DIR Card */}
-                          <div className="p-3 rounded-lg bg-muted/20 border border-border/30 space-y-2">
-                            <div className="flex justify-between items-center">
-                              <span className="text-xs font-bold text-foreground">Disparate Impact Ratio (DIR)</span>
-                              <span className="text-[10px] text-muted-foreground">Target: &ge; 0.80</span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4 pt-1">
-                              <div>
-                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">Before</span>
-                                <span className={`text-sm font-bold ${
-                                  matchingResults.fairness_metrics.before_correction.DIR_status === 'FLAG'
-                                    ? 'text-amber-400'
-                                    : 'text-emerald-400'
-                                }`}>
-                                  {matchingResults.fairness_metrics.before_correction.DIR.toFixed(4)}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">After</span>
-                                <span className="text-sm font-bold text-emerald-400">
-                                  {matchingResults.fairness_metrics.after_correction.DIR.toFixed(4)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="h-1 bg-muted/60 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-emerald-400 rounded-full"
-                                style={{ width: `${Math.min(matchingResults.fairness_metrics.after_correction.DIR * 100, 100)}%` }}
-                              />
-                            </div>
-                          </div>
+                    {matchingError && (
+                      <div className="p-5 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 flex items-start gap-3">
+                        <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                        <div>
+                          <h4 className="text-xs font-bold uppercase mb-1">Server Error</h4>
+                          <p className="text-xs leading-relaxed">{matchingError}</p>
                         </div>
                       </div>
                     )}
 
-                    {/* Candidates Matches Table */}
-                    <div className="rounded-xl bg-card border border-border/30 overflow-hidden">
-                      <div className="p-4 border-b border-border/30 bg-muted/10">
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Top Candidates Matched to Role</h3>
+                    {!matchingResults && !matchingLoading && !matchingError && (
+                      <div className="flex flex-col items-center justify-center p-12 rounded-xl bg-card border border-border/30 h-96 text-center text-muted-foreground space-y-3">
+                        <Brain size={40} className="stroke-[1.25] text-muted-foreground/40" />
+                        <div>
+                          <h4 className="text-xs font-bold uppercase text-foreground mb-1">Interactive AI Candidate Matcher</h4>
+                          <p className="text-xs max-w-sm mt-1 leading-relaxed">Select or paste a job description on the left to rank applicants from your user pool by AI fit score.</p>
+                        </div>
                       </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                          <thead>
-                            <tr className="border-b border-border/30">
-                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-12">Rank</th>
-                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-56">Candidate</th>
-                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Bio</th>
-                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-28">Fit Score</th>
-                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-44">Recommendation</th>
-                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-10"></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {matchingResults.candidates.map((cand: any) => (
-                              <tr
-                                key={cand.userId}
-                                onClick={() => {
-                                  if (!cand.userId.startsWith('csv-')) {
-                                    navigate(`/profile/${cand.userId}`)
-                                  }
-                                }}
-                                className={`border-b border-border/20 hover:bg-muted/10 transition-colors ${
-                                  cand.userId.startsWith('csv-') ? 'cursor-default' : 'cursor-pointer'
-                                } group`}
-                              >
-                                <td className="px-5 py-4 text-xs font-bold text-foreground">
-                                  {cand.rank}
-                                </td>
-                                <td className="px-5 py-4">
-                                  <div className="flex items-center gap-3">
-                                    <img
-                                      src={cand.avatar}
-                                      alt={cand.name}
-                                      className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/10 flex-shrink-0"
-                                    />
-                                    <div className="min-w-0">
-                                      <div className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
-                                        <span className="truncate">{cand.name}</span>
-                                        <span className="text-[8px] px-1 py-px rounded bg-muted/60 text-muted-foreground font-semibold flex-shrink-0">
-                                          Group {cand.demographic_group === 0 ? 'A' : 'B'}
+                    )}
+
+                    {matchingResults && !matchingLoading && (
+                      <div className="space-y-6">
+                        <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 text-primary flex items-center gap-3">
+                          <Users size={14} className="flex-shrink-0" />
+                          <span className="text-xs font-semibold">
+                            Ranked {matchingResults.candidates.length} top matches from a global pool of {matchingResults.cohort_size} candidate profiles.
+                          </span>
+                        </div>
+
+
+
+                        {/* Candidates Matches Table */}
+                        <div className="rounded-xl bg-card border border-border/30 overflow-hidden">
+                          <div className="p-4 border-b border-border/30 bg-muted/10">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Top Candidates Matched to Role</h3>
+                          </div>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                              <thead>
+                                <tr className="border-b border-border/30">
+                                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-12">Rank</th>
+                                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-56">Candidate</th>
+                                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Bio</th>
+                                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-28">Fit Score</th>
+                                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-44">Recommendation</th>
+                                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-10"></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {matchingResults.candidates.map((cand: any) => (
+                                  <tr
+                                    key={cand.userId}
+                                    onClick={() => {
+                                      if (!cand.userId.startsWith('csv-')) {
+                                        navigate(`/profile/${cand.userId}`)
+                                      }
+                                    }}
+                                    className={`border-b border-border/20 hover:bg-muted/10 transition-colors ${cand.userId.startsWith('csv-') ? 'cursor-default' : 'cursor-pointer'
+                                      } group`}
+                                  >
+                                    <td className="px-5 py-4 text-xs font-bold text-foreground">
+                                      {cand.rank}
+                                    </td>
+                                    <td className="px-5 py-4">
+                                      <div className="flex items-center gap-3">
+                                        <img
+                                          src={cand.avatar}
+                                          alt={cand.name}
+                                          className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/10 flex-shrink-0"
+                                        />
+                                        <div className="min-w-0">
+                                          <div className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
+                                            <span className="truncate">{cand.name}</span>
+
+                                          </div>
+                                          <div className="text-[10px] text-muted-foreground truncate mt-0.5">
+                                            {cand.title}{cand.location ? ` · ${cand.location}` : ''}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="px-5 py-4 text-xs text-muted-foreground max-w-xs truncate">
+                                      {cand.bioSnippet}
+                                    </td>
+                                    <td className="px-5 py-4 text-xs">
+                                      <MatchBadge score={Math.round(cand.similarity_score * 100)} />
+                                    </td>
+                                    <td className="px-5 py-4">
+                                      <div className="flex items-center gap-2">
+                                        <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${cand.shortlisted_fair
+                                          ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
+                                          : 'bg-muted/30 text-muted-foreground border-border/30'
+                                          }`}>
+                                          {cand.shortlisted_fair ? 'Recommend' : 'Skip'}
                                         </span>
+                                        {cand.reranked && (
+                                          <span className="text-[9px] px-2 py-0.5 rounded border uppercase font-bold bg-purple-500/5 text-purple-400 border-purple-500/10 flex items-center gap-0.5">
+                                            ⚖️ Reranked
+                                          </span>
+                                        )}
                                       </div>
-                                      <div className="text-[10px] text-muted-foreground truncate mt-0.5">
-                                        {cand.title}{cand.location ? ` · ${cand.location}` : ''}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-5 py-4 text-xs text-muted-foreground max-w-xs truncate">
-                                  {cand.bioSnippet}
-                                </td>
-                                <td className="px-5 py-4 text-xs">
-                                  <MatchBadge score={Math.round(cand.similarity_score * 100)} />
-                                </td>
-                                <td className="px-5 py-4">
-                                  <div className="flex items-center gap-2">
-                                    <span className={`text-[9px] px-2 py-0.5 rounded border uppercase font-bold ${
-                                      cand.shortlisted_fair
-                                        ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
-                                        : 'bg-muted/30 text-muted-foreground border-border/30'
-                                    }`}>
-                                      {cand.shortlisted_fair ? 'Recommend' : 'Skip'}
-                                    </span>
-                                    {cand.reranked && (
-                                      <span className="text-[9px] px-2 py-0.5 rounded border uppercase font-bold bg-purple-500/5 text-purple-400 border-purple-500/10 flex items-center gap-0.5">
-                                        ⚖️ Reranked
-                                      </span>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
-                                  {cand.resumeUrl ? (
-                                    <button
-                                      onClick={() => {
-                                        setViewingCvUrl(cand.resumeUrl)
-                                        setViewingCvName(cand.resumeName || 'resume.pdf')
-                                        setShowCvModal(true)
-                                      }}
-                                      className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-center inline-flex"
-                                      title="View CV inline"
-                                    >
-                                      <Eye size={14} />
-                                    </button>
-                                  ) : (
-                                    !cand.userId.startsWith('csv-') ? (
-                                      <ArrowUpRight size={14} className="text-muted-foreground group-hover:text-primary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                                    ) : null
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                                    </td>
+                                    <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                                      {cand.resumeUrl ? (
+                                        <button
+                                          onClick={() => {
+                                            setViewingCvUrl(cand.resumeUrl)
+                                            setViewingCvName(cand.resumeName || 'resume.pdf')
+                                            setShowCvModal(true)
+                                          }}
+                                          className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-center inline-flex"
+                                          title="View CV inline"
+                                        >
+                                          <Eye size={14} />
+                                        </button>
+                                      ) : (
+                                        !cand.userId.startsWith('csv-') ? (
+                                          <ArrowUpRight size={14} className="text-muted-foreground group-hover:text-primary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                                        ) : null
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                )}
+                    )}
 
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
           </>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useApp } from '../context/AppContext'
+import { toast } from 'sonner'
 import { Layout } from './Layout'
 import {
   Search, Filter, MapPin, DollarSign, Clock, Sparkles, Briefcase,
@@ -28,7 +29,7 @@ function MatchBadge({ match }: { match: number }) {
 
 export function JobListings() {
   const navigate = useNavigate()
-  const { user, jobs } = useApp()
+  const { user, jobs, addApplicantApplication } = useApp()
   const [searchParams] = useSearchParams()
   const filterParam = searchParams.get('filter')
 
@@ -105,15 +106,43 @@ export function JobListings() {
     })
   }
 
-  const handleApply = (id: string, e: React.MouseEvent) => {
+  const handleApply = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (user?.role === 'recruiter') return
-    setAppliedJobs(prev => {
-      if (prev.includes(id)) return prev
-      const updated = [...prev, id]
-      localStorage.setItem(user ? `jobnatics_applied_jobs_${user.id}` : 'jobnatics_applied_jobs_guest', JSON.stringify(updated))
-      return updated
-    })
+    if (!user) {
+      navigate('/auth')
+      return
+    }
+    if (user.role === 'recruiter') return
+
+    const job = jobs.find(j => j.id === id)
+    if (!job) return
+
+    const appDoc = {
+      id: `${job.id}_${user.id}`,
+      userId: user.id,
+      jobId: job.id,
+      job: job.title,
+      company: job.company,
+      logo: job.companyLogo || '💼',
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      match: job.match || 75,
+      stage: 'Applied',
+      status: 'applied'
+    }
+
+    try {
+      await addApplicantApplication(appDoc)
+      setAppliedJobs(prev => {
+        if (prev.includes(id)) return prev
+        const updated = [...prev, id]
+        localStorage.setItem(`jobnatics_applied_jobs_${user.id}`, JSON.stringify(updated))
+        return updated
+      })
+      toast.success(`Successfully applied to ${job.title}!`)
+    } catch (err) {
+      console.error('Error applying to job:', err)
+      toast.error('Failed to submit application.')
+    }
   }
 
   return (
