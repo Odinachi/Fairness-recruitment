@@ -6,3 +6,6 @@ numpy
 scikit-learn
 fairlearn
 nltk
+cloudinary
+python-multipart
+python-dotenv

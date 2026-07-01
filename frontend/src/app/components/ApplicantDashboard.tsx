@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useApp } from '../context/AppContext'
+import { toast } from 'sonner'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 import { Layout } from './Layout'
 import {
   Sparkles, Briefcase, Target, Eye, Bell,
@@ -182,6 +185,9 @@ export function ApplicantDashboard() {
     }
   }, [user])
 
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploadingResume, setUploadingResume] = useState(false)
+
   const [matchedJobs, setMatchedJobs] = useState<any[] | null>(null)
   const [matchingLoading, setMatchingLoading] = useState(false)
   const [matchingError, setMatchingError] = useState<string | null>(null)
@@ -242,6 +248,52 @@ export function ApplicantDashboard() {
         }
       }).slice(0, 5)
     : jobs.slice(0, 5).map(j => ({ ...j, match: j.match || 85, recommended: true }))
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Limit to 5MB (5 * 1024 * 1024 bytes)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Resume file must be under 5MB.')
+      return
+    }
+
+    setUploadingResume(true)
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/upload-cv', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!res.ok) {
+        throw new Error(`Server returned status ${res.status}`)
+      }
+
+      const data = await res.json()
+      
+      // Update Firestore user document
+      if (user?.id) {
+        await setDoc(doc(db, 'users', user.id), {
+          resumeUrl: data.url,
+          resumeName: data.filename,
+          resumeUploadedAt: new Date().toISOString()
+        }, { merge: true })
+        toast.success(`CV uploaded successfully!`)
+      }
+    } catch (err: any) {
+      console.error('Error uploading CV:', err)
+      toast.error(err.message || 'Failed to upload CV.')
+    } finally {
+      setUploadingResume(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
 
   const toggleSave = (id: string) => {
     setSavedJobs(prev => {
@@ -320,9 +372,14 @@ export function ApplicantDashboard() {
             <h1 className="text-foreground tracking-tight" style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.75rem', fontWeight: 700 }}>
               Good morning, {user?.name?.split(' ')[0]} 👋
             </h1>
-            <p className="text-xs text-muted-foreground mt-1">
-              {topJobs.length} AI-matched jobs available · Profile {profileScore}% complete
-              {user?.workStyle ? ` · ${user.workStyle} preference` : ''}
+            <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span>{topJobs.length} AI-matched jobs available · Profile {profileScore}% complete</span>
+              {user?.workStyle && <span>· {user.workStyle} preference</span>}
+              {user?.resumeUrl && (
+                <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                  · 📎 CV: <a href={user.resumeUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-emerald-300 transition-colors">{user.resumeName || 'resume.pdf'}</a>
+                </span>
+              )}
             </p>
           </div>
           <div className="flex gap-2">
@@ -333,10 +390,25 @@ export function ApplicantDashboard() {
               <Sparkles size={13} />
               View AI Matches
             </button>
-            <button className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border bg-card text-xs font-semibold hover:bg-muted transition-colors text-foreground">
-              <Upload size={13} />
-              Update Resume
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingResume}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border bg-card text-xs font-semibold hover:bg-muted transition-colors text-foreground disabled:opacity-50"
+            >
+              {uploadingResume ? (
+                <RefreshCw size={13} className="animate-spin text-primary" />
+              ) : (
+                <Upload size={13} />
+              )}
+              {uploadingResume ? 'Uploading...' : 'Update Resume'}
             </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept=".pdf,.doc,.docx,.txt"
+              className="hidden"
+            />
           </div>
         </div>
 

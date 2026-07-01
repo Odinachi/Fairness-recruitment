@@ -1,10 +1,14 @@
 import os
+from dotenv import load_dotenv
+load_dotenv() # Load variables from .env file
 import re
 import pickle
 import __main__
 import pandas as pd
 import numpy as np
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
+import cloudinary
+import cloudinary.uploader
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
@@ -731,4 +735,71 @@ def match_applicants(payload: ApplicantMatchPayload):
         }
 
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Cloudinary Configuration & CV Upload ───────────────────────────────────────
+
+CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME", "")
+CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY", "")
+CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET", "")
+
+if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
+    cloudinary.config(
+        cloud_name=CLOUDINARY_CLOUD_NAME,
+        api_key=CLOUDINARY_API_KEY,
+        api_secret=CLOUDINARY_API_SECRET,
+        secure=True
+    )
+    print("Cloudinary SDK configured successfully.")
+else:
+    print("WARNING: Cloudinary environment variables not fully set. Running in Mock/Demo mode.")
+
+
+@app.post("/api/upload-cv")
+async def upload_cv(file: UploadFile = File(...)):
+    """
+    Receives a CV/resume file and uploads it to Cloudinary using the SDK.
+    If Cloudinary config is missing, falls back to a simulated secure URL.
+    """
+    try:
+        # Check file size (5MB limit)
+        file.file.seek(0, os.SEEK_END)
+        file_size = file.file.tell()
+        file.file.seek(0)
+        if file_size > 5 * 1024 * 1024:
+            raise HTTPException(
+                status_code=400,
+                detail="File size exceeds the 5MB limit."
+            )
+
+        # Check file extension
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in [".pdf", ".doc", ".docx", ".txt"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Unsupported file format. Please upload PDF, Word, or TXT."
+            )
+
+        # Use Python SDK if configured
+        if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
+            result = cloudinary.uploader.upload(
+                file.file,
+                resource_type="raw",
+                public_id=f"jobnatics_resumes/{os.path.splitext(file.filename)[0]}"
+            )
+            secure_url = result.get("secure_url")
+            print(f"Cloudinary upload successful: {secure_url}")
+        else:
+            # Fallback to realistic mock Cloudinary URL for local testing
+            secure_url = f"https://res.cloudinary.com/demo/raw/upload/v1234567890/jobnatics_resumes/{file.filename}"
+            print(f"Cloudinary Mock upload fallback triggered: {secure_url}")
+
+        return {
+            "status": "success",
+            "url": secure_url,
+            "filename": file.filename
+        }
+    except Exception as e:
+        print(f"Cloudinary upload error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

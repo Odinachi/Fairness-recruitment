@@ -54,6 +54,9 @@ export interface User {
   salaryRange?: string
   relocation?: string
   hiringPriority?: string
+  resumeUrl?: string
+  resumeName?: string
+  resumeUploadedAt?: string
 }
 
 interface AppContextType {
@@ -304,6 +307,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
               salaryRange: profile.salaryRange || '',
               relocation: profile.relocation || '',
               hiringPriority: profile.hiringPriority || '',
+              resumeUrl: profile.resumeUrl || '',
+              resumeName: profile.resumeName || '',
+              resumeUploadedAt: profile.resumeUploadedAt || '',
             })
           } catch (e) {
             console.error('Error parsing cached profile:', e)
@@ -333,6 +339,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
               salaryRange: data.salaryRange || '',
               relocation: data.relocation || '',
               hiringPriority: data.hiringPriority || '',
+              resumeUrl: data.resumeUrl || '',
+              resumeName: data.resumeName || '',
+              resumeUploadedAt: data.resumeUploadedAt || '',
             }
             setUser(updatedUser)
             // Update LocalStorage cache
