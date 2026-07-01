@@ -60,9 +60,9 @@ export function RecruiterDashboard() {
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
 
-  const activeTab = (tabParam === 'candidates' || tabParam === 'analytics' || tabParam === 'match') ? tabParam : 'overview'
+  const activeTab = (tabParam === 'match') ? tabParam : 'overview'
 
-  const setActiveTab = (newTab: 'overview' | 'candidates' | 'analytics' | 'match') => {
+  const setActiveTab = (newTab: 'overview' | 'match') => {
     if (newTab === 'overview') {
       setSearchParams({})
     } else {
@@ -241,21 +241,35 @@ export function RecruiterDashboard() {
     }
   }
 
-  // Build AI insights using real candidate names from Firestore
-  const highRiskCandidates = candidates.filter(c => c.aiScore >= 85 && (c.stage === 'interview' || c.stage === 'offer'))
-  const unreviewedCandidates = candidates.filter(c => c.stage === 'applied')
-  const openJobs = recruiterJobPostings.filter(j => j.status === 'active')
+  // Real-time Firestore-backed metrics
+  const myJobs = jobs.filter(j => j.postedBy === user?.id)
+  const myApplications = applicantApplications.filter(a => myJobs.some(j => j.id === a.jobId))
+  const myInterviews = myApplications.filter(a => a.status === 'interview')
+  const myOffers = myApplications.filter(a => a.status === 'offer')
+  const myPendingReview = myApplications.filter(a => a.status === 'applied')
+
+  const myHighRiskCandidates = myApplications
+    .filter(a => (a.status === 'interview' || a.status === 'offer'))
+    .map(a => {
+      const realUser = allUsers.find(u => u.id === a.userId)
+      return {
+        name: realUser?.name || 'Applicant',
+        stage: a.status || 'interview',
+        aiScore: a.match || 75
+      }
+    })
+    .filter(c => c.aiScore >= 85)
 
   const aiInsights = [
     { icon: TrendingUp, text: `Your avg time-to-fill is 18 days — 24% faster than industry average`, type: 'positive' },
-    highRiskCandidates.length >= 2
-      ? { icon: Star, text: `${highRiskCandidates[0].name} & ${highRiskCandidates[1].name} are at offer/interview stage — act fast to prevent competing offers`, type: 'warning' }
-      : highRiskCandidates.length === 1
-        ? { icon: Star, text: `${highRiskCandidates[0].name} is at ${highRiskCandidates[0].stage} stage with a ${highRiskCandidates[0].aiScore}% match — consider fast-tracking`, type: 'warning' }
+    myHighRiskCandidates.length >= 2
+      ? { icon: Star, text: `${myHighRiskCandidates[0].name} & ${myHighRiskCandidates[1].name} are at offer/interview stage — act fast to prevent competing offers`, type: 'warning' }
+      : myHighRiskCandidates.length === 1
+        ? { icon: Star, text: `${myHighRiskCandidates[0].name} is at ${myHighRiskCandidates[0].stage} stage with a ${myHighRiskCandidates[0].aiScore}% match — consider fast-tracking`, type: 'warning' }
         : { icon: Star, text: `No high-priority candidates at risk yet — your pipeline looks stable`, type: 'positive' },
-    { icon: Brain, text: `${unreviewedCandidates.length} candidate${unreviewedCandidates.length !== 1 ? 's' : ''} in your pipeline haven't been reviewed yet`, type: 'tip' },
-    openJobs.length > 0
-      ? { icon: AlertCircle, text: `${openJobs.length} active job${openJobs.length !== 1 ? 's' : ''} open — keep refreshing listings to attract top talent`, type: 'tip' }
+    { icon: Brain, text: `${myPendingReview.length} candidate${myPendingReview.length !== 1 ? 's' : ''} in your pipeline haven't been reviewed yet`, type: 'tip' },
+    myJobs.length > 0
+      ? { icon: AlertCircle, text: `${myJobs.length} active job${myJobs.length !== 1 ? 's' : ''} open — keep refreshing listings to attract top talent`, type: 'tip' }
       : { icon: AlertCircle, text: 'No active job postings — post a new role to start receiving applicants', type: 'warning' },
   ]
 
@@ -274,7 +288,7 @@ export function RecruiterDashboard() {
               Welcome back, {user?.name?.split(' ')[0]} 👋
             </h1>
             <p className="text-xs text-muted-foreground mt-1">
-              {user?.company || 'Your company'} · {candidates.length} total applicants · {candidates.filter(c => c.stage === 'interview').length} interviews · {unreviewedCandidates.length} pending review
+              {user?.company || 'Your company'} · {myApplications.length} total applicants · {myInterviews.length} interviews · {myPendingReview.length} pending review
             </p>
           </div>
           <div className="flex gap-2">
@@ -285,20 +299,15 @@ export function RecruiterDashboard() {
               <Plus size={13} />
               Post New Job
             </button>
-            <button className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border bg-card text-xs font-semibold hover:bg-muted transition-colors text-foreground">
-              <Filter size={13} />
-              Filter Candidates
-            </button>
           </div>
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {[
-            { label: 'Active Jobs', value: String(openJobs.length || recruiterJobPostings.length), change: `${recruiterJobPostings.length} total listings`, icon: Briefcase, color: 'text-primary' },
-            { label: 'Total Applicants', value: String(candidates.length), change: `${unreviewedCandidates.length} unreviewed`, icon: Users, color: 'text-accent' },
-            { label: 'Interviews', value: String(candidates.filter(c => c.stage === 'interview').length), change: `${candidates.filter(c => c.stage === 'offer').length} at offer stage`, icon: Calendar, color: 'text-purple-400' },
-            { label: 'Avg AI Score', value: candidates.length > 0 ? `${Math.round(candidates.reduce((s, c) => s + c.aiScore, 0) / candidates.length)}%` : '—', change: 'across all candidates', icon: Clock, color: 'text-emerald-400' },
+            { label: 'Active Jobs', value: String(myJobs.length), change: `${myJobs.length} active postings`, icon: Briefcase, color: 'text-primary' },
+            { label: 'Total Applicants', value: String(myApplications.length), change: `${myPendingReview.length} unreviewed`, icon: Users, color: 'text-accent' },
+            { label: 'Interviews', value: String(myInterviews.length), change: `${myOffers.length} at offer stage`, icon: Calendar, color: 'text-purple-400' },
           ].map((stat) => {
             const Icon = stat.icon
             return (
@@ -451,13 +460,7 @@ export function RecruiterDashboard() {
 
                                 {/* Actions */}
                                 <div className="flex items-center gap-1.5 md:ml-2">
-                                  <button
-                                    onClick={() => navigate('/messages')}
-                                    className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                                    title="Message Applicant"
-                                  >
-                                    <MessageSquare size={13} />
-                                  </button>
+
                                   <button
                                     onClick={() => navigate(`/profile/${app.userId}`)}
                                     className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
@@ -483,7 +486,7 @@ export function RecruiterDashboard() {
           <>
             {/* Tab navigation */}
             <div className="flex gap-6 mb-8 border-b border-border/30 pb-px">
-              {(['overview', 'candidates', 'analytics', 'match'] as const).map(tab => (
+              {(['overview', 'match'] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -506,33 +509,6 @@ export function RecruiterDashboard() {
 
                 {/* Left column 2/3 */}
                 <div className="xl:col-span-2 space-y-6">
-
-                  {/* Hiring funnel */}
-                  <div className="p-5 rounded-xl bg-card border border-border/30">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hiring Funnel</h3>
-                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                        <span>All roles</span>
-                        <ChevronRight size={10} />
-                      </div>
-                    </div>
-                    <ResponsiveContainer width="100%" height={180}>
-                      <BarChart data={recruiterHiringData} layout="vertical" barSize={14}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                        <YAxis dataKey="stage" type="category" tick={{ fontSize: 10, fill: '#8b92b8' }} axisLine={false} tickLine={false} width={80} />
-                        <Tooltip
-                          contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }}
-                          cursor={{ fill: 'rgba(255,255,255,0.02)' }}
-                        />
-                        <Bar dataKey="count" radius={[0, 4, 4, 0]} name="Candidates">
-                          {recruiterHiringData.map((entry, i) => (
-                            <Cell key={i} fill={entry.color} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
 
                   {/* Job postings */}
                   <div className="rounded-xl bg-card border border-border/30 overflow-hidden">
@@ -618,29 +594,6 @@ export function RecruiterDashboard() {
                     </div>
                   </div>
 
-                  {/* Monthly hires chart */}
-                  <div className="p-5 rounded-xl bg-card border border-border/30">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hires vs Target</h3>
-                      <span className="text-[10px] text-muted-foreground">2026</span>
-                    </div>
-                    <ResponsiveContainer width="100%" height={180}>
-                      <AreaChart data={monthlyHireData}>
-                        <defs>
-                          <linearGradient id="hireGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15} />
-                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                        <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                        <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
-                        <Area type="monotone" dataKey="hires" stroke="#6366f1" fill="url(#hireGrad)" strokeWidth={1.5} name="Actual" />
-                        <Line type="monotone" dataKey="target" stroke="#22d3ee" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="Target" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
                 </div>
 
                 {/* Right sidebar 1/3 */}
@@ -653,9 +606,6 @@ export function RecruiterDashboard() {
                         <Brain size={14} className="text-primary" />
                         AI Top Candidates
                       </h3>
-                      <button onClick={() => setActiveTab('candidates')} className="text-xs text-primary font-semibold hover:underline">
-                        See all
-                      </button>
                     </div>
                     <div className="space-y-3">
                       {candidates.slice(0, 4).map((candidate, i) => (
@@ -680,101 +630,7 @@ export function RecruiterDashboard() {
                     </div>
                   </div>
 
-                  {/* Application sources */}
-                  <div className="p-5 rounded-xl bg-card border border-border/30">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Application Sources</h3>
-                    <div className="flex justify-center mb-4">
-                      <ResponsiveContainer width="100%" height={150}>
-                        <PieChart>
-                          <Pie
-                            data={sourceData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={45}
-                            outerRadius={60}
-                            paddingAngle={3}
-                            dataKey="value"
-                          >
-                            {sourceData.map((entry, i) => (
-                              <Cell key={i} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="space-y-1.5">
-                      {sourceData.map(source => (
-                        <div key={source.name} className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: source.color }} />
-                            <span className="text-muted-foreground">{source.name}</span>
-                          </div>
-                          <span className="font-semibold text-foreground" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{source.value}%</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-
                 </div>
-              </div>
-            )}
-
-
-
-            {activeTab === 'analytics' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                <div className="p-5 rounded-xl bg-card border border-border/30">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-1.5">
-                    <BarChart3 size={14} className="text-primary" />
-                    Hiring Funnel Breakdown
-                  </h3>
-                  <ResponsiveContainer width="100%" height={240}>
-                    <BarChart data={recruiterHiringData} barSize={16}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                      <XAxis dataKey="stage" tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 9, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
-                      <Bar dataKey="count" radius={[4, 4, 0, 0]} name="Candidates">
-                        {recruiterHiringData.map((entry, i) => (
-                          <Cell key={i} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="p-5 rounded-xl bg-card border border-border/30">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Application Source Distribution</h3>
-                  <div className="flex justify-center">
-                    <ResponsiveContainer width="100%" height={240}>
-                      <PieChart>
-                        <Pie data={sourceData} cx="50%" cy="50%" outerRadius={80} paddingAngle={3} dataKey="value" label={({ name, value }) => `${name} ${value}%`} labelLine={false} style={{ fontSize: 9, fill: '#8b92b8' }}>
-                          {sourceData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                        </Pie>
-                        <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                <div className="p-5 rounded-xl bg-card border border-border/30 lg:col-span-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Monthly Hires vs Target</h3>
-                  <ResponsiveContainer width="100%" height={220}>
-                    <LineChart data={monthlyHireData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                      <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 10, fill: '#8b92b8' }} axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ background: '#0a0d20', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 11 }} />
-                      <Legend wrapperStyle={{ fontSize: 10, paddingTop: 10 }} />
-                      <Line type="monotone" dataKey="hires" stroke="#6366f1" strokeWidth={1.5} dot={{ fill: '#6366f1', r: 3 }} name="Actual Hires" />
-                      <Line type="monotone" dataKey="target" stroke="#22d3ee" strokeWidth={1.5} strokeDasharray="5 5" dot={false} name="Target" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
               </div>
             )}
 

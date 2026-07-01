@@ -96,15 +96,7 @@ export function CompanyProfile() {
                   <h1 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '2rem', fontWeight: 800 }}>{company.name}</h1>
                   <p className="text-muted-foreground">{company.tagline}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  {company.rating > 0 && (
-                    <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                      <Star size={14} className="text-amber-400 fill-amber-400" />
-                      <span className="text-sm font-semibold text-amber-400">{company.rating}</span>
-                      <span className="text-xs text-muted-foreground">({company.reviews?.toLocaleString()} reviews)</span>
-                    </div>
-                  )}
-                </div>
+
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
                 <span className="flex items-center gap-1.5"><MapPin size={14} strokeWidth={1.75} /> {company.location}</span>
