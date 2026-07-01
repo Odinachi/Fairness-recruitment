@@ -9,7 +9,8 @@ import {
   Sparkles, Briefcase, Target, Eye, Bell,
   ChevronRight, MapPin, Clock, DollarSign, Star, ArrowUpRight,
   Brain, FileText, MessageSquare, AlertCircle,
-  Zap, BarChart3, Award, Upload, Play, RefreshCw, Bookmark, TrendingUp
+  Zap, BarChart3, Award, Upload, Play, RefreshCw, Bookmark, TrendingUp,
+  Download, X
 } from 'lucide-react'
 
 import {
@@ -187,6 +188,7 @@ export function ApplicantDashboard() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploadingResume, setUploadingResume] = useState(false)
+  const [showCvModal, setShowCvModal] = useState(false)
 
   const [matchedJobs, setMatchedJobs] = useState<any[] | null>(null)
   const [matchingLoading, setMatchingLoading] = useState(false)
@@ -378,6 +380,13 @@ export function ApplicantDashboard() {
               {user?.resumeUrl && (
                 <span className="flex items-center gap-1 text-emerald-400 font-semibold">
                   · 📎 CV: <a href={user.resumeUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-emerald-300 transition-colors">{user.resumeName || 'resume.pdf'}</a>
+                  <button
+                    onClick={() => setShowCvModal(true)}
+                    className="p-0.5 rounded hover:bg-muted/30 transition-colors text-emerald-400 hover:text-emerald-300 cursor-pointer flex items-center justify-center"
+                    title="View CV inline"
+                  >
+                    <Eye size={13} className="ml-1" />
+                  </button>
                 </span>
               )}
             </p>
@@ -882,6 +891,49 @@ export function ApplicantDashboard() {
           </div>
         )}
       </div>
+
+      {/* CV Viewer Modal */}
+      {showCvModal && user?.resumeUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm transition-all duration-300">
+          <div className="w-full max-w-4xl h-[85vh] flex flex-col bg-card border border-border/80 rounded-xl shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border/40 bg-muted/20">
+              <div className="flex items-center gap-2">
+                <FileText size={16} className="text-primary" />
+                <h3 className="text-sm font-semibold text-foreground tracking-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                  CV Preview: {user.resumeName || 'resume.pdf'}
+                </h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <a
+                  href={user.resumeUrl}
+                  download={user.resumeName || 'resume.pdf'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-[11px] font-semibold text-foreground transition-all"
+                >
+                  <Download size={11} />
+                  Download
+                </a>
+                <button
+                  onClick={() => setShowCvModal(false)}
+                  className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+            {/* Modal Content */}
+            <div className="flex-1 bg-muted/10 p-4">
+              <iframe
+                src={user.resumeUrl}
+                className="w-full h-full border border-border/30 rounded-lg shadow-sm"
+                title="CV Document Preview"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }

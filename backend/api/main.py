@@ -781,25 +781,38 @@ async def upload_cv(file: UploadFile = File(...)):
                 detail="Unsupported file format. Please upload PDF, Word, or TXT."
             )
 
-        # Use Python SDK if configured
-        if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
+        # Check that Cloudinary credentials are set up
+        if not (CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET):
+            raise HTTPException(
+                status_code=500,
+                detail="Cloudinary credentials are not configured in the backend environment variables (.env)."
+            )
+
+        try:
+            # Upload using the Cloudinary SDK (with resource_type auto)
             result = cloudinary.uploader.upload(
                 file.file,
-                resource_type="raw",
+                resource_type="auto",
                 public_id=f"jobnatics_resumes/{os.path.splitext(file.filename)[0]}"
             )
             secure_url = result.get("secure_url")
+            if not secure_url:
+                raise Exception("Cloudinary did not return a secure URL.")
             print(f"Cloudinary upload successful: {secure_url}")
-        else:
-            # Fallback to realistic mock Cloudinary URL for local testing
-            secure_url = f"https://res.cloudinary.com/demo/raw/upload/v1234567890/jobnatics_resumes/{file.filename}"
-            print(f"Cloudinary Mock upload fallback triggered: {secure_url}")
+        except Exception as cl_err:
+            print(f"Cloudinary upload error: {cl_err}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Cloudinary upload failed: {str(cl_err)}"
+            )
 
         return {
             "status": "success",
             "url": secure_url,
             "filename": file.filename
         }
+    except HTTPException as he:
+        raise he
     except Exception as e:
-        print(f"Cloudinary upload error: {e}")
+        print(f"Upload process error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

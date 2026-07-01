@@ -6,7 +6,7 @@ import {
   Sparkles, Users, Briefcase, Clock, BarChart3,
   ChevronRight, ArrowUpRight, Brain, Plus, Filter,
   Calendar, MessageSquare, AlertCircle, Zap, RefreshCw, Eye, TrendingUp, Star,
-  ArrowLeft, MapPin, DollarSign
+  ArrowLeft, MapPin, DollarSign, FileText, Download, X
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -71,6 +71,9 @@ export function RecruiterDashboard() {
   }
 
   const [selectedJobId, setSelectedJobId] = useState<string>('')
+  const [showCvModal, setShowCvModal] = useState(false)
+  const [viewingCvUrl, setViewingCvUrl] = useState('')
+  const [viewingCvName, setViewingCvName] = useState('')
   const [customJobDescription, setCustomJobDescription] = useState<string>('')
   const [matchingResults, setMatchingResults] = useState<any | null>(null)
   const [matchingLoading, setMatchingLoading] = useState<boolean>(false)
@@ -202,19 +205,25 @@ export function RecruiterDashboard() {
         const name = professionalNames[index % professionalNames.length]
         const location = locations[index % locations.length]
         const fallbackAvatar = `https://i.pravatar.cc/150?img=${index + 10}`
+        
+        // Find matching real user in Firestore by name (case-insensitive)
+        const realUser = allUsers.find(u => u.name && u.name.toLowerCase().trim() === name.toLowerCase().trim())
+        
         return {
-          userId: `csv-${cand.rank}`,
+          userId: realUser?.id || `csv-${cand.rank}`,
           rank: cand.rank,
           name: name,
-          avatar: fallbackAvatar,
+          avatar: realUser?.avatar || fallbackAvatar,
           title: cand.category,
-          location: location,
+          location: realUser?.location || location,
           bioSnippet: cand.resume_snippet,
           similarity_score: cand.similarity_score,
           shortlisted_base: cand.shortlisted_base,
           shortlisted_fair: cand.shortlisted_fair,
           reranked: cand.reranked,
-          demographic_group: cand.demographic_group
+          demographic_group: cand.demographic_group,
+          resumeUrl: realUser?.resumeUrl || "https://res.cloudinary.com/demo/image/upload/v1234567890/sample.pdf",
+          resumeName: realUser?.resumeName || "resume.pdf"
         }
       })
 
@@ -1043,9 +1052,23 @@ export function RecruiterDashboard() {
                                     )}
                                   </div>
                                 </td>
-                                <td className="px-5 py-4">
-                                  {!cand.userId.startsWith('csv-') && (
-                                    <ArrowUpRight size={14} className="text-muted-foreground group-hover:text-primary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                                <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                                  {cand.resumeUrl ? (
+                                    <button
+                                      onClick={() => {
+                                        setViewingCvUrl(cand.resumeUrl)
+                                        setViewingCvName(cand.resumeName || 'resume.pdf')
+                                        setShowCvModal(true)
+                                      }}
+                                      className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-center inline-flex"
+                                      title="View CV inline"
+                                    >
+                                      <Eye size={14} />
+                                    </button>
+                                  ) : (
+                                    !cand.userId.startsWith('csv-') ? (
+                                      <ArrowUpRight size={14} className="text-muted-foreground group-hover:text-primary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                                    ) : null
                                   )}
                                 </td>
                               </tr>
@@ -1064,6 +1087,49 @@ export function RecruiterDashboard() {
           </>
         )}
       </div>
+
+      {/* CV Viewer Modal */}
+      {showCvModal && viewingCvUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm transition-all duration-300">
+          <div className="w-full max-w-4xl h-[85vh] flex flex-col bg-card border border-border/80 rounded-xl shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border/40 bg-muted/20">
+              <div className="flex items-center gap-2">
+                <FileText size={16} className="text-primary" />
+                <h3 className="text-sm font-semibold text-foreground tracking-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                  CV Preview: {viewingCvName}
+                </h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <a
+                  href={viewingCvUrl}
+                  download={viewingCvName}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-[11px] font-semibold text-foreground transition-all"
+                >
+                  <Download size={11} />
+                  Download
+                </a>
+                <button
+                  onClick={() => setShowCvModal(false)}
+                  className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+            {/* Modal Content */}
+            <div className="flex-1 bg-muted/10 p-4">
+              <iframe
+                src={viewingCvUrl}
+                className="w-full h-full border border-border/30 rounded-lg shadow-sm"
+                title="CV Document Preview"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }
