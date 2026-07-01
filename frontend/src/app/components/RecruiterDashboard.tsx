@@ -57,6 +57,7 @@ export function RecruiterDashboard() {
     sourceData, monthlyHireData, allUsers, applicantApplications
   } = useApp()
   const navigate = useNavigate()
+
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
 
@@ -155,7 +156,6 @@ export function RecruiterDashboard() {
       console.error('Error updating application status:', err)
     }
   }
-
   // Auto-populate customJobDescription when selectedJobId changes
   useEffect(() => {
     if (selectedJobId) {
@@ -240,7 +240,6 @@ export function RecruiterDashboard() {
       setMatchingLoading(false)
     }
   }
-
   // Real-time Firestore-backed metrics
   const myJobs = jobs.filter(j => j.postedBy === user?.id)
   const myApplications = applicantApplications.filter(a => myJobs.some(j => j.id === a.jobId))
@@ -736,8 +735,6 @@ export function RecruiterDashboard() {
                           </span>
                         </div>
 
-
-
                         {/* Candidates Matches Table */}
                         <div className="rounded-xl bg-card border border-border/30 overflow-hidden">
                           <div className="p-4 border-b border-border/30 bg-muted/10">
@@ -780,7 +777,6 @@ export function RecruiterDashboard() {
                                         <div className="min-w-0">
                                           <div className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
                                             <span className="truncate">{cand.name}</span>
-
                                           </div>
                                           <div className="text-[10px] text-muted-foreground truncate mt-0.5">
                                             {cand.title}{cand.location ? ` · ${cand.location}` : ''}

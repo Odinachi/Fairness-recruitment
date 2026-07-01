@@ -27,8 +27,6 @@ const applicantNav: NavItem[] = [
 const recruiterNav: NavItem[] = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/app/recruiter' },
   { label: 'Job Postings', icon: Briefcase, path: '/jobs' },
-  { label: 'Candidates', icon: Users, path: '/app/recruiter?tab=candidates' },
-  { label: 'Analytics', icon: BarChart3, path: '/app/recruiter?tab=analytics' },
   { label: 'Company', icon: Building2, path: '/company/stripe' },
 ]
 

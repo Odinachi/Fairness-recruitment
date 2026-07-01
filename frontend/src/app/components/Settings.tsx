@@ -14,8 +14,8 @@ export function Settings() {
   const { user, setUser, darkMode, toggleDarkMode, companies } = useApp()
   const [saved, setSaved] = useState(false)
 
-  const userCompany = companies.find(c => 
-    c.postedBy === user?.id || 
+  const userCompany = companies.find(c =>
+    c.postedBy === user?.id ||
     (user?.company && (c.id === user.company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || c.name.toLowerCase() === user.company.toLowerCase()))
   )
 
@@ -228,11 +228,10 @@ export function Settings() {
                     value={profileForm[field.key as keyof typeof profileForm] || ''}
                     onChange={e => setProfileForm({ ...profileForm, [field.key]: e.target.value })}
                     disabled={field.disabled}
-                    className={`w-full px-3 py-2 rounded-lg border text-xs transition-all text-foreground ${
-                      field.disabled
+                    className={`w-full px-3 py-2 rounded-lg border text-xs transition-all text-foreground ${field.disabled
                         ? 'bg-muted/40 border-border/20 opacity-60 cursor-not-allowed'
                         : 'bg-muted/20 border-border/30 focus:outline-none focus:border-primary'
-                    }`}
+                      }`}
                   />
                 </div>
               ))}
@@ -256,27 +255,15 @@ export function Settings() {
                 <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Company Profile Settings</h2>
               </div>
               <div className="space-y-4">
-                <div className="grid grid-cols-[64px_1fr] gap-3 items-start">
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Logo</label>
-                    <input
-                      type="text"
-                      value={companyForm.logo}
-                      onChange={e => setCompanyForm({ ...companyForm, logo: e.target.value })}
-                      maxLength={2}
-                      className="w-full text-center text-xl px-2 py-1.5 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-foreground"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Company Name *</label>
-                    <input
-                      type="text"
-                      value={companyForm.name}
-                      onChange={e => setCompanyForm({ ...companyForm, name: e.target.value })}
-                      placeholder="e.g. Acme Corp"
-                      className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all text-foreground"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Company Name *</label>
+                  <input
+                    type="text"
+                    value={companyForm.name}
+                    onChange={e => setCompanyForm({ ...companyForm, name: e.target.value })}
+                    placeholder="e.g. Acme Corp"
+                    className="w-full px-3 py-2 rounded-lg bg-muted/20 border border-border/30 focus:outline-none focus:border-primary text-xs transition-all text-foreground"
+                  />
                 </div>
 
                 <div>
@@ -376,7 +363,7 @@ export function Settings() {
               <Sparkles size={14} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary transition-transform duration-300 group-hover:scale-110 animate-pulse" />
               <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">AI Profile Settings</h2>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
                 <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1.5">Preferred Work Style</label>
@@ -475,11 +462,10 @@ export function Settings() {
           <div className="flex justify-end pt-4 border-t border-border/20">
             <button
               onClick={handleSave}
-              className={`flex items-center gap-1.5 px-5 py-2.5 rounded-lg font-semibold text-xs transition-all duration-200 group ${
-                saved
+              className={`flex items-center gap-1.5 px-5 py-2.5 rounded-lg font-semibold text-xs transition-all duration-200 group ${saved
                   ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                   : 'bg-primary text-white hover:bg-primary/90 hover:scale-[1.02] shadow-sm'
-              }`}
+                }`}
             >
               {saved ? (
                 <>

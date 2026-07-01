@@ -585,28 +585,16 @@ export function ProfileSetup() {
                   </h2>
                   <p className="text-xs text-muted-foreground -mt-2 mb-3">This will populate your public company page shown to candidates.</p>
 
-                  <div className="grid grid-cols-[48px_1fr] gap-3 items-start">
-                    <div>
-                      <label className="block text-xs font-medium text-foreground mb-1.5">Logo</label>
-                      <input
-                        type="text"
-                        value={form.companyLogo}
-                        onChange={e => setForm({ ...form, companyLogo: e.target.value })}
-                        maxLength={2}
-                        className="w-full text-center text-2xl px-1 py-2 rounded-xl bg-muted/40 border border-border/30 focus:outline-none focus:border-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-foreground mb-1.5">Company Name *</label>
-                      <input
-                        type="text"
-                        value={form.companyName}
-                        onChange={e => { setForm({ ...form, companyName: e.target.value }); if (errors.companyName) setErrors({ ...errors, companyName: '' }) }}
-                        placeholder="e.g. Acme Corp"
-                        className={`w-full px-4 py-3 text-sm rounded-xl bg-muted/40 border focus:outline-none focus:ring-2 transition-all placeholder:text-muted-foreground/50 ${errors.companyName ? 'border-red-500/50 focus:ring-red-500/20' : 'border-border/30 focus:border-primary focus:ring-primary/20'}`}
-                      />
-                      {errors.companyName && <p className="text-[11px] text-red-400 mt-1">{errors.companyName}</p>}
-                    </div>
+                  <div>
+                    <label className="block text-xs font-medium text-foreground mb-1.5">Company Name *</label>
+                    <input
+                      type="text"
+                      value={form.companyName}
+                      onChange={e => { setForm({ ...form, companyName: e.target.value }); if (errors.companyName) setErrors({ ...errors, companyName: '' }) }}
+                      placeholder="e.g. Acme Corp"
+                      className={`w-full px-4 py-3 text-sm rounded-xl bg-muted/40 border focus:outline-none focus:ring-2 transition-all placeholder:text-muted-foreground/50 ${errors.companyName ? 'border-red-500/50 focus:ring-red-500/20' : 'border-border/30 focus:border-primary focus:ring-primary/20'}`}
+                    />
+                    {errors.companyName && <p className="text-[11px] text-red-400 mt-1">{errors.companyName}</p>}
                   </div>
 
                   <div>
