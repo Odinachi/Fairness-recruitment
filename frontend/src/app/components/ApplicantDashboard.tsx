@@ -146,14 +146,10 @@ function buildCareerPaths(user: any) {
   return paths[level] || paths['Mid']
 }
 
-function buildUserResumeText(u: any) {
-  if (!u) return 'No resume details provided.'
-  const parts = [u.title, u.roleLevel, u.workStyle, u.bio, u.location, u.github].filter(Boolean)
-  return parts.join('\n') || 'No resume details provided.'
-}
+
 
 export function ApplicantDashboard() {
-  const { user, jobs, applicantApplications, applicationChartData } = useApp()
+  const { user, jobs, applicantApplications, applicationChartData, matchedJobs, loadingAiMatches: matchingLoading } = useApp()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
@@ -190,45 +186,7 @@ export function ApplicantDashboard() {
   const [uploadingResume, setUploadingResume] = useState(false)
   const [showCvModal, setShowCvModal] = useState(false)
 
-  const [matchedJobs, setMatchedJobs] = useState<any[] | null>(null)
-  const [matchingLoading, setMatchingLoading] = useState(false)
-  const [matchingError, setMatchingError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!user) return
-
-    const fetchMatches = async () => {
-      setMatchingLoading(true)
-      setMatchingError(null)
-      try {
-        const resumeText = buildUserResumeText(user)
-        const res = await fetch('http://127.0.0.1:8000/api/match', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            resume_text: resumeText,
-            demographic_group: 0,
-          }),
-        })
-
-        if (!res.ok) {
-          throw new Error(`Server returned status ${res.status}`)
-        }
-
-        const data = await res.json()
-        setMatchedJobs(data.recommendations || [])
-      } catch (err: any) {
-        console.error('Error fetching matched jobs:', err)
-        setMatchingError(err.message || 'Failed to fetch AI matches.')
-      } finally {
-        setMatchingLoading(false)
-      }
-    }
-
-    fetchMatches()
-  }, [user])
 
   const topJobs = matchedJobs
     ? matchedJobs.map((rec, i) => {

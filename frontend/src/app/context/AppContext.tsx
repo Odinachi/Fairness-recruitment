@@ -84,6 +84,7 @@ interface AppContextType {
   allUsers: any[]
   aiMatchScores: Record<string, number>
   loadingAiMatches: boolean
+  matchedJobs: any[] | null
 
   // Mutators
   addApplicantApplication: (app: any) => Promise<void>
@@ -111,6 +112,7 @@ export const AppContext = createContext<AppContextType>({
   allUsers: [],
   aiMatchScores: {},
   loadingAiMatches: false,
+  matchedJobs: null,
 
   addApplicantApplication: async () => {},
 })
@@ -135,6 +137,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [allUsers, setAllUsers] = useState<any[]>([])
   const [aiMatchScores, setAiMatchScores] = useState<Record<string, number>>({})
   const [loadingAiMatches, setLoadingAiMatches] = useState(false)
+  const [matchedJobs, setMatchedJobs] = useState<any[] | null>(null)
+
 
 
   useEffect(() => {
@@ -162,6 +166,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setLoadingData(false)
       setAiMatchScores({})
       setLoadingAiMatches(false)
+      setMatchedJobs(null)
       return
     }
 
@@ -420,6 +425,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user || user.role !== 'applicant') {
       setAiMatchScores({})
+      setMatchedJobs(null)
       return
     }
 
@@ -446,6 +452,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             scoreMap[key] = Math.round(rec.similarity_score * 100)
           })
           setAiMatchScores(scoreMap)
+          setMatchedJobs(data.recommendations || [])
         }
       } catch (err) {
         console.error('Failed to fetch model matches:', err)
@@ -481,6 +488,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       allUsers,
       aiMatchScores,
       loadingAiMatches,
+      matchedJobs,
       addApplicantApplication
     }}>
       {children}
