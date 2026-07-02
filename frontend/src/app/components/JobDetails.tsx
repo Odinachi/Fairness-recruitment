@@ -365,7 +365,7 @@ export function JobDetails() {
                 <CalendarDays size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-amber-400 flex-shrink-0" />
                 <div>
                   <p className="text-xs font-medium text-amber-400">Application Deadline</p>
-                  <p className="text-xs text-muted-foreground">{job.deadline}</p>
+                  <p className="text-xs text-muted-foreground">{job.deadline || 'Not specified'}</p>
                 </div>
               </div>
             </div>

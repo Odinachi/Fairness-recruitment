@@ -29,6 +29,9 @@ nltk.download('stopwords', quiet=True)
 nltk.download('punkt', quiet=True)
 nltk.download('punkt_tab', quiet=True)
 
+from pypdf import PdfReader
+import io
+
 app = FastAPI(
     title="Fairness-Aware Job Recommendation API",
     description=(
@@ -788,6 +791,28 @@ async def upload_cv(file: UploadFile = File(...)):
                 detail="Cloudinary credentials are not configured in the backend environment variables (.env)."
             )
 
+        # Read file bytes for text extraction before upload
+        file_bytes = file.file.read()
+        file.file.seek(0)
+
+        extracted_text = ""
+        if ext == ".pdf":
+            try:
+                pdf_reader = PdfReader(io.BytesIO(file_bytes))
+                pages_text = []
+                for page in pdf_reader.pages:
+                    text = page.extract_text()
+                    if text:
+                        pages_text.append(text)
+                extracted_text = "\n".join(pages_text)
+            except Exception as pdf_err:
+                print(f"Error parsing PDF: {pdf_err}")
+        elif ext == ".txt":
+            try:
+                extracted_text = file_bytes.decode("utf-8", errors="ignore")
+            except Exception as txt_err:
+                print(f"Error decoding TXT: {txt_err}")
+
         try:
             # Upload using the Cloudinary SDK (with resource_type auto)
             result = cloudinary.uploader.upload(
@@ -809,7 +834,8 @@ async def upload_cv(file: UploadFile = File(...)):
         return {
             "status": "success",
             "url": secure_url,
-            "filename": file.filename
+            "filename": file.filename,
+            "text": extracted_text
         }
     except HTTPException as he:
         raise he

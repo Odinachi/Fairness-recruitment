@@ -9,3 +9,5 @@ nltk
 cloudinary
 python-multipart
 python-dotenv
+pypdf
+

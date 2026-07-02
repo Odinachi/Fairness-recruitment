@@ -11,7 +11,13 @@ import {
 
 interface NavItem {
   label: string
-  icon: React.FC<{ size?: number; className?: string }>
+  icon: React.ComponentType<{
+    size?: number
+    strokeWidth?: number
+    fill?: string
+    fillOpacity?: number
+    className?: string
+  }>
   path: string
   badge?: number
 }

@@ -29,6 +29,7 @@ export interface Job {
   industry: string
   postedBy?: string
   views?: number
+  deadline?: string
 }
 
 export interface Candidate {

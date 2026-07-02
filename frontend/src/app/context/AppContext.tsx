@@ -56,7 +56,9 @@ export interface User {
   hiringPriority?: string
   resumeUrl?: string
   resumeName?: string
+  resumeText?: string
   resumeUploadedAt?: string
+  skills?: string[]
 }
 
 interface AppContextType {
@@ -319,6 +321,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               resumeUrl: profile.resumeUrl || '',
               resumeName: profile.resumeName || '',
               resumeUploadedAt: profile.resumeUploadedAt || '',
+              skills: profile.skills,
             })
           } catch (e) {
             console.error('Error parsing cached profile:', e)
@@ -351,6 +354,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               resumeUrl: data.resumeUrl || '',
               resumeName: data.resumeName || '',
               resumeUploadedAt: data.resumeUploadedAt || '',
+              skills: data.skills,
             }
             setUser(updatedUser)
             // Update LocalStorage cache
@@ -389,6 +393,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               salaryRange: profile.salaryRange || '',
               relocation: profile.relocation || '',
               hiringPriority: profile.hiringPriority || '',
+              skills: profile.skills,
             }
             setUser({ id: firebaseUser.uid, ...initialUser })
 
@@ -421,8 +426,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const fetchModelMatches = async () => {
       setLoadingAiMatches(true)
       try {
-        const parts = [user.title, user.roleLevel, user.workStyle, user.bio, user.location, user.github].filter(Boolean)
-        const resumeText = parts.join('\n') || 'No resume details provided.'
+        const resumeText = user.resumeText ||
+          [user.title, user.roleLevel, user.workStyle, user.bio, user.location, user.github].filter(Boolean).join('\n') ||
+          'No resume details provided.'
 
         const res = await fetch('http://127.0.0.1:8000/api/match', {
           method: 'POST',

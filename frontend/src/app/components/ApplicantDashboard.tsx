@@ -282,6 +282,7 @@ export function ApplicantDashboard() {
         await setDoc(doc(db, 'users', user.id), {
           resumeUrl: data.url,
           resumeName: data.filename,
+          resumeText: data.text || '',
           resumeUploadedAt: new Date().toISOString()
         }, { merge: true })
         toast.success(`CV uploaded successfully!`)
