@@ -80,6 +80,8 @@ interface AppContextType {
   companies: CompanyProfileData[]
   loadingData: boolean
   allUsers: any[]
+  aiMatchScores: Record<string, number>
+  loadingAiMatches: boolean
 
   // Mutators
   addApplicantApplication: (app: any) => Promise<void>
@@ -105,6 +107,8 @@ export const AppContext = createContext<AppContextType>({
   companies: [],
   loadingData: true,
   allUsers: [],
+  aiMatchScores: {},
+  loadingAiMatches: false,
 
   addApplicantApplication: async () => {},
 })
@@ -127,6 +131,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [companies, setCompanies] = useState<CompanyProfileData[]>([])
   const [loadingData, setLoadingData] = useState<boolean>(true)
   const [allUsers, setAllUsers] = useState<any[]>([])
+  const [aiMatchScores, setAiMatchScores] = useState<Record<string, number>>({})
+  const [loadingAiMatches, setLoadingAiMatches] = useState(false)
+
 
   useEffect(() => {
     if (darkMode) {
@@ -151,6 +158,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMonthlyHireData([])
       setCompanies([])
       setLoadingData(false)
+      setAiMatchScores({})
+      setLoadingAiMatches(false)
       return
     }
 
@@ -403,6 +412,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  useEffect(() => {
+    if (!user || user.role !== 'applicant') {
+      setAiMatchScores({})
+      return
+    }
+
+    const fetchModelMatches = async () => {
+      setLoadingAiMatches(true)
+      try {
+        const parts = [user.title, user.roleLevel, user.workStyle, user.bio, user.location, user.github].filter(Boolean)
+        const resumeText = parts.join('\n') || 'No resume details provided.'
+
+        const res = await fetch('http://127.0.0.1:8000/api/match', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            resume_text: resumeText,
+            demographic_group: 0,
+          }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const scoreMap: Record<string, number> = {}
+          data.recommendations?.forEach((rec: any) => {
+            const key = `${rec.job_title.toLowerCase().trim()}_${rec.company.toLowerCase().trim()}`
+            scoreMap[key] = Math.round(rec.similarity_score * 100)
+          })
+          setAiMatchScores(scoreMap)
+        }
+      } catch (err) {
+        console.error('Failed to fetch model matches:', err)
+      } finally {
+        setLoadingAiMatches(false)
+      }
+    }
+
+    fetchModelMatches()
+  }, [user, jobs])
+
 
 
   const addApplicantApplication = async (app: any) => {
@@ -425,6 +473,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       applicantApplications, applicationChartData, recruiterHiringData,
       recruiterJobPostings, sourceData, monthlyHireData, companies, loadingData,
       allUsers,
+      aiMatchScores,
+      loadingAiMatches,
       addApplicantApplication
     }}>
       {children}

@@ -22,7 +22,7 @@ const matchBreakdown = [
 export function JobDetails() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user, jobs, applicantApplications, loadingData, addApplicantApplication } = useApp()
+  const { user, jobs, applicantApplications, loadingData, addApplicantApplication, aiMatchScores } = useApp()
   const [saved, setSaved] = useState(false)
   const [applied, setApplied] = useState(false)
   const [applyLoading, setApplyLoading] = useState(false)
@@ -31,7 +31,7 @@ export function JobDetails() {
   const job = rawJob ? {
     ...rawJob,
     match: user && user.role !== 'recruiter'
-      ? calculateJobMatchScore(user.skills, rawJob.skills, rawJob.id)
+      ? calculateJobMatchScore(user.skills, rawJob.skills, rawJob.id, rawJob.title, rawJob.company, aiMatchScores)
       : 75
   } : undefined
 
@@ -202,8 +202,8 @@ export function JobDetails() {
                   <Star size={13} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} /> {job.level}
                 </span>
                 <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium ${job.remote === 'remote' ? 'bg-emerald-500/10 text-emerald-400' :
-                    job.remote === 'hybrid' ? 'bg-accent/10 text-accent' :
-                      'bg-muted text-muted-foreground'
+                  job.remote === 'hybrid' ? 'bg-accent/10 text-accent' :
+                    'bg-muted text-muted-foreground'
                   }`}>
                   <Globe size={13} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} /> {job.remote.charAt(0).toUpperCase() + job.remote.slice(1)}
                 </span>
@@ -306,50 +306,7 @@ export function JobDetails() {
           <div className="space-y-5">
             {/* Apply card */}
             <div className="sticky top-24 space-y-4">
-              {user && user.role !== 'recruiter' && (
-                <div className={`p-5 rounded-2xl bg-gradient-to-br ${matchBg} to-card border border-border`}>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold flex items-center gap-2">
-                      <Brain size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.15} className="text-primary animate-pulse" />
-                      AI Match Score
-                    </span>
-                    <span className={`font-bold text-2xl ${matchColor}`} style={{ fontFamily: 'Outfit, sans-serif' }}>
-                      {job.match}%
-                    </span>
-                  </div>
 
-                  <div className="mb-4">
-                    <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${job.match}%` }}
-                        transition={{ duration: 1, ease: 'easeOut' }}
-                        className={`h-full rounded-full ${job.match >= 90 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' :
-                            job.match >= 80 ? 'bg-gradient-to-r from-primary to-violet-500' :
-                              'bg-gradient-to-r from-amber-500 to-amber-400'
-                          }`}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    {matchBreakdown.slice(0, 4).map(item => (
-                      <div key={item.label}>
-                        <div className="flex justify-between text-xs mb-0.5">
-                          <span className="text-muted-foreground">{item.label}</span>
-                          <span className="font-medium">{item.score}%</span>
-                        </div>
-                        <div className="h-1 bg-muted/50 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-                            style={{ width: `${item.score}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <div className="p-5 rounded-2xl bg-card border border-border">
                 {user?.role === 'recruiter' ? (

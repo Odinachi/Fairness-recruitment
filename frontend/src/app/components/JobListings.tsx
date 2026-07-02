@@ -29,7 +29,7 @@ function MatchBadge({ match }: { match: number }) {
 
 export function JobListings() {
   const navigate = useNavigate()
-  const { user, jobs, addApplicantApplication } = useApp()
+  const { user, jobs, addApplicantApplication, aiMatchScores } = useApp()
   const [searchParams] = useSearchParams()
   const filterParam = searchParams.get('filter')
 
@@ -80,9 +80,9 @@ export function JobListings() {
     if (!user || user.role === 'recruiter') return jobs
     return jobs.map(j => ({
       ...j,
-      match: calculateJobMatchScore(user.skills, j.skills, j.id)
+      match: calculateJobMatchScore(user.skills, j.skills, j.id, j.title, j.company, aiMatchScores)
     }))
-  }, [jobs, user])
+  }, [jobs, user, aiMatchScores])
 
   const filtered = useMemo(() => {
     return jobsWithMatches

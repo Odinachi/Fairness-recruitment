@@ -61,7 +61,23 @@ export interface Notification {
   actionLabel?: string
 }
 
-export function calculateJobMatchScore(userSkills: string[] | undefined, jobSkills: string[] | undefined, jobId: string): number {
+export function calculateJobMatchScore(
+  userSkills: string[] | undefined,
+  jobSkills: string[] | undefined,
+  jobId: string,
+  jobTitle?: string,
+  jobCompany?: string,
+  aiMatchScores?: Record<string, number>
+): number {
+  // 1. Try to fetch from backend model scores
+  if (jobTitle && jobCompany && aiMatchScores) {
+    const key = `${jobTitle.toLowerCase().trim()}_${jobCompany.toLowerCase().trim()}`
+    if (aiMatchScores[key] !== undefined) {
+      return aiMatchScores[key]
+    }
+  }
+
+  // 2. Fallback to client-side match calculation
   if (!userSkills || userSkills.length === 0) {
     let hash = 0
     for (let i = 0; i < jobId.length; i++) {

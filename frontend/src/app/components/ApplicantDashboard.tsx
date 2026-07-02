@@ -158,9 +158,9 @@ export function ApplicantDashboard() {
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
 
-  const activeTab = (tabParam === 'applications' || tabParam === 'insights') ? tabParam : 'overview'
+  const activeTab = tabParam === 'applications' ? 'applications' : 'overview'
 
-  const setActiveTab = (newTab: 'overview' | 'applications' | 'insights') => {
+  const setActiveTab = (newTab: 'overview' | 'applications') => {
     if (newTab === 'overview') {
       setSearchParams({})
     } else {
@@ -448,7 +448,7 @@ export function ApplicantDashboard() {
 
         {/* Tab navigation */}
         <div className="flex gap-6 mb-8 border-b border-border/30 pb-px">
-          {(['overview', 'applications', 'insights'] as const).map(tab => (
+          {(['overview', 'applications'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -726,76 +726,6 @@ export function ApplicantDashboard() {
           </div>
         )}
 
-        {activeTab === 'insights' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            {/* Skills radar — derived from user role level */}
-            <div className="p-5 rounded-xl bg-card border border-border/30">
-              <div className="flex items-center gap-1.5 mb-4">
-                <Brain size={14} className="text-primary" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">AI Match Profile</h3>
-              </div>
-              <p className="text-[10px] text-muted-foreground mb-3">
-                Based on your {user?.roleLevel || 'current'} level profile
-                {user?.workStyle ? ` · ${user.workStyle} preference` : ''}
-              </p>
-              <div className="flex items-center justify-center">
-                <ResponsiveContainer width="100%" height={260}>
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="rgba(255,255,255,0.03)" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fontSize: 9, fill: '#8b92b8' }} />
-                    <Radar name="Score" dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.1} strokeWidth={1.5} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Skill strength bars — derived from user role level */}
-            <div className="p-5 rounded-xl bg-card border border-border/30">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Target size={14} className="text-accent" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Skill Strength Analysis</h3>
-              </div>
-              <p className="text-[10px] text-muted-foreground mb-4">
-                Typical skills for a {user?.roleLevel || 'Mid'}-level {user?.title || 'professional'}
-              </p>
-              <div className="space-y-4">
-                {skillsData.map(skill => (
-                  <div key={skill.skill}>
-                    <div className="flex justify-between text-xs mb-1.5">
-                      <span className="font-semibold">{skill.skill}</span>
-                      <span className="text-muted-foreground" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{skill.score}%</span>
-                    </div>
-                    <div className="h-1 bg-muted/40 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${skill.score}%` }}
-                        transition={{ duration: 0.8 }}
-                        className="h-full bg-primary rounded-full"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-6 p-3 rounded-lg border border-primary/10 bg-primary/5">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Sparkles size={11} className="text-primary" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary">AI Recommendation</span>
-                </div>
-                <p className="text-xs text-muted-foreground leading-normal">
-                  {user?.roleLevel === 'Senior' || user?.roleLevel === 'Lead'
-                    ? `Focus on System Design and Cloud Architecture to unlock Staff-level and Principal roles.`
-                    : user?.roleLevel === 'Entry'
-                    ? `Building a portfolio project and getting AWS Cloud Practitioner certified could accelerate your career by 12–18 months.`
-                    : `Deepening expertise in your strongest skill area and gaining leadership experience will position you for senior roles.`}
-                </p>
-              </div>
-            </div>
-
-
-
-          </div>
-        )}
       </div>
 
       {/* CV Viewer Modal */}
