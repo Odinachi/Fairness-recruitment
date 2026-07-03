@@ -11,6 +11,7 @@ import { motion } from 'motion/react'
 import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer,
 } from 'recharts'
+import { BACKEND_URL } from '../firebase'
 
 interface ChatMessage {
   id: string
@@ -207,7 +208,7 @@ export function AIRecommendations() {
       setMatchingLoading(true)
       try {
         const resumeText = buildUserResumeText(user)
-        const res = await fetch('http://127.0.0.1:8000/api/match', {
+        const res = await fetch(`${BACKEND_URL}/api/match`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

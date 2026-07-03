@@ -14,7 +14,7 @@ import {
 } from 'recharts'
 import { motion } from 'motion/react'
 import { doc, setDoc } from 'firebase/firestore'
-import { db } from '../firebase'
+import { db, BACKEND_URL } from '../firebase'
 
 function MatchBadge({ score }: { score: number }) {
   const color = score >= 90 ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
@@ -107,7 +107,7 @@ export function RecruiterDashboard() {
           }
         })
 
-        const res = await fetch('http://127.0.0.1:8000/api/match-applicants', {
+        const res = await fetch(`${BACKEND_URL}/api/match-applicants`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -178,7 +178,7 @@ export function RecruiterDashboard() {
     setMatchingResults(null)
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/match-job', {
+      const res = await fetch(`${BACKEND_URL}/api/match-job`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

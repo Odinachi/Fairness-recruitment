@@ -6,7 +6,7 @@ import {
   setDoc,
   onSnapshot
 } from 'firebase/firestore'
-import { auth, db } from '../firebase'
+import { auth, db, BACKEND_URL } from '../firebase'
 import {
   Job,
   Candidate,
@@ -436,7 +436,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           [user.title, user.roleLevel, user.workStyle, user.bio, user.location, user.github].filter(Boolean).join('\n') ||
           'No resume details provided.'
 
-        const res = await fetch('http://127.0.0.1:8000/api/match', {
+        const res = await fetch(`${BACKEND_URL}/api/match`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { useApp } from '../context/AppContext'
 import { toast } from 'sonner'
 import { doc, setDoc } from 'firebase/firestore'
-import { db } from '../firebase'
+import { db, BACKEND_URL } from '../firebase'
 import { Layout } from './Layout'
 import {
   Sparkles, Briefcase, Target, Eye, Bell,
@@ -224,7 +224,7 @@ export function ApplicantDashboard() {
     formData.append('file', file)
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/upload-cv', {
+      const res = await fetch(`${BACKEND_URL}/api/upload-cv`, {
         method: 'POST',
         body: formData,
       })
