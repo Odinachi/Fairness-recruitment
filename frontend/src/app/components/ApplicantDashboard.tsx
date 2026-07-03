@@ -38,8 +38,8 @@ const stageLabels: Record<string, string> = {
 function MatchBadge({ match }: { match: number }) {
   const color = match >= 90 ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10'
     : match >= 80 ? 'bg-primary/5 text-primary border-primary/10'
-    : match >= 70 ? 'bg-amber-500/5 text-amber-400 border-amber-500/10'
-    : 'bg-muted/30 text-muted-foreground border-border/30'
+      : match >= 70 ? 'bg-amber-500/5 text-amber-400 border-amber-500/10'
+        : 'bg-muted/30 text-muted-foreground border-border/30'
 
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border ${color}`}>
@@ -190,23 +190,23 @@ export function ApplicantDashboard() {
 
   const topJobs = matchedJobs
     ? matchedJobs.map((rec, i) => {
-        const fullJob = jobs.find(
-          j => j.title.toLowerCase().trim() === rec.job_title.toLowerCase().trim() &&
-               j.company.toLowerCase().trim() === rec.company.toLowerCase().trim()
-        )
-        return {
-          id: fullJob?.id || `fallback-${i}`,
-          title: rec.job_title,
-          company: rec.company,
-          location: fullJob?.location || 'Remote',
-          salary: fullJob?.salary || '$80K – $120K',
-          posted: fullJob?.posted || 'Just now',
-          remote: fullJob?.remote || 'remote',
-          skills: fullJob?.skills || ['Engineering'],
-          match: Math.round(rec.similarity_score * 100),
-          recommended: rec.recommended
-        }
-      }).slice(0, 5)
+      const fullJob = jobs.find(
+        j => j.title.toLowerCase().trim() === rec.job_title.toLowerCase().trim() &&
+          j.company.toLowerCase().trim() === rec.company.toLowerCase().trim()
+      )
+      return {
+        id: fullJob?.id || `fallback-${i}`,
+        title: rec.job_title,
+        company: rec.company,
+        location: fullJob?.location || 'Remote',
+        salary: fullJob?.salary || '$80K – $120K',
+        posted: fullJob?.posted || 'Just now',
+        remote: fullJob?.remote || 'remote',
+        skills: fullJob?.skills || ['Engineering'],
+        match: Math.round(rec.similarity_score * 100),
+        recommended: rec.recommended
+      }
+    }).slice(0, 5)
     : jobs.slice(0, 5).map(j => ({ ...j, match: j.match || 85, recommended: true }))
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -234,7 +234,7 @@ export function ApplicantDashboard() {
       }
 
       const data = await res.json()
-      
+
       // Update Firestore user document
       if (user?.id) {
         await setDoc(doc(db, 'users', user.id), {
@@ -313,7 +313,7 @@ export function ApplicantDashboard() {
   // Completeness sub-scores
   const completenessScore = Math.round(
     ((user?.name ? 1 : 0) + (user?.bio && user.bio.length > 10 ? 1 : 0) + (user?.location ? 1 : 0) +
-     (user?.linkedin ? 1 : 0) + (user?.github ? 1 : 0) + (user?.title ? 1 : 0)) / 6 * 100
+      (user?.linkedin ? 1 : 0) + (user?.github ? 1 : 0) + (user?.title ? 1 : 0)) / 6 * 100
   )
   const roleScoreMap: Record<string, number> = { Entry: 70, Mid: 80, Senior: 90, Lead: 95, Executive: 98 }
   const skillsAlignmentScore = roleScoreMap[user?.roleLevel || 'Mid'] || 80
@@ -322,7 +322,7 @@ export function ApplicantDashboard() {
   return (
     <Layout>
       <div className="p-6 max-w-7xl mx-auto">
-        
+
         {/* Welcome Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-6 border-b border-border/30">
           <div>
@@ -411,9 +411,8 @@ export function ApplicantDashboard() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-3 text-xs font-bold uppercase tracking-wider transition-all relative ${
-                activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-              }`}
+              className={`pb-3 text-xs font-bold uppercase tracking-wider transition-all relative ${activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                }`}
             >
               {tab}
               {activeTab === tab && (
@@ -428,7 +427,7 @@ export function ApplicantDashboard() {
 
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            
+
             {/* Job recommendations - 2/3 width */}
             <div className="xl:col-span-2 space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -494,11 +493,10 @@ export function ApplicantDashboard() {
                             <span className="flex items-center gap-1">
                               <Clock size={11} /> {job.posted}
                             </span>
-                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border uppercase ${
-                              job.remote === 'remote' ? 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10' :
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border uppercase ${job.remote === 'remote' ? 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10' :
                               job.remote === 'hybrid' ? 'text-accent bg-accent/5 border-accent/10' :
-                              'text-muted-foreground bg-muted/20 border-border/30'
-                            }`}>
+                                'text-muted-foreground bg-muted/20 border-border/30'
+                              }`}>
                               {job.remote}
                             </span>
                           </div>
@@ -513,9 +511,8 @@ export function ApplicantDashboard() {
                         <div className="flex flex-col gap-2 flex-shrink-0">
                           <button
                             onClick={e => { e.stopPropagation(); toggleSave(job.id) }}
-                            className={`w-7 h-7 rounded-md flex items-center justify-center border border-border/30 hover:bg-muted/40 transition-colors ${
-                              savedJobs.includes(job.id) ? 'text-primary border-primary/20 bg-primary/5' : 'text-muted-foreground'
-                            }`}
+                            className={`w-7 h-7 rounded-md flex items-center justify-center border border-border/30 hover:bg-muted/40 transition-colors ${savedJobs.includes(job.id) ? 'text-primary border-primary/20 bg-primary/5' : 'text-muted-foreground'
+                              }`}
                           >
                             <Bookmark size={13} className={savedJobs.includes(job.id) ? 'fill-primary' : ''} />
                           </button>
@@ -533,57 +530,7 @@ export function ApplicantDashboard() {
               </div>
             </div>
 
-            {/* Right sidebar - 1/3 width */}
-            <div className="space-y-6">
-              
-              {/* AI Profile Score — derived from actual user data */}
-              <div className="p-5 rounded-xl bg-card border border-border/30">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">AI Profile Score</h3>
-                  <span className="text-[10px] text-muted-foreground">{profileScore >= 80 ? 'Strong' : profileScore >= 60 ? 'Good' : 'Needs work'}</span>
-                </div>
-                <div className="flex items-center justify-center mb-6">
-                  <div className="relative w-28 h-28">
-                    <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                      <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="6" className="text-muted/15" />
-                      <circle
-                        cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="6"
-                        strokeLinecap="round"
-                        className="text-primary"
-                        strokeDasharray={`${profileScore * 2.64} 300`}
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="font-bold text-foreground leading-none" style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.75rem' }}>{profileScore}</span>
-                      <span className="text-[10px] text-muted-foreground mt-1">/ 100</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { label: 'Skills Alignment', score: skillsAlignmentScore },
-                    { label: 'Experience Relevance', score: experienceScore },
-                    { label: 'Profile Completeness', score: completenessScore },
-                  ].map(item => (
-                    <div key={item.label}>
-                      <div className="flex justify-between text-xs mb-1.5">
-                        <span className="text-muted-foreground">{item.label}</span>
-                        <span className="text-foreground font-semibold">{item.score}%</span>
-                      </div>
-                      <div className="h-1 bg-muted/40 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary rounded-full"
-                          style={{ width: `${item.score}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
-
-
-            </div>
           </div>
         )}
 
